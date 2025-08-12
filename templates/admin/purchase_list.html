@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}購入履歴一覧{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>購入履歴</h2>
+  <table class="table table-bordered mt-3">
+    <thead>
+      <tr>
+        <th>商品名</th>
+        <th>価格</th>
+        <th>購入日</th>
+        <th>状態</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in purchases %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.price }}円</td>
+        <td>{{ item.date }}</td>
+        <td>{{ item.status }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

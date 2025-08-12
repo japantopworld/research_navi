@@ -1,0 +1,44 @@
+{% extends "base/base.html" %}
+
+{% block title %}マイページ | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">👤 マイページ</h2>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">ユーザー情報</h5>
+            <p><strong>ユーザー名：</strong> {{ user.username }}</p>
+            <p><strong>メールアドレス：</strong> {{ user.email }}</p>
+            <p><strong>登録日：</strong> {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">🔔 通知設定</h5>
+                    <p>メールやLINE通知の受信設定を変更できます。</p>
+                    <a href="{{ url_for('settings') }}" class="btn btn-outline-primary btn-sm">設定を変更</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mt-3 mt-md-0">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">📊 利用履歴</h5>
+                    <p>これまでの検索・利益計算・通知履歴を確認できます。</p>
+                    <a href="{{ url_for('history') }}" class="btn btn-outline-primary btn-sm">履歴を確認</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">ログアウト</a>
+    </div>
+</div>
+{% endblock %}

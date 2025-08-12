@@ -1,0 +1,41 @@
+{% extends "base/base.html" %}
+
+{% block title %}サポート | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">🛠 サポート</h2>
+
+    <p>
+        リサーチナビのご利用に関してお困りのことがありましたら、以下をご確認ください。
+    </p>
+
+    <div class="list-group mb-4">
+        <a href="{{ url_for('guide') }}" class="list-group-item list-group-item-action">
+            📘 使い方ガイド
+        </a>
+        <a href="{{ url_for('faq') }}" class="list-group-item list-group-item-action">
+            ❓ よくある質問（FAQ）
+        </a>
+        <a href="{{ url_for('contact') }}" class="list-group-item list-group-item-action">
+            📩 お問い合わせフォーム
+        </a>
+        <a href="{{ url_for('terms') }}" class="list-group-item list-group-item-action">
+            📄 利用規約
+        </a>
+        <a href="{{ url_for('privacy') }}" class="list-group-item list-group-item-action">
+            🔐 プライバシーポリシー
+        </a>
+    </div>
+
+    <div class="alert alert-info">
+        より迅速な対応をご希望の場合は、<strong>公式LINEまたはメール</strong>にてご連絡ください。  
+        <br>📧 <a href="mailto:support@researchnavi.jp">support@researchnavi.jp</a>  
+        <br>📱 LINE連携：マイページより設定可
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">ホームに戻る</a>
+    </div>
+</div>
+{% endblock %}

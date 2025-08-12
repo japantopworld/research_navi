@@ -1,0 +1,54 @@
+{% extends "base/base.html" %}
+
+{% block title %}管理者ページ | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>🔧 管理者ページ</h2>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            通知の管理
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/admin/add_notification">
+                <div class="mb-3">
+                    <label for="title" class="form-label">タイトル</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+                <div class="mb-3">
+                    <label for="content" class="form-label">内容</label>
+                    <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">通知を追加</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            登録済み通知一覧
+        </div>
+        <div class="card-body">
+            {% if notifications and notifications|length > 0 %}
+            <ul class="list-group">
+                {% for note in notifications %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ note.title }}</strong><br>
+                        <small class="text-muted">{{ note.timestamp }}</small><br>
+                        {{ note.content }}
+                    </div>
+                    <form method="POST" action="/admin/delete_notification/{{ note.id }}">
+                        <button type="submit" class="btn btn-sm btn-danger">削除</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted">通知はまだありません。</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

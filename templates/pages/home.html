@@ -1,0 +1,16 @@
+﻿{% extends "base/layout.html" %}
+{% block title %}ホーム | リサーチナビ{% endblock %}
+{% block content %}
+  <h1>リサーチナビ</h1>
+  <p>最強のせどり・物販支援サービス</p>
+  <div class="menu">
+    <a href="{{ url_for('search') }}">🔎 商品検索</a>
+    <a href="{{ url_for('profit') }}">💰 利益計算</a>
+    <a href="{{ url_for('history') }}">📜 履歴一覧</a>
+    <a href="{{ url_for('ranking') }}">📈 利益ランキング</a>
+    <a href="{{ url_for('notifications') }}">📣 通知一覧</a>
+    <a href="{{ url_for('ocr') }}">📷 OCR読取</a>
+    <a href="{{ url_for('suppliers') }}">🏪 仕入れ先</a>
+    <a href="{{ url_for('setting') }}">⚙️ 設定</a>
+  </div>
+{% endblock %}

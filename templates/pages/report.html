@@ -1,0 +1,54 @@
+{% extends "base/base.html" %}
+
+{% block title %}レポート | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">📑 利益レポート</h2>
+
+    <form method="GET" action="{{ url_for('report') }}" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label for="start_date" class="form-label">開始日</label>
+            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="end_date" class="form-label">終了日</label>
+            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+        </div>
+        <div class="col-md-4 align-self-end">
+            <button type="submit" class="btn btn-primary w-100">検索</button>
+        </div>
+    </form>
+
+    {% if reports %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>日付</th>
+                    <th>商品名</th>
+                    <th>仕入れ価格</th>
+                    <th>販売価格</th>
+                    <th>利益</th>
+                    <th>備考</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reports %}
+                <tr>
+                    <td>{{ r.date }}</td>
+                    <td>{{ r.product_name }}</td>
+                    <td>{{ r.purchase_price }}円</td>
+                    <td>{{ r.sell_price }}円</td>
+                    <td>{{ r.profit }}円</td>
+                    <td>{{ r.note or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-muted">該当するデータがありません。</p>
+    {% endif %}
+</div>
+{% endblock %}

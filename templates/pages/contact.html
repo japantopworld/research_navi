@@ -1,0 +1,31 @@
+{% extends "base/base.html" %}
+
+{% block title %}お問い合わせ | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">📩 お問い合わせ</h2>
+
+    <p>不具合報告・ご要望・ご質問などございましたら、以下のフォームからご連絡ください。</p>
+
+    <form method="post" action="/send_contact">
+        <div class="mb-3">
+            <label for="name" class="form-label">お名前</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="例：山田 太郎" required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">メールアドレス</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="example@example.com" required>
+        </div>
+        <div class="mb-3">
+            <label for="subject" class="form-label">件名</label>
+            <input type="text" class="form-control" id="subject" name="subject" placeholder="件名を入力してください" required>
+        </div>
+        <div class="mb-3">
+            <label for="message" class="form-label">内容</label>
+            <textarea class="form-control" id="message" name="message" rows="6" placeholder="お問い合わせ内容を入力してください" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">送信</button>
+    </form>
+</div>
+{% endblock %}

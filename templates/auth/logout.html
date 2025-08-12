@@ -1,0 +1,12 @@
+{% extends "base/base.html" %}
+
+{% block title %}ログアウト完了 | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h2 class="mb-4">🚪 ログアウトしました</h2>
+    <p>ご利用ありがとうございました。</p>
+    <p>またのご利用をお待ちしております。</p>
+    <a href="{{ url_for('login') }}" class="btn btn-primary mt-3">ログイン画面へ戻る</a>
+</div>
+{% endblock %}

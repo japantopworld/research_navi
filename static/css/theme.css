@@ -1,0 +1,180 @@
+/* ========= ResearchNavi Theme v2 ========= */
+/* 明るいブランド色・読みやすい行間・余白最適化。HTML変更なしで反映 */
+
+:root{
+  /* 基本色（明るめ） */
+  --bg:#f5f8ff;
+  --card:#ffffff;
+  --line:#e4ebff;
+  --ink:#0f1222;
+  --muted:#5e6a85;
+
+  /* ブランド（以前より明るく・彩度高め） */
+  --brand:#2f7bff;          /* 主要アクセント */
+  --brand-ink:#ffffff;
+  --brand-weak:#e9f1ff;     /* 薄い背景 */
+  --brand-line:#cfe0ff;
+
+  /* 状態色 */
+  --good:#00a35a;
+  --warn:#ffb100;
+  --bad:#e23c39;
+
+  /* 立体感・角丸 */
+  --shadow:0 10px 30px rgba(38,70,190,.10);
+  --r:14px;
+
+  /* タイポ */
+  --fs:16px;                /* 基本サイズ */
+  --lh:1.65;                /* 行間 */
+  --tight:1.15;             /* 見出しの行間 */
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP","メイリオ",sans-serif;
+  font-size:var(--fs);
+  line-height:var(--lh);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  letter-spacing:.02em;
+}
+
+/* ========= ヘッダー ========= */
+.app-header{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; justify-content:space-between;
+  height:58px; padding:0 14px;
+  background:#fff; border-bottom:1px solid var(--line);
+  box-shadow:0 4px 12px rgba(47,123,255,.05);
+}
+.brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink)}
+.brand-logo{width:26px;height:26px; object-fit:contain}
+.brand-name{font-weight:900; letter-spacing:.03em; font-size:17px}
+.header-actions{display:flex; gap:8px}
+.icon-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:38px; height:38px; padding:0 10px;
+  border-radius:11px; text-decoration:none;
+  background:var(--brand-weak); color:#1f4bd8; border:1px solid var(--brand-line);
+  font-weight:700;
+}
+.icon-btn:hover{filter:brightness(.98)}
+
+/* ========= メイン ========= */
+.app-main{max-width:1100px; margin:18px auto 98px; padding:0 16px}
+.flash-wrap{display:grid; gap:10px; margin:8px 0}
+.flash{
+  padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:#fff;
+  box-shadow:var(--shadow);
+}
+
+/* ========= セクション ========= */
+.hero{margin:8px 0 14px}
+.hero-title{margin:0; font-size:22px; font-weight:900; line-height:var(--tight)}
+.hero-sub{margin:6px 0 0; color:var(--muted); font-size:14px}
+
+/* ========= カード・入力 ========= */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  box-shadow:var(--shadow);
+}
+label{display:grid; gap:6px; font-size:13.5px}
+.input, select, input[type="number"], input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="file"]{
+  width:100%; height:44px; padding:0 12px; border-radius:12px;
+  border:1px solid var(--line); background:#fff; color:var(--ink);
+  box-shadow:inset 0 0 0 2px transparent; transition:box-shadow .15s ease, border-color .15s ease;
+}
+.input:focus, select:focus, input:focus{
+  outline:none; border-color:#bcd3ff; box-shadow:inset 0 0 0 2px #dfe8ff;
+}
+
+/* ========= ボタン ========= */
+.btn{
+  display:inline-flex; align-items:center; gap:.5em;
+  height:44px; padding:0 16px; border-radius:12px;
+  border:1px solid var(--brand-line);
+  background:linear-gradient(#eff5ff,#dfe9ff);
+  color:#0b3bb0; font-weight:800; text-decoration:none; cursor:pointer;
+}
+.btn:hover{filter:brightness(.98)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{
+  background:#fff; color:#1f2937; border:1px solid var(--line);
+  font-weight:700;
+}
+.btn.primary{
+  background:var(--brand); color:var(--brand-ink); border:1px solid rgba(0,0,0,.02);
+}
+
+/* 小さめタグボタン（chip） */
+.chip{
+  display:inline-flex; align-items:center; height:34px; padding:0 12px;
+  border-radius:999px; border:1px solid var(--brand-line);
+  background:#fff; color:#1f2b5a; cursor:pointer; font-weight:700;
+}
+.chip.active{background:var(--brand-weak); color:#0b3bb0}
+
+/* ========= グリッド ========= */
+.grid{display:grid; gap:12px}
+@media (min-width:720px){ .grid-2{grid-template-columns:1fr 1fr} }
+@media (min-width:960px){ .grid-3{grid-template-columns:repeat(3,1fr)} }
+
+/* ========= KPI ========= */
+.kpi{
+  padding:14px; border:1px dashed #dfe6f3; border-radius:14px; background:#fff
+}
+.kpi-label{color:#6b7484; font-size:12.5px}
+.kpi-val{font-weight:900; font-size:20px; letter-spacing:.02em}
+#kpiProfit.good .kpi-val{color:var(--good)}
+#kpiProfit.ok   .kpi-val{color:var(--brand)}
+#kpiProfit.bad  .kpi-val{color:var(--bad)}
+
+/* ========= 表（Excel風） ========= */
+.table-like{
+  border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#fff
+}
+.table-like table{width:100%; border-collapse:collapse}
+.table-like thead th{
+  background:#f0f5ff; text-align:left; font-weight:800; color:#2c3452;
+}
+.table-like th, .table-like td{
+  border:1px solid var(--line); padding:10px; font-size:14.5px
+}
+.td-right{text-align:right}
+.td-left{text-align:left}
+.table-like tbody tr:hover{background:#fafcff}
+
+/* ========= タブバー ========= */
+.tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:60;
+  background:#fff; border-top:1px solid var(--line); display:grid;
+  grid-template-columns:repeat(5,1fr);
+  padding:6px 6px calc(env(safe-area-inset-bottom) + 6px);
+  box-shadow:0 -4px 16px rgba(47,123,255,.08);
+}
+.tab{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  text-decoration:none; color:#3b4150; padding:8px 4px; border-radius:12px; font-size:12.5px;
+}
+.tab span{font-weight:800; letter-spacing:.02em}
+.tab.active{background:#eef4ff; color:#0b3bb0; box-shadow:inset 0 0 0 2px #e3ecff}
+
+/* ========= レスポンシブ ========= */
+.main-bottom-space{height:22px}
+@media (min-width: 960px){
+  .app-main{margin-bottom:32px}
+  .tabbar{position:sticky; bottom:auto; top:0; border-top:none; border-bottom:1px solid var(--line)}
+  .tab{flex-direction:row; font-size:14px; justify-content:center}
+  .main-bottom-space{display:none}
+}
+
+/* ========= 補助：通知の色分け（level対応） ========= */
+.note-success{border-left:6px solid var(--good)}
+.note-warning{border-left:6px solid var(--warn)}
+.note-info{border-left:6px solid var(--brand)}
+.note-error{border-left:6px solid var(--bad)}

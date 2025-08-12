@@ -1,0 +1,46 @@
+/* 履歴ページ専用CSS（Excel風） */
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.history-table th,
+.history-table td {
+    border: 1px solid #ccc;
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.history-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.history-table tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.history-table tr:hover {
+    background-color: #eaf4ff;
+}
+
+.history-wrapper {
+    border: 2px solid #4a90e2;
+    border-radius: 6px;
+    padding: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* スマホ対応 */
+@media (max-width: 768px) {
+    .history-table {
+        font-size: 12px;
+    }
+    .history-table th,
+    .history-table td {
+        padding: 6px;
+    }
+}

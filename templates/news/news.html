@@ -1,0 +1,25 @@
+{% extends "base/base.html" %}
+
+{% block title %}お知らせ一覧 | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">📢 お知らせ一覧</h2>
+
+    {% if news_list %}
+        <div class="list-group">
+            {% for news in news_list %}
+            <a href="{{ url_for('news_detail', news_id=news.id) }}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ news.title }}</h5>
+                    <small class="text-muted">{{ news.date.strftime('%Y-%m-%d') }}</small>
+                </div>
+                <p class="mb-1 text-muted">{{ news.summary }}</p>
+            </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>現在、お知らせはありません。</p>
+    {% endif %}
+</div>
+{% endblock %}

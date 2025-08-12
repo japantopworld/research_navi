@@ -1,0 +1,38 @@
+{% extends "base/base.html" %}
+
+{% block title %}使い方ガイド | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">🔰 リサーチナビ 使い方ガイド</h2>
+
+    <section class="mb-5">
+        <h4>① 商品を検索する</h4>
+        <p>上部メニューの「検索」から、気になる商品名やキーワードを入力し、各プラットフォーム（メルカリ、Amazon、楽天など）で売れ筋商品をリサーチします。</p>
+    </section>
+
+    <section class="mb-5">
+        <h4>② 利益計算する</h4>
+        <p>「利益計算」ページで、仕入れ価格・販売価格・送料などを入力することで、自動で利益を計算してくれます。</p>
+    </section>
+
+    <section class="mb-5">
+        <h4>③ 履歴を保存・確認する</h4>
+        <p>検索履歴や利益履歴は「履歴」ページでいつでも確認可能。CSV出力もできます。</p>
+    </section>
+
+    <section class="mb-5">
+        <h4>④ 通知機能を活用する</h4>
+        <p>「通知」ページでは、利益が出る商品や注目商品があった場合に、LINEやメールで通知を受け取れます。</p>
+    </section>
+
+    <section class="mb-5">
+        <h4>⑤ 管理者機能（任意）</h4>
+        <p>ログインした管理者のみがアクセスできる「管理ページ」から、ユーザー管理・通知配信などが可能です。</p>
+    </section>
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">ホームに戻る</a>
+    </div>
+</div>
+{% endblock %}

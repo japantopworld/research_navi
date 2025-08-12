@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>期間サマリ</title>
+</head>
+<body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#0f172a;">
+  <h2 style="margin:0 0 8px;">📈 期間サマリ：{{ start }} 〜 {{ end }}</h2>
+
+  <table style="border-collapse:collapse;min-width:520px;margin:0 0 12px;">
+    <tr><td style="padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;">取引件数</td><td style="padding:6px 10px;border:1px solid #e2e8f0;">{{ sm.count }}</td></tr>
+    <tr><td style="padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;">合計利益</td><td style="padding:6px 10px;border:1px solid #e2e8f0;"><b>{{ sm.total_profit|yen }}</b></td></tr>
+    <tr><td style="padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;">平均利益</td><td style="padding:6px 10px;border:1px solid #e2e8f0;">{{ sm.avg_profit|yen }}</td></tr>
+    <tr><td style="padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;">平均利益率</td><td style="padding:6px 10px;border:1px solid #e2e8f0;">{{ sm.avg_margin }}%</td></tr>
+    <tr><td style="padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;">合計販売</td><td style="padding:6px 10px;border:1px solid #e2e8f0;">{{ sm.total_sales|yen }}</td></tr>
+    <tr><td style="padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;">合計仕入</td><td style="padding:6px 10px;border:1px solid #e2e8f0;">{{ sm.total_cost|yen }}</td></tr>
+  </table>
+
+  {% if rows and rows|length %}
+  <h3 style="margin:10px 0 6px;">取引明細</h3>
+  <table style="border-collapse:collapse;min-width:720px;">
+    <thead>
+      <tr>
+        <th style="text-align:left;padding:6px 8px;border:1px solid #e2e8f0;background:#f8fafc;">日時</th>
+        <th style="text-align:left;padding:6px 8px;border:1px solid #e2e8f0;background:#f8fafc;">商品名</th>
+        <th style="text-align:left;padding:6px 8px;border:1px solid #e2e8f0;background:#f8fafc;">PF</th>
+        <th style="text-align:right;padding:6px 8px;border:1px solid #e2e8f0;background:#f8fafc;">仕入</th>
+        <th style="text-align:right;padding:6px 8px;border:1px solid #e2e8f0;background:#f8fafc;">販売</th>
+        <th style="text-align:right;padding:6px 8px;border:1px solid #e2e8f0;background:#f8fafc;">送料</th>
+        <th style="text-align:right;padding:6px 8px;border:1px solid #e2e8f0;background:#f8fafc;">手数料</th>
+        <th style="text-align:right;padding:6px 8px;border:1px solid #e2e8f0;background:#f8fafc;">利益</th>
+        <th style="text-align:right;padding:6px 8px;border:1px solid #e2e8f0;background:#f8fafc;">利益率</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;">{{ r["日時"] }}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;">{{ r["商品名"] }}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;">{{ r["プラットフォーム"] }}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">{{ r["仕入価格"]|yen }}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">{{ r["販売価格"]|yen }}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">{{ r["送料"]|yen }}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">{{ r["手数料(円)"]|yen }}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;"><b>{{ r["利益"]|yen }}</b></td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">{{ r["利益率(%)"] }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <p style="margin:12px 0 0; color:#64748b;">このメールはリサーチナビの自動送信です。</p>
+</body>
+</html>

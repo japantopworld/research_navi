@@ -1,0 +1,53 @@
+{% extends "base/base.html" %}
+
+{% block title %}ダッシュボード | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">📊 ダッシュボード</h2>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">本日の検索件数</h5>
+                    <p class="card-text display-5">{{ stats.today_searches }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">利益商品数</h5>
+                    <p class="card-text display-5">{{ stats.profitable_items }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">保存済み履歴</h5>
+                    <p class="card-text display-5">{{ stats.saved_histories }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5">
+        <h4>📈 最近の動向</h4>
+        {% if recent_logs %}
+            <ul class="list-group">
+                {% for log in recent_logs %}
+                    <li class="list-group-item">
+                        <strong>{{ log.timestamp }}</strong> - {{ log.message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">まだログはありません。</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

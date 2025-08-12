@@ -1,0 +1,38 @@
+{% extends "base/base.html" %}
+
+{% block title %}このサービスについて | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">📘 このサービスについて</h2>
+
+    <p><strong>リサーチナビ</strong>は、せどり・転売ビジネスに特化したオールインワンのリサーチ＆分析ツールです。</p>
+
+    <hr>
+
+    <h4>📌 主な機能</h4>
+    <ul>
+        <li>複数ECサイト（メルカリ、Amazon、楽天など）の横断検索</li>
+        <li>自動利益計算機能（販売価格、仕入れ値、手数料、送料などを考慮）</li>
+        <li>検索・計算履歴の自動保存（CSV出力可能）</li>
+        <li>LINE・メールによる利益通知</li>
+        <li>人気商品ランキング、自動出品支援などの高機能</li>
+    </ul>
+
+    <h4>🎯 目的</h4>
+    <p>
+        転売初心者からプロのセラーまで、<strong>誰でも使える、そして利益を最大化できる</strong>ツールとして設計されています。<br>
+        「探す・仕入れる・売る」の全プロセスをこのツール1つで完結させることができます。
+    </p>
+
+    <h4>🛠️ 開発者について</h4>
+    <p>
+        制作者：<strong>小島崇彦</strong><br>
+        このツールは「最強のせどり支援ツールを自分用に作る」という目的でゼロから開発されました。
+    </p>
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">ホームに戻る</a>
+    </div>
+</div>
+{% endblock %}

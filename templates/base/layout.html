@@ -1,0 +1,39 @@
+﻿<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}リサーチナビ{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div class="container">
+    <a href="{{ url_for('home') }}" class="brand">🚀 リサーチナビ</a>
+    <nav class="nav">
+      <a href="{{ url_for('search') }}">🔎 検索</a>
+      <a href="{{ url_for('profit') }}">💰 利益計算</a>
+      <a href="{{ url_for('history') }}">📜 履歴</a>
+      <a href="{{ url_for('ranking') }}">📈 ランキング</a>
+      <a href="{{ url_for('notifications') }}">📣 通知</a>
+      <a href="{{ url_for('ocr') }}">📷 OCR</a>
+      <a href="{{ url_for('suppliers') }}">🏪 仕入れ先</a>
+      <a href="{{ url_for('setting') }}">⚙️ 設定</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  {% with msgs = get_flashed_messages() %}
+    {% if msgs %}
+      <div class="flash">
+        {% for m in msgs %}<div>{{ m }}</div>{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer"><div class="container">© リサーチナビ</div></footer>
+</body>
+</html>

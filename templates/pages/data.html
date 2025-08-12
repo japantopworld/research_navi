@@ -1,0 +1,108 @@
+{% extends "base/layout.html" %}
+{% block title %}データ管理 | リサーチナビ{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <h2 class="hero-title">データ管理</h2>
+  <p class="hero-sub">履歴のエクスポート／バックアップ作成、CSVからの復元ができます。</p>
+</section>
+
+<!-- エクスポート -->
+<section class="card" style="padding:12px;border:1px solid #e8ecf4;border-radius:14px;">
+  <h3 style="margin:0 0 10px;font-size:16px;">エクスポート</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a class="btn" href="{{ url_for('export_csv') }}">⬇️ 履歴CSV（全件）</a>
+    <a class="btn primary" href="{{ url_for('export_backup') }}">🧰 バックアップZIP（履歴+設定+通知）</a>
+  </div>
+  <p style="color:#667085;font-size:13px;margin:8px 0 0;">
+    ・CSVはExcelで開けるBOM付きUTF-8。<br>
+    ・バックアップZIPには <code>profit_history.csv</code> / <code>settings.json</code> / <code>notes.json</code> を同梱します。
+  </p>
+</section>
+
+<!-- インポート -->
+<section class="card" style="margin-top:12px;padding:12px;border:1px solid #e8ecf4;border-radius:14px;">
+  <h3 style="margin:0 0 10px;font-size:16px;">インポート（CSV）</h3>
+
+  <!-- ドラッグ&ドロップ -->
+  <div id="drop" style="border:2px dashed #cfe0ff;background:#f7f9ff;padding:18px;border-radius:12px;text-align:center;">
+    <p style="margin:0 0 6px;">ここにCSVをドラッグ & ドロップ</p>
+    <small style="color:#667085;">または下の「ファイル選択」から選んでください</small>
+  </div>
+
+  <form id="importForm" method="post" action="{{ url_for('import_csv') }}" enctype="multipart/form-data" style="margin-top:10px;">
+    <div style="display:grid;gap:10px;grid-template-columns:1fr 200px;">
+      <label>CSVファイル
+        <input class="input" type="file" name="file" id="file" accept=".csv,text/csv">
+      </label>
+      <label>取り込み方法
+        <select class="input" name="mode" id="mode">
+          <option value="append">追記（既存に追加）</option>
+          <option value="replace">置き換え（既存を上書き）</option>
+        </select>
+      </label>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
+      <button class="btn primary" type="submit">📥 インポート実行</button>
+      <button class="btn ghost" type="button" id="templateBtn">ひな形CSVを確認</button>
+    </div>
+    <p style="color:#667085;font-size:13px;margin:8px 0 0;">
+      必須ヘッダー：<code>日時, 商品名, プラットフォーム, 仕入価格, 販売価格, 送料, 追加手数料, 手数料率(%), 手数料(円), 利益, 利益率(%)</code>
+    </p>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(()=>{
+  const $ = (s)=>document.querySelector(s);
+  const form = $('#importForm');
+  const file = $('#file');
+  const drop = $('#drop');
+  const mode = $('#mode');
+
+  // D&D
+  ;['dragenter','dragover','dragleave','drop'].forEach(ev=>{
+    drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); }, false);
+  });
+  ;['dragenter','dragover'].forEach(ev=>{
+    drop.addEventListener(ev, ()=>{ drop.style.background='#eef4ff'; }, false);
+  });
+  ;['dragleave','drop'].forEach(ev=>{
+    drop.addEventListener(ev, ()=>{ drop.style.background='#f7f9ff'; }, false);
+  });
+  drop.addEventListener('drop', (e)=>{
+    const files = e.dataTransfer.files;
+    if(!files || !files.length) return;
+    file.files = files;
+  });
+
+  // テンプレ表示（ヘッダーのみのCSVを生成してダウンロード）
+  $('#templateBtn').addEventListener('click', ()=>{
+    const header = [
+      "日時","商品名","プラットフォーム","仕入価格","販売価格","送料",
+      "追加手数料","手数料率(%)","手数料(円)","利益","利益率(%)"
+    ].join(',') + '\n';
+    const blob = new Blob(['\ufeff' + header], {type: 'text/csv;charset=utf-8;'});
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'profit_history_template.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  // 軽い検証
+  form.addEventListener('submit', (e)=>{
+    if(!file.files || file.files.length===0){
+      e.preventDefault();
+      alert('CSVファイルを選択してください。');
+      return;
+    }
+    if(!/\.csv$/i.test(file.files[0].name)){
+      if(!confirm('拡張子が .csv ではありません。続行しますか？')) e.preventDefault();
+    }
+  });
+})();
+</script>
+{% endblock %}

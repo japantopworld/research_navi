@@ -1,0 +1,174 @@
+/* =========================
+   Research Navi – Premium UI
+   ========================= */
+
+/* ---- Theme Vars ---- */
+:root{
+  --bg: #0e1320;           /* 背景(濃紺) */
+  --panel: rgba(255,255,255,.06);
+  --stroke: rgba(255,255,255,.12);
+  --ink: #e6edf7;          /* 文字 */
+  --muted: #9aa7bd;        /* 説明 */
+  --brand: #5cc8ff;        /* アクセント(シアン) */
+  --brand2:#7ee081;        /* 成功(エメラルド) */
+  --warn: #ffd166;         /* 強調(ゴールド) */
+  --danger:#ff6b6b;        /* 危険 */
+  --glow: 0 10px 30px rgba(92,200,255,.25);
+  --radius: 16px;
+}
+
+/* ---- Base ---- */
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+html{ scroll-behavior:smooth; }
+body{
+  margin:0; color:var(--ink); background: var(--bg);
+  font-family: "Noto Sans JP","Segoe UI","Helvetica Neue",system-ui,-apple-system,sans-serif;
+  line-height:1.65; letter-spacing:.01em;
+  /* 奥行きのあるグラデーション背景 */
+  background-image:
+    radial-gradient(1200px 500px at -10% -10%, #1a2540 0%, transparent 60%),
+    radial-gradient(1000px 500px at 110% 0%, #1f2d52 0%, transparent 60%),
+    linear-gradient(180deg, #0b101c 0%, #12192b 100%);
+}
+
+/* ---- Header / Navbar ---- */
+.site-header{
+  position:sticky; top:0; z-index:1000;
+  backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, rgba(20,28,46,.9), rgba(20,28,46,.6));
+  border-bottom:1px solid var(--stroke);
+  padding: 10px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand .brand-mark{ filter: drop-shadow(0 2px 6px rgba(92,200,255,.45)); }
+.brand .brand-name{
+  color:var(--ink); font-weight:800; text-decoration:none; letter-spacing:.02em;
+}
+
+.navbar{ display:flex; }
+.nav-list{
+  list-style:none; margin:0; padding:0; display:flex; gap:10px; flex-wrap:wrap;
+}
+.nav-list a{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:999px; text-decoration:none;
+  color:var(--ink); background: transparent; border:1px solid transparent;
+  transition: all .18s ease;
+}
+.nav-list a:hover{
+  color:#0b1220; background: linear-gradient(180deg,#96e4ff,#58c5ff);
+  box-shadow: var(--glow);
+}
+
+/* ---- Utility (Back/Home) ---- */
+.utility-bar{
+  display:flex; gap:10px; align-items:center; padding:10px 18px;
+  border-bottom:1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+}
+.btn{
+  display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+  border:none; border-radius:12px; padding:10px 14px; font-weight:700;
+  background: linear-gradient(180deg,#66d1ff,#38b6ff); color:#0b1220;
+  box-shadow: var(--glow); transition: transform .05s ease, filter .2s ease;
+  text-decoration:none;
+}
+.btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+.btn.ghost{
+  background: rgba(255,255,255,.06); color:var(--ink); box-shadow:none;
+  border:1px solid var(--stroke);
+}
+.btn.ghost:hover{ background: rgba(255,255,255,.1); }
+
+/* ---- Main Layout / Cards ---- */
+.container{ max-width:1120px; margin:24px auto; padding: 0 18px 24px; }
+.card{
+  background: var(--panel);
+  border:1px solid var(--stroke);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0,0,0,.25);
+  padding: 20px;
+  backdrop-filter: blur(8px);
+}
+
+/* ---- Headings / Text ---- */
+h1,h2,h3{ margin:0 0 .6em; line-height:1.25; letter-spacing:.01em; }
+h1{ font-size: clamp(22px, 3.2vw, 30px); font-weight:900; }
+h2{ font-size: clamp(18px, 2.6vw, 24px); font-weight:800; }
+p,li{ color:var(--muted); }
+.lead{ color:var(--ink); font-weight:600; }
+
+/* ---- Forms ---- */
+.input, input[type="text"], input[type="number"], input[type="file"], select, textarea{
+  width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--stroke);
+  background: rgba(255,255,255,.04); color:var(--ink); font-size:16px;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.input::placeholder, input::placeholder, textarea::placeholder{ color:#9ab1cc; }
+.input:focus, input:focus, select:focus, textarea:focus{
+  outline:none; border-color:#7fd7ff; box-shadow:0 0 0 3px rgba(124,216,255,.18);
+  background: rgba(255,255,255,.07);
+}
+
+/* ---- KPI (計算結果) ---- */
+.kpi{
+  display:flex; align-items:center; justify-content:space-between;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+  border:1px solid var(--stroke);
+  border-radius:14px; padding:14px 16px; margin-top:12px;
+}
+.kpi .label{ color:var(--muted); font-weight:700; }
+.kpi .val{ font-size: clamp(18px, 2.4vw, 24px); font-weight:900; }
+.kpi.plus  .val{ color: var(--brand2); text-shadow: 0 0 12px rgba(126,224,129,.25); }
+.kpi.minus .val{ color: var(--danger);  text-shadow: 0 0 12px rgba(255,107,107,.25); }
+
+/* ---- History Table ---- */
+.table{ width:100%; border-collapse:collapse; font-size:.96rem; }
+.table th,.table td{
+  padding:12px; border-bottom:1px solid var(--stroke); text-align:left;
+}
+.table th{ color:#b6c3d8; font-weight:800; letter-spacing:.02em; }
+.tr-profit{ background: rgba(126,224,129,.08); }
+.tr-loss  { background: rgba(255,107,107,.08); }
+
+/* ---- Hero / Home ---- */
+.hero{
+  text-align:center; margin-top:28px;
+}
+.hero .title{ font-size: clamp(26px, 4.2vw, 40px); font-weight:900; color:var(--ink); }
+.hero .subtitle{ color:var(--muted); font-weight:600; }
+
+.menu{
+  display:grid; gap:14px; margin:22px auto; max-width:780px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.menu a{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:14px 12px; border-radius:14px; text-decoration:none; font-weight:800;
+  color:#0b1220; background: linear-gradient(180deg,#a6e8ff,#58c5ff);
+  border:1px solid rgba(255,255,255,.35); box-shadow: var(--glow);
+  transition: transform .06s ease, filter .2s ease;
+}
+.menu a:hover{ transform: translateY(-2px); filter: brightness(1.04); }
+.menu a.secondary{
+  background: linear-gradient(180deg,#bdf3c2,#7ee081);
+}
+
+/* ---- Footer ---- */
+.site-footer{
+  border-top:1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(20,28,46,.6), rgba(20,28,46,.3));
+  text-align:center; color:var(--muted); padding:18px;
+}
+.site-footer a{ color: var(--brand); text-decoration:none; }
+.site-footer a:hover{ text-decoration:underline; }
+
+/* ---- Helpers ---- */
+.grid{ display:grid; gap:14px; }
+.cols-2{ grid-template-columns:1fr; }
+@media (min-width:760px){ .cols-2{ grid-template-columns:1fr 1fr; } }
+.center{ text-align:center; }
+.mt-0{ margin-top:0; } .mt-8{ margin-top:8px; } .mt-16{ margin-top:16px; } .mt-24{ margin-top:24px; }

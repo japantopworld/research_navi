@@ -1,0 +1,29 @@
+[
+  {
+    "time": "2025-08-12 16:56",
+    "title": "データ移行",
+    "message": "CSV から 0 件をSQLiteに取り込みました。",
+    "level": "success",
+    "type": "text",
+    "payload": {},
+    "read": true
+  },
+  {
+    "time": "2025-08-12 16:56",
+    "title": "データ移行",
+    "message": "CSV から 0 件をSQLiteに取り込みました。",
+    "level": "success",
+    "type": "text",
+    "payload": {},
+    "read": true
+  },
+  {
+    "time": "2025-08-12 16:58",
+    "title": "データ移行",
+    "message": "CSV から 0 件をSQLiteに取り込みました。",
+    "level": "success",
+    "type": "text",
+    "payload": {},
+    "read": true
+  }
+]

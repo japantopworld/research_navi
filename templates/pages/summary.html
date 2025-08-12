@@ -1,0 +1,146 @@
+{% extends "base/layout.html" %}
+{% block title %}月次サマリ | リサーチナビ{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <h2 class="hero-title">月次サマリ</h2>
+  <p class="hero-sub">期間内のKPIと取引一覧。ワンクリックでメール送信できます。</p>
+</section>
+
+<!-- 期間選択 -->
+<form method="get" action="{{ url_for('summary') }}" class="card" style="padding:12px;border:1px solid #e8ecf4;border-radius:14px;">
+  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
+    <label>開始日
+      <input class="input" type="date" name="start" value="{{ start }}">
+    </label>
+    <label>終了日
+      <input class="input" type="date" name="end" value="{{ end }}">
+    </label>
+
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button class="btn primary" type="submit" name="mode" value="custom">適用</button>
+      <a class="btn ghost" href="{{ url_for('summary', mode='this') }}">今月</a>
+      <a class="btn ghost" href="{{ url_for('summary', mode='prev') }}">先月</a>
+    </div>
+
+    <!-- メール送信 -->
+    <form method="post" action="{{ url_for('summary_send') }}" style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+      <input type="hidden" name="start" value="{{ start }}">
+      <input type="hidden" name="end" value="{{ end }}">
+      <button class="btn" type="submit">📧 この期間をメール送信</button>
+    </form>
+  </div>
+</form>
+
+<!-- KPI -->
+<section class="card" style="margin-top:12px;padding:12px;border:1px solid #e8ecf4;border-radius:14px;">
+  <h3 style="margin:0 0 10px;">KPI（{{ start }} 〜 {{ end }}）</h3>
+  <div class="grid grid-3">
+    <div class="kpi"><div class="kpi-label">取引件数</div><div class="kpi-val">{{ summary.count }}</div></div>
+    <div class="kpi"><div class="kpi-label">合計利益</div><div class="kpi-val">{{ summary.total_profit|yen }}</div></div>
+    <div class="kpi"><div class="kpi-label">平均利益</div><div class="kpi-val">{{ summary.avg_profit|yen }}</div></div>
+    <div class="kpi"><div class="kpi-label">平均利益率</div><div class="kpi-val">{{ summary.avg_margin }}%</div></div>
+    <div class="kpi"><div class="kpi-label">合計販売</div><div class="kpi-val">{{ summary.total_sales|yen }}</div></div>
+    <div class="kpi"><div class="kpi-label">合計仕入</div><div class="kpi-val">{{ summary.total_cost|yen }}</div></div>
+  </div>
+
+  <!-- ミニトレンド（利益の推移：日次合算をJSで描画） -->
+  <div id="trendBox" class="card" style="margin-top:12px;padding:10px;border:1px dashed #dfe6f3;border-radius:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <strong style="font-size:14px;">利益トレンド（合算/日次）</strong>
+      <small style="color:#667085">簡易スパークライン</small>
+    </div>
+    <div id="trendSvg" style="height:64px;"></div>
+  </div>
+</section>
+
+<!-- 明細テーブル -->
+<div class="table-like" style="margin-top:12px;">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:140px;">日時</th>
+        <th>商品名</th>
+        <th style="width:110px;">PF</th>
+        <th class="td-right" style="width:110px;">仕入</th>
+        <th class="td-right" style="width:110px;">販売</th>
+        <th class="td-right" style="width:90px;">送料</th>
+        <th class="td-right" style="width:110px;">手数料</th>
+        <th class="td-right" style="width:110px;">利益</th>
+        <th class="td-right" style="width:100px;">利益率</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      {% set p = (r['利益']|float) %}
+      <tr style="{% if p>0 %}background:#f7fff9{% elif p<0 %}background:#fff7f7{% endif %}">
+        <td>{{ r["日時"] }}</td>
+        <td class="td-left">{{ r["商品名"] }}</td>
+        <td>{{ r["プラットフォーム"] }}</td>
+        <td class="td-right">{{ r["仕入価格"]|yen }}</td>
+        <td class="td-right">{{ r["販売価格"]|yen }}</td>
+        <td class="td-right">{{ r["送料"]|yen }}</td>
+        <td class="td-right">{{ r["手数料(円)"]|yen }}</td>
+        <td class="td-right"><strong>{{ r["利益"]|yen }}</strong></td>
+        <td class="td-right">{{ r["利益率(%)"] }}%</td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="9" style="text-align:center;color:#667085;">該当データがありません。</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(()=>{
+  // rows を日次集計してミニスパークライン（SVG）を描画（外部ライブラリ不使用）
+  const rows = {{ rows|tojson }};
+  if(!rows || !rows.length){ return; }
+
+  // 日付 -> 利益合算
+  const byDay = {};
+  rows.forEach(r=>{
+    const dt = (r["日時"]||"").slice(0,10);
+    const p  = Number(r["利益"]||0);
+    byDay[dt] = (byDay[dt]||0) + p;
+  });
+  const days = Object.keys(byDay).sort();
+  const vals = days.map(d=>byDay[d]);
+
+  const svgW = 600, svgH = 64, pad = 6;
+  const maxV = Math.max(...vals, 1);
+  const minV = Math.min(...vals, 0);
+  const span = Math.max(maxV - minV, 1);
+
+  // 座標変換
+  const x = i => pad + (svgW - pad*2) * (i/(days.length-1 || 1));
+  const y = v => svgH - pad - (svgH - pad*2) * ((v - minV) / span);
+
+  // 折れ線パス
+  let d = "";
+  vals.forEach((v,i)=>{ d += (i===0 ? "M" : "L") + x(i) + " " + y(v) + " "; });
+
+  // 基準ライン（0円）
+  const y0 = (0 >= minV && 0 <= maxV) ? y(0) : null;
+
+  const el = document.getElementById('trendSvg');
+  el.innerHTML = `
+    <svg viewBox="0 0 ${svgW} ${svgH}" width="100%" height="${svgH}">
+      <rect x="0" y="0" width="${svgW}" height="${svgH}" fill="#fff"/>
+      ${y0!==null ? `<line x1="0" y1="${y0}" x2="${svgW}" y2="${y0}" stroke="#e8ecf4"/>` : ''}
+      <path d="${d}" fill="none" stroke="#2f7bff" stroke-width="2"/>
+      ${vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="#2f7bff"/>`).join('')}
+    </svg>
+    <div style="display:flex;gap:10px;color:#667085;font-size:12px;margin-top:4px;">
+      <span>期間: <strong>${days[0]||'-'} 〜 ${days[days.length-1]||'-'}</strong></span>
+      <span>最大: <strong>¥${Math.max(...vals).toLocaleString('ja-JP')}</strong></span>
+      <span>最小: <strong>¥${Math.min(...vals).toLocaleString('ja-JP')}</strong></span>
+      <span>平均: <strong>¥${Math.round(vals.reduce((a,b)=>a+b,0)/(vals.length||1)).toLocaleString('ja-JP')}</strong></span>
+    </div>
+  `;
+})();
+</script>
+{% endblock %}

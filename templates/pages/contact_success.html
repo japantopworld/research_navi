@@ -1,0 +1,12 @@
+{% extends "base/base.html" %}
+
+{% block title %}お問い合わせ完了 | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <h2 class="mb-4">📩 お問い合わせありがとうございます</h2>
+    <p>ご連絡内容を受け付けました。</p>
+    <p>担当者より、通常24時間以内にメールにてご返信いたします。</p>
+    <p class="mt-4"><a href="{{ url_for('home') }}" class="btn btn-primary">ホームへ戻る</a></p>
+</div>
+{% endblock %}

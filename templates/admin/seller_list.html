@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}出品商品一覧{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>出品商品</h2>
+  <table class="table table-striped mt-3">
+    <thead>
+      <tr>
+        <th>商品名</th>
+        <th>価格</th>
+        <th>在庫</th>
+        <th>登録日</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in products %}
+      <tr>
+        <td>{{ product.name }}</td>
+        <td>{{ product.price }}円</td>
+        <td>{{ product.stock }}</td>
+        <td>{{ product.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+﻿<table style="font-family:sans-serif;font-size:14px;width:100%;max-width:560px">
+  <tr><td><h2>利益通知</h2></td></tr>
+  <tr><td>
+    <p>商品名：{{ name }} / プラットフォーム：{{ platform }}</p>
+    <p>利益：{{ profit_val|yen }}（利益率 {{ margin }}％）</p>
+    <p>販売 {{ price|yen }} / 仕入 {{ cost|yen }} / 送料 {{ ship|yen }} / 手数料 {{ fee_calc|yen }}</p>
+    <p>閾値：{{ threshold|yen }} / 時刻：{{ now }}</p>
+  </td></tr>
+</table>
