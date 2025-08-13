@@ -1,6 +1,36 @@
 ﻿{% extends "base/layout.html" %}
-{% block title %}history | リサーチナビ{% endblock %}
+{% block title %}履歴 | リサーチナビ{% endblock %}
 {% block content %}
-  <h1>history</h1>
-  <p>このページは雛形です（テンプレ有り）。</p>
+<h1>📜 利益履歴</h1>
+
+<div class="table-actions">
+  <a class="btn" href="{{ url_for('history_export') }}">CSVを書き出す</a>
+</div>
+
+<table class="sheet">
+  <thead>
+    <tr>
+      <th>日時</th><th>商品名</th><th>PF</th>
+      <th>販売</th><th>仕入</th><th>送料</th><th>手数料</th>
+      <th>利益</th><th>利益率</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr class="{{ 'good' if r.profit >= 0 else 'bad' }}">
+      <td>{{ r.created_at.astimezone().strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>{{ r.name }}</td>
+      <td>{{ r.platform }}</td>
+      <td>{{ r.price|yen }}</td>
+      <td>{{ r.cost|yen }}</td>
+      <td>{{ r.ship|yen }}</td>
+      <td>{{ r.fee|yen }}</td>
+      <td><strong>{{ r.profit|yen }}</strong></td>
+      <td>{{ r.margin }}%</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9" class="muted">まだありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
