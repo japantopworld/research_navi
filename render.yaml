@@ -3,10 +3,16 @@ services:
     name: research-navi
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 2 -k gthread -t 120 main:app
+    branch: main
     autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 2 -k gthread --threads 8 -t 120 -b 0.0.0.0:$PORT main:app
+    healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.9   # ★ パッチまで指定（例: 3.11.9）
-      # DATABASE_URL は Render のダッシュボードで設定済み（ここには書かない）
+        value: 3.11.9
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # Postgres を設定済みなら（Environment に入れたのでここは省略可）
+      # - key: DATABASE_URL
+      #   sync: false
