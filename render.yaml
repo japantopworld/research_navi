@@ -8,5 +8,5 @@ services:
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
-      # DATABASE_URL は Render のダッシュボードで設定済み（ここでは書かない）
+        value: 3.11.9   # ★ パッチまで指定（例: 3.11.9）
+      # DATABASE_URL は Render のダッシュボードで設定済み（ここには書かない）
