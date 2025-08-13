@@ -6,13 +6,14 @@ services:
     branch: main
     autoDeploy: true
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 2 -k gthread --threads 8 -t 120 -b 0.0.0.0:$PORT main:app
+    # ← シンプル・確実なWaitressで起動
+    startCommand: waitress-serve --port $PORT main:app
     healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: PYTHONUNBUFFERED
         value: "1"
-      # Postgres を設定済みなら（Environment に入れたのでここは省略可）
+      # Postgres を Environment に設定済みならここは不要
       # - key: DATABASE_URL
       #   sync: false
