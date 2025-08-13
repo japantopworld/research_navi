@@ -3,13 +3,8 @@ services:
     name: research-navi
     env: python
     plan: free
-    branch: main
-    autoDeploy: true
     buildCommand: pip install -r requirements.txt
     startCommand: python -m waitress --listen=0.0.0.0:$PORT main:app
-    healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
-      - key: PYTHONUNBUFFERED
-        value: "1"
