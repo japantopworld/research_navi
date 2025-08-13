@@ -1,5 +1,12 @@
 Flask==3.0.3
-Flask-SQLAlchemy==3.1.1
+Jinja2==3.1.4
+Werkzeug==3.0.3
+click==8.1.7
+
+# 本番サーバ（Render想定：gunicorn）
+gunicorn==21.2.0
+
+# 将来DBを使う場合に備えて（今は未使用でもOK）
 SQLAlchemy==2.0.32
-psycopg2-binary==2.9.9
-gunicorn==23.0.0
+psycopg[binary]==3.1.19
+python-dotenv==1.0.1
