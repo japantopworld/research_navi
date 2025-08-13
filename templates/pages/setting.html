@@ -1,6 +1,24 @@
-﻿{% extends "base/layout.html" %}
-{% block title %}setting | リサーチナビ{% endblock %}
+{% extends "base/layout.html" %}
+{% block title %}設定 | リサーチナビ{% endblock %}
 {% block content %}
-  <h1>setting</h1>
-  <p>このページは雛形です（テンプレ有り）。</p>
+<h1>⚙️ 設定</h1>
+<form method="post" class="form-grid">
+  <label><input type="checkbox" name="mail_enabled" {% if s.mail_enabled %}checked{% endif %}> メール通知を有効化</label>
+  <label>プロバイダ
+    <select name="mail_provider">
+      <option value="gmail" {% if s.mail_provider=='gmail' %}selected{% endif %}>Gmail</option>
+      <option value="smtp"  {% if s.mail_provider=='smtp' %}selected{% endif %}>SMTP</option>
+    </select>
+  </label>
+  <label>送信元メール（MAIL_FROM）<input name="mail_from" value="{{ s.mail_from or '' }}"></label>
+  <label>送信先（カンマ区切り MAIL_TO）<input name="mail_to" value="{{ s.mail_to or '' }}"></label>
+  <label>アプリパスワード（MAIL_PASS）<input name="mail_pass" placeholder="変更時のみ入力"></label>
+
+  <hr>
+  <label>通知の利益しきい値（円）
+    <input type="number" name="profit_threshold" value="{{ s.profit_threshold }}">
+  </label>
+
+  <div class="actions"><button type="submit">保存</button></div>
+</form>
 {% endblock %}
