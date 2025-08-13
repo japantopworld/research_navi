@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
@@ -26,9 +26,7 @@
 <main class="container">
   {% with msgs = get_flashed_messages() %}
     {% if msgs %}
-      <div class="flash">
-        {% for m in msgs %}<div>{{ m }}</div>{% endfor %}
-      </div>
+      <div class="flash">{% for m in msgs %}<div>{{ m }}</div>{% endfor %}</div>
     {% endif %}
   {% endwith %}
   {% block content %}{% endblock %}
@@ -37,3 +35,4 @@
 <footer class="footer"><div class="container">© リサーチナビ</div></footer>
 </body>
 </html>
+
