@@ -6,14 +6,11 @@ services:
     branch: main
     autoDeploy: true
     buildCommand: pip install -r requirements.txt
-    # ← シンプル・確実なWaitressで起動
-    startCommand: waitress-serve --port $PORT main:app
+    # ← エントリポイントに依存しない起動。127対策。
+    startCommand: python -m waitress --listen=0.0.0.0:$PORT main:app
     healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: PYTHONUNBUFFERED
         value: "1"
-      # Postgres を Environment に設定済みならここは不要
-      # - key: DATABASE_URL
-      #   sync: false
