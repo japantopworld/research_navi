@@ -3,7 +3,10 @@ services:
     name: research-navi
     env: python
     plan: free
-    region: singapore
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn main:app
+    startCommand: gunicorn -w 2 -k gthread -t 120 main:app
     autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      # DATABASE_URL は Render のダッシュボードで設定済み（ここでは書かない）
