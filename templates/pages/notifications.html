@@ -1,6 +1,19 @@
-﻿{% extends "base/layout.html" %}
-{% block title %}notifications | リサーチナビ{% endblock %}
+{% extends "base/layout.html" %}
+{% block title %}通知一覧 | リサーチナビ{% endblock %}
 {% block content %}
-  <h1>notifications</h1>
-  <p>このページは雛形です（テンプレ有り）。</p>
+<h1>📣 通知一覧</h1>
+<p class="muted">現在のしきい値：<strong>{{ threshold|yen }}</strong></p>
+
+<ul class="notice-list">
+  {% for r in hits %}
+  <li>
+    <span class="dt">{{ r.created_at.astimezone().strftime("%Y-%m-%d %H:%M") }}</span>
+    <span class="name">{{ r.name }}</span>
+    <span class="pf">{{ r.platform }}</span>
+    <span class="profit">{{ r.profit|yen }}</span>
+  </li>
+  {% else %}
+  <li class="muted">該当なし。利益計算から追加してください。</li>
+  {% endfor %}
+</ul>
 {% endblock %}
