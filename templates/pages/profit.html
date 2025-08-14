@@ -1,20 +1,43 @@
 {% extends "base/layout.html" %}
 {% block title %}利益計算 | リサーチナビ{% endblock %}
 {% block content %}
-<h1>💰 利益計算</h1>
-<form method="post" class="form-grid">
-  <label>商品名<input name="name" placeholder="例：Switch 有機EL"></label>
-  <label>プラットフォーム
-    <select name="platform">
-      <option>Amazon</option><option>楽天</option><option>ヤフショ</option>
-      <option>メルカリ</option><option selected>その他</option>
-    </select>
-  </label>
-  <label>販売価格（円）<input type="number" name="price" inputmode="numeric"></label>
-  <label>仕入（円）<input type="number" name="cost" inputmode="numeric"></label>
-  <label>送料（円）<input type="number" name="ship" inputmode="numeric"></label>
-  <label>手数料（円）<input type="number" name="fee" inputmode="numeric" value="0"></label>
-  <div class="actions"><button type="submit">保存する</button></div>
+
+<h1>利益計算</h1>
+
+<form method="post" class="form">
+  <div class="grid">
+    <label>商品名
+      <input type="text" name="name" placeholder="例：Nintendo Switch" required>
+    </label>
+    <label>プラットフォーム
+      <input type="text" name="platform" placeholder="Amazon / 楽天 / ヤフショ など" required>
+    </label>
+  </div>
+
+  <div class="grid">
+    <label>販売価格（円）
+      <input type="number" name="price" inputmode="numeric" required>
+    </label>
+    <label>仕入（円）
+      <input type="number" name="cost" inputmode="numeric" required>
+    </label>
+    <label>送料（円）
+      <input type="number" name="ship" inputmode="numeric" value="0">
+    </label>
+    <label>手数料（円）
+      <input type="number" name="fee" inputmode="numeric" value="0">
+    </label>
+  </div>
+
+  <button type="submit">保存する</button>
 </form>
-<p class="muted">保存すると「履歴」に追加され、通知のしきい値を超えるものは「通知一覧」に出ます。</p>
+
+<style>
+.form .grid{display:grid;gap:12px;margin:12px 0}
+@media (min-width:720px){.form .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.form input{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px}
+button{padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer}
+button:hover{border-color:#cbd5e1;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+</style>
+
 {% endblock %}
