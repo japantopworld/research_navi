@@ -3,12 +3,12 @@
 
 {% block content %}
 
-<!-- ヒーロー：メインビジュアル -->
+<!-- ヒーロー：メインビジュアル（画像は static/hero_main.jpg を使用） -->
 <section class="hero">
   <picture>
-    <!-- 将来WebPも置けるように拡張余地 -->
-    <!-- <source srcset="{{ url_for('static', filename='img/hero_main.webp') }}" type="image/webp"> -->
-    <img src="{{ url_for('static', filename='img/hero_main.jpg') }}"
+    <!-- WebP を置く場合は下行を有効化して hero_main.webp を static 直下に置く -->
+    <!-- <source srcset="{{ url_for('static', filename='hero_main.webp') }}" type="image/webp"> -->
+    <img src="{{ url_for('static', filename='hero_main.jpg') }}"
          alt="リサーチナビのマスコット" loading="eager" decoding="async">
   </picture>
 
