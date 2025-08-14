@@ -1,6 +1,6 @@
-1. No module named 'psycopg'
-==> Application exited early
-==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
-==> Running 'python -m waitress --listen=0.0.0.0:$PORT main:app'
-Error: No module named 'psycopg'
-Usage:
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.31
+psycopg[binary]==3.1.19
+waitress==3.0.2
+python-dotenv==1.0.1
