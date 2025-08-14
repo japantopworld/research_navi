@@ -1,16 +1,65 @@
-﻿{% extends "base/layout.html" %}
+{% extends "base/layout.html" %}
 {% block title %}ホーム | リサーチナビ{% endblock %}
+
 {% block content %}
-  <h1>リサーチナビ</h1>
-  <p>最強のせどり・物販支援サービス</p>
-  <div class="menu">
-    <a href="{{ url_for('search') }}">🔎 商品検索</a>
-    <a href="{{ url_for('profit') }}">💰 利益計算</a>
-    <a href="{{ url_for('history') }}">📜 履歴一覧</a>
-    <a href="{{ url_for('ranking') }}">📈 利益ランキング</a>
-    <a href="{{ url_for('notifications') }}">📣 通知一覧</a>
-    <a href="{{ url_for('ocr') }}">📷 OCR読取</a>
-    <a href="{{ url_for('suppliers') }}">🏪 仕入れ先</a>
-    <a href="{{ url_for('setting') }}">⚙️ 設定</a>
+
+<!-- ヒーロー：メインビジュアル -->
+<section class="hero">
+  <picture>
+    <!-- 将来WebPも置けるように拡張余地 -->
+    <!-- <source srcset="{{ url_for('static', filename='img/hero_main.webp') }}" type="image/webp"> -->
+    <img src="{{ url_for('static', filename='img/hero_main.jpg') }}"
+         alt="リサーチナビのマスコット" loading="eager" decoding="async">
+  </picture>
+
+  <div class="hero__overlay"></div>
+  <div class="hero__content">
+    <h1 class="hero__title">リサーチナビ</h1>
+    <p class="hero__tagline">最強のせどり・物販支援サービス</p>
   </div>
+</section>
+
+<!-- 主要機能：指で押しやすいボタンカード -->
+<nav class="home-menu">
+  <a class="menu-card" href="{{ url_for('search') }}">
+    <span class="menu-card__icon">🔎</span>
+    <span class="menu-card__title">商品検索</span>
+  </a>
+
+  <a class="menu-card" href="{{ url_for('profit') }}">
+    <span class="menu-card__icon">💰</span>
+    <span class="menu-card__title">利益計算</span>
+  </a>
+
+  <a class="menu-card" href="{{ url_for('history') }}">
+    <span class="menu-card__icon">📜</span>
+    <span class="menu-card__title">履歴一覧</span>
+  </a>
+
+  <a class="menu-card" href="{{ url_for('ranking') }}">
+    <span class="menu-card__icon">📈</span>
+    <span class="menu-card__title">履歴ランキング</span>
+  </a>
+
+  <a class="menu-card" href="{{ url_for('notifications') }}">
+    <span class="menu-card__icon">📣</span>
+    <span class="menu-card__title">通知一覧</span>
+  </a>
+
+  <a class="menu-card" href="{{ url_for('ocr') }}">
+    <span class="menu-card__icon">📷</span>
+    <span class="menu-card__title">OCR読取</span>
+  </a>
+
+  <a class="menu-card" href="{{ url_for('suppliers') }}">
+    <span class="menu-card__icon">🏪</span>
+    <span class="menu-card__title">仕入れ先</span>
+  </a>
+
+  <a class="menu-card" href="{{ url_for('setting') }}">
+    <span class="menu-card__icon">⚙️</span>
+    <span class="menu-card__title">設定</span>
+  </a>
+</nav>
+
 {% endblock %}
