@@ -1,34 +1,98 @@
-:root{--bg:#fff;--ink:#222;--muted:#6b7280;--card:#f8fafc;--brand:#2563eb;--line:#e5e7eb}
+/* ===== リサーチナビ 共通 ===== */
+:root{
+  --bg:#ffffff;
+  --ink:#222;
+  --muted:#6b7280;
+  --card:#f8fafc;
+  --line:#e5e7eb;
+  --brand:#2563eb;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;
+}
 .container{max-width:1000px;margin:0 auto;padding:16px}
+a{color:inherit;text-decoration:none}
+a:hover{color:var(--brand)}
+img{max-width:100%;height:auto;display:block}
+
+/* Top bar */
 .topbar{border-bottom:1px solid var(--line);background:#fff}
-.topbar .brand{font-weight:700;margin-right:16px;color:#111;text-decoration:none}
-.nav a{margin-right:10px;text-decoration:none;color:#111}
-.nav a:hover{color:var(--brand)}
+.topbar .brand{font-weight:700;margin-right:16px;color:var(--ink)}
+.nav a{margin-right:12px}
 .flash>div{background:#ecfeff;border:1px solid #a5f3fc;padding:10px;border-radius:8px;margin:12px 0}
-.menu{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
-.menu a{display:inline-block;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;text-decoration:none;color:#111}
-.menu a:hover{border-color:#cbd5e1;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .footer{border-top:1px solid var(--line);margin-top:40px;color:var(--muted);font-size:12px}
 
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:12px 0}
-.form-grid label{display:flex;flex-direction:column;gap:6px}
-.form-grid input,.form-grid select{padding:10px;border:1px solid var(--line);border-radius:8px}
-.actions{grid-column:1/-1}
-.actions button{padding:10px 16px;border:1px solid var(--brand);background:var(--brand);color:#fff;border-radius:8px;cursor:pointer}
+/* ===== ホーム：ヒーロー ===== */
+.hero{
+  position:relative;
+  width:100%;
+  aspect-ratio: 16/9;              /* PCでは横長、スマホは後の @media で調整 */
+  max-height: 520px;
+  overflow:hidden;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:#000;
+}
+.hero picture, .hero img{
+  width:100%; height:100%;
+  object-fit:cover;
+}
+.hero__overlay{
+  position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.35));
+}
+.hero__content{
+  position:absolute; left:24px; bottom:24px; right:24px;
+  color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.35);
+}
+.hero__title{
+  margin:0 0 4px 0;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight:800;
+  letter-spacing:.02em;
+}
+.hero__tagline{
+  margin:0;
+  font-size: clamp(14px, 2.2vw, 18px);
+  opacity:.95;
+}
 
-.table-actions{margin:8px 0}
-.btn{display:inline-block;padding:8px 12px;border:1px solid var(--line);border-radius:8px;text-decoration:none;color:#111;background:#fff}
-.btn:hover{border-color:#cbd5e1}
+/* ===== ホーム：カードメニュー ===== */
+.home-menu{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap:14px;
+}
+.menu-card{
+  display:flex; align-items:center; justify-content:center; flex-direction:column;
+  padding:16px 10px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  transition:.15s ease;
+  min-height:94px;
+}
+.menu-card__icon{font-size:26px; line-height:1; margin-bottom:6px}
+.menu-card__title{font-weight:600}
+.menu-card:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(2,6,23,.06);
+  border-color:#dbe2ea;
+}
 
-.sheet{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
-.sheet th,.sheet td{padding:8px 10px;border:1px solid var(--line)}
-.sheet thead th{background:#f1f5f9}
-.sheet tr.good td{background:#f0fdf4}
-.sheet tr.bad td{background:#fef2f2}
-
-.notice-list{list-style:none;padding:0;margin:10px 0}
-.notice-list li{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff}
-.notice-list .profit{font-weight:700}
-.muted{color:var(--muted)}
+/* スマホ最適化 */
+@media (max-width: 720px){
+  .container{padding:14px}
+  .hero{aspect-ratio: 3/4; max-height: 70vh; border-radius:16px}
+  .home-menu{grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px}
+  .menu-card{min-height:88px}
+}
+@media (min-width: 1280px){
+  .container{max-width:1150px}
+}
