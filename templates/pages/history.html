@@ -1,36 +1,54 @@
-﻿{% extends "base/layout.html" %}
-{% block title %}履歴 | リサーチナビ{% endblock %}
+{% extends "base/layout.html" %}
+{% block title %}履歴一覧 | リサーチナビ{% endblock %}
 {% block content %}
-<h1>📜 利益履歴</h1>
 
-<div class="table-actions">
-  <a class="btn" href="{{ url_for('history_export') }}">CSVを書き出す</a>
-</div>
+<h1>履歴一覧</h1>
 
-<table class="sheet">
-  <thead>
-    <tr>
-      <th>日時</th><th>商品名</th><th>PF</th>
-      <th>販売</th><th>仕入</th><th>送料</th><th>手数料</th>
-      <th>利益</th><th>利益率</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for r in rows %}
-    <tr class="{{ 'good' if r.profit >= 0 else 'bad' }}">
-      <td>{{ r.created_at.astimezone().strftime("%Y-%m-%d %H:%M") }}</td>
-      <td>{{ r.name }}</td>
-      <td>{{ r.platform }}</td>
-      <td>{{ r.price|yen }}</td>
-      <td>{{ r.cost|yen }}</td>
-      <td>{{ r.ship|yen }}</td>
-      <td>{{ r.fee|yen }}</td>
-      <td><strong>{{ r.profit|yen }}</strong></td>
-      <td>{{ r.margin }}%</td>
-    </tr>
-    {% else %}
-    <tr><td colspan="9" class="muted">まだありません。</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% if rows and rows|length %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>日時</th>
+          <th>商品名</th>
+          <th>PF</th>
+          <th class="num">販売</th>
+          <th class="num">仕入</th>
+          <th class="num">送料</th>
+          <th class="num">手数料</th>
+          <th class="num">利益</th>
+          <th class="num">利益率</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          <td>{{ r.name }}</td>
+          <td>{{ r.platform }}</td>
+          <td class="num">{{ r.price|yen }}</td>
+          <td class="num">{{ r.cost|yen }}</td>
+          <td class="num">{{ r.ship|yen }}</td>
+          <td class="num">{{ r.fee|yen }}</td>
+          <td class="num {% if r.profit>=0 %}pos{% else %}neg{% endif %}">{{ r.profit|yen }}</td>
+          <td class="num">{{ r.margin }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p>まだ履歴がありません。まずは <a href="{{ url_for('profit') }}">利益計算</a> で登録してください。</p>
+{% endif %}
+
+<style>
+.table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:10px}
+.table{width:100%;border-collapse:collapse;background:#fff}
+.table th,.table td{padding:10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+.table thead th{position:sticky;top:0;background:#f8fafc;font-weight:700}
+.table .num{text-align:right}
+.pos{color:#0a7f20;font-weight:600}
+.neg{color:#b91c1c;font-weight:600}
+</style>
+
 {% endblock %}
