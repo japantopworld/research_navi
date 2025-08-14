@@ -1,19 +1,189 @@
 {% extends "base/layout.html" %}
 {% block title %}通知一覧 | リサーチナビ{% endblock %}
 {% block content %}
-<h1>📣 通知一覧</h1>
-<p class="muted">現在のしきい値：<strong>{{ threshold|yen }}</strong></p>
 
-<ul class="notice-list">
-  {% for r in hits %}
-  <li>
-    <span class="dt">{{ r.created_at.astimezone().strftime("%Y-%m-%d %H:%M") }}</span>
-    <span class="name">{{ r.name }}</span>
-    <span class="pf">{{ r.platform }}</span>
-    <span class="profit">{{ r.profit|yen }}</span>
-  </li>
+<h1>通知一覧</h1>
+
+<!-- フィルタ／操作 -->
+<section class="toolbar">
+  <div class="left">
+    <label>期間
+      <select id="range">
+        <option value="all">すべて</option>
+        <option value="7d">直近7日</option>
+        <option value="30d">直近30日</option>
+        <option value="today">今日</option>
+      </select>
+    </label>
+    <label>種別
+      <select id="type">
+        <option value="all">すべて</option>
+        <option value="profit">利益アラート</option>
+        <option value="pricedrop">値下げ</option>
+        <option value="stock">在庫</option>
+      </select>
+    </label>
+    <label>状態
+      <select id="state">
+        <option value="all">すべて</option>
+        <option value="unread">未読のみ</option>
+      </select>
+    </label>
+  </div>
+  <div class="right">
+    <button id="markAll">すべて既読</button>
+    <button id="clearRead">既読を隠す</button>
+  </div>
+</section>
+
+<!-- 通知リスト（サーバから渡されない場合はサンプルを表示） -->
+<section id="notifs" class="notifs">
+  {# 将来: サーバから notifs を渡す #}
+  {% if notifs %}
+    {% for n in notifs %}
+      <article class="notif {{ n.kind }} {{ 'unread' if n.unread else '' }}">
+        <div class="icon" aria-hidden="true">
+          {% if n.kind=='profit' %}💰{% elif n.kind=='pricedrop' %}📉{% elif n.kind=='stock' %}📦{% else %}🔔{% endif %}
+        </div>
+        <div class="content">
+          <header>
+            <h3 class="title">{{ n.title }}</h3>
+            <time class="time">{{ n.time }}</time>
+          </header>
+          <p class="body">{{ n.body }}</p>
+          {% if n.meta %}
+          <dl class="meta">
+            {% for k,v in n.meta.items() %}
+              <div><dt>{{ k }}</dt><dd>{{ v }}</dd></div>
+            {% endfor %}
+          </dl>
+          {% endif %}
+        </div>
+        <div class="actions">
+          <button class="btn-read">既読</button>
+          <button class="btn-snooze">スヌーズ</button>
+        </div>
+      </article>
+    {% endfor %}
   {% else %}
-  <li class="muted">該当なし。利益計算から追加してください。</li>
-  {% endfor %}
-</ul>
+    {# デモデータ（今すぐ見栄えする） #}
+    <article class="notif profit unread">
+      <div class="icon">💰</div>
+      <div class="content">
+        <header>
+          <h3 class="title">利益アラート：Switch 有機EL（利益 ¥8,900 / 21%）</h3>
+          <time class="time">今日 14:22</time>
+        </header>
+        <p class="body">条件：利益≥¥8,000 AND 利益率≥18% AND 回転≥70</p>
+        <dl class="meta">
+          <div><dt>販売</dt><dd>¥44,800</dd></div>
+          <div><dt>仕入</dt><dd>¥33,000</dd></div>
+          <div><dt>在庫</dt><dd>◯（出品者 6）</dd></div>
+        </dl>
+      </div>
+      <div class="actions">
+        <button class="btn-read">既読</button>
+        <button class="btn-snooze">スヌーズ</button>
+      </div>
+    </article>
+
+    <article class="notif pricedrop unread">
+      <div class="icon">📉</div>
+      <div class="content">
+        <header>
+          <h3 class="title">値下げ検知：Anker 100W 充電器（-12%）</h3>
+          <time class="time">昨日 19:05</time>
+        </header>
+        <p class="body">前回比 -¥980 / クーポン出現で実質さらに -¥500</p>
+        <dl class="meta">
+          <div><dt>最安</dt><dd>¥6,980</dd></div>
+          <div><dt>実質</dt><dd>¥6,480（ポイント/クーポン込）</dd></div>
+        </dl>
+      </div>
+      <div class="actions">
+        <button class="btn-read">既読</button>
+        <button class="btn-snooze">スヌーズ</button>
+      </div>
+    </article>
+
+    <article class="notif stock">
+      <div class="icon">📦</div>
+      <div class="content">
+        <header>
+          <h3 class="title">在庫復活：レゴ アイデア #21348</h3>
+          <time class="time">2025-08-12 08:11</time>
+        </header>
+        <p class="body">在庫: △ / 競合スコア: 42 / 回転: 76</p>
+        <dl class="meta">
+          <div><dt>BuyBox</dt><dd>¥12,480</dd></div>
+          <div><dt>差額</dt><dd>+¥2,400 見込み</dd></div>
+        </dl>
+      </div>
+      <div class="actions">
+        <button class="btn-read">既読</button>
+        <button class="btn-snooze">スヌーズ</button>
+      </div>
+    </article>
+  {% endif %}
+</section>
+
+<style>
+.toolbar{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;margin:10px 0 14px;
+  border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff;
+}
+.toolbar .left{display:flex;gap:12px;flex-wrap:wrap}
+.toolbar label{font-size:12px;color:#6b7280;display:flex;align-items:center;gap:6px}
+.toolbar select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.toolbar .right button{padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer}
+.toolbar .right button:hover{border-color:#cbd5e1;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+
+.notifs{display:grid;gap:12px}
+.notif{
+  display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:flex-start;
+  background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:12px;
+}
+.notif.unread{box-shadow:0 6px 16px rgba(2,6,23,.06);border-color:#dbe2ea}
+.icon{font-size:24px;line-height:1;width:28px;text-align:center}
+.content header{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.title{margin:0;font-size:15px}
+.time{color:#6b7280;font-size:12px;white-space:nowrap}
+.body{margin:6px 0 0 0;color:#334155}
+.meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.meta dt{font-size:11px;color:#6b7280}
+.meta dd{margin:2px 0 0 0;font-weight:600}
+.actions{display:flex;flex-direction:column;gap:6px}
+.actions button{padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;white-space:nowrap}
+.actions button:hover{border-color:#cbd5e1}
+.notif.profit .icon{filter: hue-rotate(70deg)}
+.notif.pricedrop .icon{filter: hue-rotate(300deg)}
+.notif.stock .icon{filter: hue-rotate(200deg)}
+
+@media (max-width:720px){
+  .meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .content header{flex-direction:column;align-items:flex-start}
+}
+</style>
+
+<script>
+(()=> {
+  const root = document.getElementById('notifs');
+  const markAll = document.getElementById('markAll');
+  const clearRead = document.getElementById('clearRead');
+  root?.addEventListener('click', e=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const card = e.target.closest('.notif');
+    if(btn.classList.contains('btn-read')) card?.classList.remove('unread');
+    if(btn.classList.contains('btn-snooze')) { card?.style.opacity = .4; }
+  });
+  markAll?.addEventListener('click', ()=> {
+    document.querySelectorAll('.notif.unread').forEach(n=>n.classList.remove('unread'));
+  });
+  clearRead?.addEventListener('click', ()=> {
+    document.querySelectorAll('.notif:not(.unread)').forEach(n=>n.style.display='none');
+  });
+})();
+</script>
+
 {% endblock %}
