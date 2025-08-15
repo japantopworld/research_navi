@@ -1,244 +1,160 @@
 {% extends "base/layout.html" %}
-{% block title %}仕入れ先 | リサーチナビ{% endblock %}
+{% block title %}利益計算 | リサーチナビ{% endblock %}
 {% block content %}
+<h1>利益計算（PF別 手数料オート & ライブ計算）</h1>
 
-<h1>仕入れ先（ワンクリック検索）</h1>
-
-<div class="card">
+<form method="post" class="card" id="profitForm">
   <div class="grid">
     <label class="col">
-      <span>キーワード</span>
-      <input id="kw" type="text" placeholder="例：Switch 有機EL / iPad 64GB / ルンバ j7+">
+      <span>商品名</span>
+      <input name="name" id="name" type="text" value="{{ request.args.get('name','') }}" placeholder="例：Nintendo Switch 有機EL">
     </label>
+
     <label class="col">
-      <span>JAN / ISBN / ASIN（任意）</span>
-      <input id="code" type="text" placeholder="例：4902370550501 / B0CXXXXX">
-    </label>
-    <label class="col">
-      <span>条件</span>
-      <select id="cond">
-        <option value="">すべて</option>
-        <option value="新品">新品</option>
-        <option value="中古">中古</option>
+      <span>プラットフォーム</span>
+      {% set pf_q = request.args.get('platform','') %}
+      <select name="platform" id="platform">
+        {% for opt in ['Amazon','楽天','ヤフショ','メルカリ','その他'] %}
+          <option value="{{ opt }}" {% if pf_q==opt %}selected{% endif %}>{{ opt }}</option>
+        {% endfor %}
       </select>
     </label>
+
+    <label class="col">
+      <span>販売価格（円）</span>
+      <input name="price" id="price" type="number" inputmode="numeric" min="0" step="1" value="{{ request.args.get('price','') }}" required>
+    </label>
+
+    <label class="col">
+      <span>仕入価格（円）</span>
+      <input name="cost" id="cost" type="number" inputmode="numeric" min="0" step="1" value="{{ request.args.get('cost','') }}" required>
+    </label>
+
+    <label class="col">
+      <span>送料（円）</span>
+      <input name="ship" id="ship" type="number" inputmode="numeric" min="0" step="1" value="{{ request.args.get('ship','0') }}">
+    </label>
+
+    <div class="col">
+      <span>手数料</span>
+      <div class="fee-row">
+        <select id="fee_mode" name="fee_mode">
+          {% set fm = request.args.get('fee_mode','auto') %}
+          <option value="auto" {% if fm=='auto' %}selected{% endif %}>自動（PF別ルール）</option>
+          <option value="manual" {% if fm=='manual' %}selected{% endif %}>手動</option>
+        </select>
+        <input name="fee" id="fee" type="number" inputmode="numeric" min="0" step="1"
+               value="{{ request.args.get('fee','') }}" placeholder="自動時は入力不要">
+      </div>
+      <small class="muted" id="fee_hint">PF別の推定レート：Amazon≒10%+100円 / 楽天≒7% / ヤフショ≒8% / メルカリ≒10% / その他≒5%</small>
+    </div>
+  </div>
+
+  <div class="preview">
+    <div class="pill">
+      <div>推定手数料</div>
+      <strong id="fee_auto_view">¥0</strong>
+    </div>
+    <div class="pill">
+      <div>利益</div>
+      <strong id="profit_view">¥0</strong>
+    </div>
+    <div class="pill">
+      <div>利益率</div>
+      <strong id="margin_view">0%</strong>
+    </div>
   </div>
 
   <div class="actions">
-    <button id="openSelected">選択したサイトで一括検索</button>
-    <button id="clear" class="secondary">クリア</button>
+    <button type="submit">保存（履歴へ）</button>
+    <a class="secondary" href="{{ url_for('history') }}">履歴を見る</a>
   </div>
-</div>
-
-<div class="groups">
-
-  <!-- 大手EC -->
-  <section class="group">
-    <h2>大手ECモール</h2>
-    <div class="sites">
-      <label><input type="checkbox" class="site" data-id="amazon"> 🅰️ Amazon（新品）</label>
-      <label><input type="checkbox" class="site" data-id="rakuten"> ♨️ 楽天市場</label>
-      <label><input type="checkbox" class="site" data-id="yahoo"> 🟡 ヤフーショッピング</label>
-      <label><input type="checkbox" class="site" data-id="kakaku"> 📊 価格.com</label>
-    </div>
-    <div class="buttons">
-      <a class="btn" data-id="amazon">Amazon</a>
-      <a class="btn" data-id="rakuten">楽天</a>
-      <a class="btn" data-id="yahoo">ヤフショ</a>
-      <a class="btn" data-id="kakaku">価格.com</a>
-    </div>
-  </section>
-
-  <!-- フリマ/オークション -->
-  <section class="group">
-    <h2>フリマ / オークション</h2>
-    <div class="sites">
-      <label><input type="checkbox" class="site" data-id="mercari"> 🟥 メルカリ</label>
-      <label><input type="checkbox" class="site" data-id="paypayflea"> 🟡 PayPayフリマ</label>
-      <label><input type="checkbox" class="site" data-id="yafuoku"> ⛳ ヤフオク!</label>
-      <label><input type="checkbox" class="site" data-id="rakuma"> 🟣 ラクマ</label>
-    </div>
-    <div class="buttons">
-      <a class="btn" data-id="mercari">メルカリ</a>
-      <a class="btn" data-id="paypayflea">PayPayフリマ</a>
-      <a class="btn" data-id="yafuoku">ヤフオク!</a>
-      <a class="btn" data-id="rakuma">ラクマ</a>
-    </div>
-  </section>
-
-  <!-- 家電量販オンライン -->
-  <section class="group">
-    <h2>家電量販オンライン</h2>
-    <div class="sites">
-      <label><input type="checkbox" class="site" data-id="yodobashi"> 🟦 ヨドバシ</label>
-      <label><input type="checkbox" class="site" data-id="bic"> 🟥 ビックカメラ</label>
-      <label><input type="checkbox" class="site" data-id="nojima"> 🟩 ノジマ</label>
-      <label><input type="checkbox" class="site" data-id="edion"> 🔵 エディオン</label>
-      <label><input type="checkbox" class="site" data-id="joshin"> 🟠 Joshin</label>
-    </div>
-    <div class="buttons">
-      <a class="btn" data-id="yodobashi">ヨドバシ</a>
-      <a class="btn" data-id="bic">ビック</a>
-      <a class="btn" data-id="nojima">ノジマ</a>
-      <a class="btn" data-id="edion">エディオン</a>
-      <a class="btn" data-id="joshin">Joshin</a>
-    </div>
-  </section>
-
-  <!-- 玩具/日用品/工具など -->
-  <section class="group">
-    <h2>玩具/日用品/工具 ほか</h2>
-    <div class="sites">
-      <label><input type="checkbox" class="site" data-id="toysrus"> 🧸 トイザらス</label>
-      <label><input type="checkbox" class="site" data-id="lohaco"> 🧻 LOHACO</label>
-      <label><input type="checkbox" class="site" data-id="monotaro"> 🛠️ MonotaRO</label>
-      <label><input type="checkbox" class="site" data-id="surugaya"> 💿 駿河屋</label>
-    </div>
-    <div class="buttons">
-      <a class="btn" data-id="toysrus">トイザらス</a>
-      <a class="btn" data-id="lohaco">LOHACO</a>
-      <a class="btn" data-id="monotaro">MonotaRO</a>
-      <a class="btn" data-id="surugaya">駿河屋</a>
-    </div>
-  </section>
-
-  <!-- 参考＆外部ツール -->
-  <section class="group">
-    <h2>参考リンク（任意・ログイン要の可能性あり）</h2>
-    <div class="sites">
-      <label><input type="checkbox" class="site" data-id="keepa"> 📈 Keepa（ASIN）</label>
-      <label><input type="checkbox" class="site" data-id="camel"> 🐪 CamelCamel（ASIN）</label>
-      <label><input type="checkbox" class="site" data-id="google"> 🔎 Googleショッピング</label>
-    </div>
-    <div class="buttons">
-      <a class="btn" data-id="keepa">Keepa</a>
-      <a class="btn" data-id="camel">Camel</a>
-      <a class="btn" data-id="google">Google</a>
-    </div>
-  </section>
-
-</div>
+</form>
 
 <style>
 .card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:16px;margin:10px 0}
-.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr 1fr}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
 .col{display:flex;flex-direction:column;gap:6px}
 .col span{font-size:12px;color:#6b7280}
 input,select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.fee-row{display:flex;gap:8px}
+.muted{color:#6b7280}
+.preview{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.pill{border:1px solid #e5e7eb;border-radius:999px;padding:8px 12px;background:#f8fafc;display:flex;gap:8px;align-items:center}
+#profit_view.pos{color:#0a7f20} #profit_view.neg{color:#b91c1c}
 .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 button{padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#111;color:#fff;cursor:pointer}
-button.secondary{background:#fff;color:#111}
-
-.groups{display:grid;gap:16px;margin-top:12px}
-.group{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px}
-.group h2{margin:0 0 8px;font-size:16px}
-.sites{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
-.sites label{display:flex;gap:6px;align-items:center;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;background:#fff;cursor:pointer}
-.buttons{display:flex;flex-wrap:wrap;gap:8px}
-a.btn{display:inline-block;padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#111;text-decoration:none;cursor:pointer}
-a.btn:hover{border-color:#cbd5e1}
-
-@media (max-width:980px){.grid{grid-template-columns:1fr 1fr}}
-@media (max-width:640px){.grid{grid-template-columns:1fr}}
+a.secondary{padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;color:#111;text-decoration:none}
+@media (max-width:720px){.grid{grid-template-columns:1fr}}
 </style>
 
 <script>
 (() => {
-  const $  = (q)=>document.querySelector(q);
-  const $$ = (q)=>Array.from(document.querySelectorAll(q));
+  const $ = q => document.querySelector(q);
+  const jpy = n => '¥' + (isFinite(n)? Math.round(n).toLocaleString() : '0');
 
-  const kw    = $('#kw');
-  const code  = $('#code');
-  const cond  = $('#cond');
+  // 推定手数料（フロント側：サーバと同じルール）
+  function estimateFee(platform, price){
+    const p = String(platform||'').toLowerCase();
+    const pr = parseFloat(price||0);
+    if(!isFinite(pr) || pr<=0) return 0;
 
-  // サイトごとの検索URLを定義（{q}=キーワード、{c}=コード）
-  const URLS = {
-    // 大手EC
-    amazon:    q => `https://www.amazon.co.jp/s?k=${encodeURIComponent(q)}`,
-    rakuten:   q => `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(q)}/`,
-    yahoo:     q => `https://shopping.yahoo.co.jp/search?p=${encodeURIComponent(q)}`,
-    kakaku:    q => `https://kakaku.com/search_results/${encodeURIComponent(q)}/`,
-
-    // フリマ/オク
-    mercari:   q => `https://www.mercari.com/jp/search/?keyword=${encodeURIComponent(q)}`,
-    paypayflea:q => `https://paypayfleamarket.yahoo.co.jp/search/%E6%A4%9C%E7%B4%A2?query=${encodeURIComponent(q)}`,
-    yafuoku:   q => `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(q)}`,
-    rakuma:    q => `https://fril.jp/s?query=${encodeURIComponent(q)}`,
-
-    // 家電量販
-    yodobashi: q => `https://www.yodobashi.com/?word=${encodeURIComponent(q)}`,
-    bic:       q => `https://www.biccamera.com/bc/item/?q=${encodeURIComponent(q)}`,
-    nojima:    q => `https://online.nojima.co.jp/app/catalog/list/init?searchMethod=2&searchText=${encodeURIComponent(q)}`,
-    edion:     q => `https://www.edion.com/Search?keyword=${encodeURIComponent(q)}`,
-    joshin:    q => `https://joshinweb.jp/search/?key=${encodeURIComponent(q)}`,
-
-    // 玩具/日用品/工具
-    toysrus:   q => `https://www.toysrus.co.jp/search/?q=${encodeURIComponent(q)}`,
-    lohaco:    q => `https://lohaco.yahoo.co.jp/search/?p=${encodeURIComponent(q)}`,
-    monotaro:  q => `https://www.monotaro.com/s/?f.keyword=${encodeURIComponent(q)}`,
-    surugaya:  q => `https://www.suruga-ya.jp/search?category=&search_word=${encodeURIComponent(q)}`,
-
-    // 参考ツール
-    keepa:   _ => code.value ? `https://keepa.com/#!product/5-${encodeURIComponent(code.value)}` : '',
-    camel:   _ => code.value ? `https://camelcamelcamel.com/search?sq=${encodeURIComponent(code.value)}` : '',
-    google:  q => `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(q)}`
-  };
-
-  // 条件（新品/中古）を簡易的にキーワードへ反映
-  function buildQuery() {
-    const base = (kw.value || '').trim();
-    const c = (code.value || '').trim();
-    const tag = cond.value ? ` ${cond.value}` : '';
-    // コードがあれば付加（メルカリなどでも引っかかる）
-    return (c ? `${base} ${c}${tag}`.trim() : `${base}${tag}`.trim());
-  }
-
-  function openSite(id){
-    const q = buildQuery();
-    if(!q){ alert('キーワードを入力してください'); return; }
-    const fn = URLS[id];
-    if(!fn){ return; }
-    const url = fn(q);
-    if(!url){ alert('そのサイトはコード（ASIN/JAN）が必要です'); return; }
-    window.open(url, '_blank');
-  }
-
-  // 各ボタン：単発オープン
-  $$('.buttons .btn').forEach(btn=>{
-    btn.addEventListener('click', e=>{
-      e.preventDefault();
-      const id = btn.dataset.id;
-      openSite(id);
-    });
-  });
-
-  // 一括オープン
-  $('#openSelected').addEventListener('click', ()=>{
-    const selected = $$('.sites .site:checked').map(x=>x.dataset.id);
-    if(selected.length===0){ alert('サイトを選択してください'); return; }
-    const q = buildQuery();
-    if(!q){ alert('キーワードを入力してください'); return; }
-    for(const id of selected){
-      const fn = URLS[id];
-      if(!fn) continue;
-      const url = fn(q);
-      if(!url) continue;
-      window.open(url, '_blank');
+    if(p.includes('amazon') || p.includes('アマゾン')){
+      return Math.round(pr * 0.10) + 100;         // 10% + 100円（簡易）
     }
+    if(p.includes('楽天') || p.includes('rakuten')){
+      return Math.round(pr * 0.07);               // 7%
+    }
+    if(p.includes('ヤフ') || p.includes('yahoo')){
+      return Math.round(pr * 0.08);               // 8%
+    }
+    if(p.includes('メルカリ') || p.includes('mercari')){
+      return Math.round(pr * 0.10);               // 10%
+    }
+    return Math.round(pr * 0.05);                 // その他 5%
+  }
+
+  function readNum(id){ return parseFloat($(id).value || 0) || 0; }
+
+  function recalc(){
+    const pf   = $('#platform').value;
+    const price= readNum('#price');
+    const cost = readNum('#cost');
+    const ship = readNum('#ship');
+    const mode = $('#fee_mode').value;
+
+    let fee;
+    if(mode==='auto'){
+      fee = estimateFee(pf, price);
+      $('#fee').value = fee;              // 送信用に反映
+      $('#fee').setAttribute('readonly','readonly');
+      $('#fee').style.opacity = 0.6;
+    }else{
+      fee = readNum('#fee');
+      $('#fee').removeAttribute('readonly');
+      $('#fee').style.opacity = 1;
+    }
+
+    // 表示
+    $('#fee_auto_view').textContent = jpy(fee);
+
+    const profit = Math.round(price - cost - ship - fee);
+    const margin = price > 0 ? (profit / price * 100) : 0;
+
+    const pv = $('#profit_view');
+    pv.textContent = jpy(profit);
+    pv.classList.toggle('pos', profit >= 0);
+    pv.classList.toggle('neg', profit < 0);
+    $('#margin_view').textContent = (isFinite(margin)? margin.toFixed(2) : '0') + '%';
+  }
+
+  ['#platform','#price','#cost','#ship','#fee','#fee_mode'].forEach(sel=>{
+    $(sel).addEventListener('input', recalc);
+    $(sel).addEventListener('change', recalc);
   });
 
-  // クリア
-  $('#clear').addEventListener('click', ()=>{
-    kw.value = ''; code.value = ''; cond.value = '';
-    $$('.sites .site').forEach(x=>x.checked = false);
-    kw.focus();
-  });
-
-  // Enterで一括オープン
-  kw.addEventListener('keydown', e=>{
-    if(e.key === 'Enter'){ e.preventDefault(); $('#openSelected').click(); }
-  });
+  // 初期計算
+  window.addEventListener('DOMContentLoaded', recalc);
 })();
 </script>
-
 {% endblock %}
