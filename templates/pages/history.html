@@ -37,12 +37,25 @@
     <button type="submit">この条件で検索</button>
     <a class="btn" href="{{ url_for('history') }}">条件クリア</a>
 
-    {# 同じ条件でCSV出力 #}
     <a class="btn" href="{{ url_for('export_history',
                                      start=params.start, end=params.end,
                                      platform=params.platform, keyword=params.keyword,
                                      min_profit=params.min_profit) }}">CSVエクスポート</a>
   </div>
+</form>
+
+<form class="import-card" method="post" action="{{ url_for('import_history') }}" enctype="multipart/form-data">
+  <div class="row">
+    <label class="file">
+      <span>CSVインポート（初回一括取り込み）</span>
+      <input type="file" name="file" accept=".csv" required>
+    </label>
+    <button type="submit">取り込む</button>
+  </div>
+  <p class="help">
+    ヘッダ例：<code>日時, 商品名, PF, 販売, 仕入, 送料, 手数料, 利益, 利益率(%)</code>（UTF-8 or CP932）<br>
+    ※ ヘッダは日本語・英語どちらでもOK（name/platform/price/cost/ship/fee/profit/margin/dt）
+  </p>
 </form>
 
 {% if rows and rows|length %}
@@ -86,21 +99,22 @@
 .search-card{
   border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0 14px;
 }
-.search-card .grid{
-  display:grid;gap:10px;
-  grid-template-columns: repeat(1, minmax(0,1fr));
-}
+.search-card .grid{display:grid;gap:10px;grid-template-columns:repeat(1,minmax(0,1fr))}
 .search-card label{display:flex;flex-direction:column;gap:6px}
 .search-card label>span{font-size:12px;color:#6b7280}
-.search-card input,.search-card select{
-  padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff
-}
+.search-card input,.search-card select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
 .actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-.actions .btn, .actions button{
-  padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer
-}
+.actions .btn, .actions button{padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer}
 .actions button{background:#111;color:#fff;border-color:#111}
 .actions .btn:hover{border-color:#cbd5e1}
+
+.import-card{border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;padding:12px;margin:0 0 14px}
+.import-card .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.import-card .file{display:flex;flex-direction:column;gap:6px}
+.import-card .file span{font-size:12px;color:#6b7280}
+.import-card input[type="file"]{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.import-card button{padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#111;color:#fff;cursor:pointer}
+.help{color:#6b7280;font-size:12px;margin-top:6px}
 
 .table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:10px}
 .table{width:100%;border-collapse:collapse;background:#fff}
