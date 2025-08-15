@@ -2,11 +2,48 @@
 {% block title %}履歴一覧 | リサーチナビ{% endblock %}
 {% block content %}
 
-<h1>履歴一覧</h1>
+<h1>履歴一覧 <small style="color:#6b7280;font-size:.8em">（{{ label }} / {{ total }}件）</small></h1>
 
-<div class="toolbar">
-  <a class="btn" href="{{ url_for('export_history') }}">CSVエクスポート</a>
-</div>
+<form method="get" class="search-card">
+  <div class="grid">
+    <label>
+      <span>開始日</span>
+      <input type="date" name="start" value="{{ params.start }}">
+    </label>
+    <label>
+      <span>終了日</span>
+      <input type="date" name="end" value="{{ params.end }}">
+    </label>
+    <label>
+      <span>プラットフォーム</span>
+      <select name="platform">
+        <option value="">すべて</option>
+        <option value="all" {% if params.platform=='all' %}selected{% endif %}>すべて</option>
+        {% for p in platforms %}
+          <option value="{{ p }}" {% if params.platform==p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>キーワード（商品名）</span>
+      <input type="text" name="keyword" value="{{ params.keyword }}" placeholder="例：Switch">
+    </label>
+    <label>
+      <span>最小利益（円）</span>
+      <input type="number" name="min_profit" min="0" step="1" value="{{ params.min_profit or '' }}">
+    </label>
+  </div>
+  <div class="actions">
+    <button type="submit">この条件で検索</button>
+    <a class="btn" href="{{ url_for('history') }}">条件クリア</a>
+
+    {# 同じ条件でCSV出力 #}
+    <a class="btn" href="{{ url_for('export_history',
+                                     start=params.start, end=params.end,
+                                     platform=params.platform, keyword=params.keyword,
+                                     min_profit=params.min_profit) }}">CSVエクスポート</a>
+  </div>
+</form>
 
 {% if rows and rows|length %}
   <div class="table-wrap">
@@ -27,8 +64,8 @@
       <tbody>
         {% for r in rows %}
         <tr>
-          <td>{{ r.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
-          <td>{{ r.name }}</td>
+          <td>{{ r.created_at|fmt }}</td>
+          <td class="name">{{ r.name }}</td>
           <td>{{ r.platform }}</td>
           <td class="num">{{ r.price|yen }}</td>
           <td class="num">{{ r.cost|yen }}</td>
@@ -42,21 +79,44 @@
     </table>
   </div>
 {% else %}
-  <p>まだ履歴がありません。まずは <a href="{{ url_for('profit') }}">利益計算</a> で登録してください。</p>
+  <p>該当データがありません。条件をゆるくして再検索してみてください。</p>
 {% endif %}
 
 <style>
-.toolbar{margin:8px 0 12px}
-.btn{display:inline-block;padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;text-decoration:none;color:#111}
-.btn:hover{border-color:#cbd5e1;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.search-card{
+  border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0 14px;
+}
+.search-card .grid{
+  display:grid;gap:10px;
+  grid-template-columns: repeat(1, minmax(0,1fr));
+}
+.search-card label{display:flex;flex-direction:column;gap:6px}
+.search-card label>span{font-size:12px;color:#6b7280}
+.search-card input,.search-card select{
+  padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff
+}
+.actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.actions .btn, .actions button{
+  padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer
+}
+.actions button{background:#111;color:#fff;border-color:#111}
+.actions .btn:hover{border-color:#cbd5e1}
 
 .table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:10px}
 .table{width:100%;border-collapse:collapse;background:#fff}
 .table th,.table td{padding:10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
 .table thead th{position:sticky;top:0;background:#f8fafc;font-weight:700}
 .table .num{text-align:right}
+.table td.name{max-width:380px;overflow:hidden;text-overflow:ellipsis}
 .pos{color:#0a7f20;font-weight:600}
 .neg{color:#b91c1c;font-weight:600}
+
+@media (min-width:900px){
+  .search-card .grid{grid-template-columns: repeat(5, minmax(0,1fr));}
+}
+@media (min-width:600px) and (max-width:899px){
+  .search-card .grid{grid-template-columns: repeat(3, minmax(0,1fr));}
+}
 </style>
 
 {% endblock %}
