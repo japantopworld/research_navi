@@ -1,7 +1,7 @@
 # main.py
 import os, csv, json, ssl, smtplib
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -47,7 +47,7 @@ class ProfitHistory(db.Model):
 class Notification(db.Model):
     __tablename__ = "notifications"
     id = db.Column(db.Integer, primary_key=True)
-    kind = db.Column(db.String(20), nullable=False, default="info")
+    kind = db.Column(db.String(20), nullable=False, default="info")  # profit/pricedrop/stock/info
     title = db.Column(db.String(255), nullable=False)
     body = db.Column(db.Text, default="")
     meta_json = db.Column(db.Text, default="{}")
@@ -68,7 +68,7 @@ class AppSettings(db.Model):
     mail_enabled = db.Column(db.Boolean, nullable=False, default=False)
     mail_provider = db.Column(db.String(50), nullable=False, default="gmail")
     mail_from = db.Column(db.String(255), nullable=False, default="")
-    mail_to = db.Column(db.String(1000), nullable=False, default="")
+    mail_to = db.Column(db.String(1000), nullable=False, default="")   # カンマ区切り
     mail_pass = db.Column(db.String(255), nullable=False, default="")
     profit_threshold = db.Column(db.Integer, nullable=False, default=5000)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -103,7 +103,7 @@ def calc_profit(price: int, cost: int, ship: int, fee: int):
     return p, m
 
 def estimate_fee(platform: str, price: int) -> int:
-    """PF別の簡易手数料。フロントJSと同じロジック。"""
+    """PF別の簡易手数料。"""
     pf = (platform or "").lower()
     pr = int(price or 0)
     if pr <= 0: return 0
@@ -194,6 +194,87 @@ def send_mail_by_settings(subject: str, html: str, text_alt: str = ""):
 with app.app_context():
     db.create_all()
     AppSettings.get()
+
+# =============================================================================
+# レポート集計
+# =============================================================================
+def _report_range(kind: str):
+    # Asia/Tokyo の終日を意識（ただしDBはUTC保存想定）
+    now = datetime.utcnow()
+    if kind == "weekly":
+        start = now - timedelta(days=7)
+        title = "週次レポート（直近7日）"
+    elif kind == "monthly":
+        start = now - timedelta(days=30)
+        title = "月次レポート（直近30日）"
+    else:
+        start = now - timedelta(days=7)
+        title = "週次レポート（直近7日）"
+    end = now
+    return title, start, end
+
+def make_report(start_dt: datetime, end_dt: datetime):
+    q = (db.session.query(ProfitHistory)
+         .filter(ProfitHistory.created_at >= start_dt)
+         .filter(ProfitHistory.created_at <  end_dt))
+
+    # トータル
+    sum_price  = db.session.query(func.coalesce(func.sum(ProfitHistory.price), 0)).filter(
+        ProfitHistory.created_at >= start_dt, ProfitHistory.created_at < end_dt).scalar() or 0
+    sum_profit = db.session.query(func.coalesce(func.sum(ProfitHistory.profit), 0)).filter(
+        ProfitHistory.created_at >= start_dt, ProfitHistory.created_at < end_dt).scalar() or 0
+    avg_margin = db.session.query(func.coalesce(func.avg(ProfitHistory.margin), 0.0)).filter(
+        ProfitHistory.created_at >= start_dt, ProfitHistory.created_at < end_dt).scalar() or 0.0
+    count_rows = q.count()
+
+    # PF別
+    by_pf = (db.session.query(
+                ProfitHistory.platform.label("platform"),
+                func.coalesce(func.sum(ProfitHistory.profit),0).label("sum_profit"),
+                func.count(ProfitHistory.id).label("cnt"))
+             .filter(ProfitHistory.created_at >= start_dt, ProfitHistory.created_at < end_dt)
+             .group_by(ProfitHistory.platform)
+             .order_by(func.sum(ProfitHistory.profit).desc())
+             .all())
+
+    # TOP商品
+    top = (db.session.query(
+                ProfitHistory.name.label("name"),
+                ProfitHistory.platform.label("platform"),
+                func.coalesce(func.sum(ProfitHistory.profit),0).label("sum_profit"),
+                func.count(ProfitHistory.id).label("cnt"),
+                func.min(ProfitHistory.created_at).label("first_at"),
+                func.max(ProfitHistory.created_at).label("last_at"))
+           .filter(ProfitHistory.created_at >= start_dt, ProfitHistory.created_at < end_dt)
+           .group_by(ProfitHistory.name, ProfitHistory.platform)
+           .order_by(func.sum(ProfitHistory.profit).desc())
+           .limit(10).all())
+
+    return {
+        "sum_price": int(sum_price or 0),
+        "sum_profit": int(sum_profit or 0),
+        "avg_margin": round(float(avg_margin or 0), 2),
+        "count_rows": int(count_rows or 0),
+        "by_pf": by_pf,
+        "top": top,
+    }
+
+def render_report_html(title: str, start_dt: datetime, end_dt: datetime):
+    stats = make_report(start_dt, end_dt)
+    return render_template(
+        "email/report_summary.html",
+        title=title,
+        start=start_dt, end=end_dt,
+        stats=stats,
+        generated=datetime.utcnow()
+    )
+
+def send_report(kind: str):
+    title, start_dt, end_dt = _report_range(kind)
+    html = render_report_html(title, start_dt, end_dt)
+    subj = f"【リサーチナビ】{title}"
+    ok, info = send_mail_by_settings(subj, html, f"{title}")
+    return ok, info
 
 # =============================================================================
 # ルーティング：ページ
@@ -314,94 +395,6 @@ def export_history():
     fname = f"profit_history_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.csv"
     return send_file(BytesIO(data), as_attachment=True,
                      download_name=fname, mimetype="text/csv; charset=utf-8")
-
-# ---------- CSV インポート（履歴一括取り込み） ---------------------------------
-@app.post("/import/history")
-def import_history():
-    f = request.files.get("file")
-    if not f or f.filename == "":
-        flash("CSVファイルを選択してください。")
-        return redirect(url_for("history"))
-    raw = f.read()
-    text = None
-    for enc in ("utf-8-sig", "utf-8", "cp932"):
-        try:
-            text = raw.decode(enc); break
-        except Exception: continue
-    if text is None:
-        flash("文字コードの判定に失敗しました（UTF-8 / CP932 推奨）。")
-        return redirect(url_for("history"))
-
-    def norm(h):
-        h = (h or "").strip().lower()
-        rep = {"日時":"dt","date":"dt","created_at":"dt","time":"dt",
-               "商品名":"name","name":"name","title":"name",
-               "pf":"platform","プラットフォーム":"platform","platform":"platform",
-               "販売":"price","売価":"price","価格":"price","price":"price","sell":"price",
-               "仕入":"cost","原価":"cost","cost":"cost","buy":"cost",
-               "送料":"ship","配送料":"ship","ship":"ship","shipping":"ship",
-               "手数料":"fee","販売手数料":"fee","fee":"fee","commission":"fee",
-               "利益":"profit","profit":"profit",
-               "利益率":"margin","利益率(%)":"margin","margin":"margin"}
-        return rep.get(h, h)
-
-    rdr = csv.reader(StringIO(text))
-    rows = list(rdr)
-    if not rows: 
-        flash("CSVが空です。"); 
-        return redirect(url_for("history"))
-
-    header = [norm(h) for h in rows[0]]; data_rows = rows[1:]
-    col = {h:i for i,h in enumerate(header)}
-
-    created_i = col.get("dt")
-    name_i    = col.get("name")
-    pf_i      = col.get("platform")
-    price_i   = col.get("price")
-    cost_i    = col.get("cost")
-    ship_i    = col.get("ship")
-    fee_i     = col.get("fee")
-    profit_i  = col.get("profit")
-    margin_i  = col.get("margin")
-
-    imported = 0
-    for r in data_rows[:10000]:
-        if not any(str(c).strip() for c in r): continue
-        dt = _parse_date(r[created_i]) if created_i is not None and created_i < len(r) else None
-        name = (r[name_i].strip() if (name_i is not None and name_i < len(r) and r[name_i]) else "不明商品")
-        pf   = (r[pf_i].strip()   if (pf_i   is not None and pf_i   < len(r) and r[pf_i])   else "Unknown")
-
-        price = _to_int(r[price_i]) if price_i is not None and price_i < len(r) else 0
-        cost  = _to_int(r[cost_i])  if cost_i  is not None and cost_i  < len(r) else 0
-        ship  = _to_int(r[ship_i])  if ship_i  is not None and ship_i  < len(r) else 0
-
-        if fee_i is not None and fee_i < len(r) and str(r[fee_i]).strip() != "":
-            fee = _to_int(r[fee_i])
-        else:
-            fee = estimate_fee(pf, price)
-
-        if profit_i is not None and profit_i < len(r) and str(r[profit_i]).strip() != "":
-            profit = _to_int(r[profit_i])
-        else:
-            profit, _ = calc_profit(price, cost, ship, fee)
-
-        if margin_i is not None and margin_i < len(r) and str(r[margin_i]).strip() != "":
-            try:
-                margin = float(str(r[margin_i]).replace("%","").strip())
-            except Exception:
-                margin = 0.0
-        else:
-            margin = round((profit / price * 100.0), 2) if price > 0 else 0.0
-
-        row = ProfitHistory(
-            name=name, platform=pf, price=price, cost=cost, ship=ship, fee=fee,
-            profit=profit, margin=margin, created_at=(dt or datetime.utcnow())
-        )
-        db.session.add(row); imported += 1
-
-    db.session.commit()
-    flash(f"CSVを取り込みました：{imported}件")
-    return redirect(url_for("history"))
 
 # ---------- ランキング ----------------------------------------------------------
 def _build_ranking_query(args):
@@ -533,6 +526,31 @@ def api_notif_snooze():
     n.snooze_until = datetime.utcnow() + timedelta(minutes=minutes)
     db.session.commit()
     return jsonify(ok=True, snooze_until=n.snooze_until.isoformat())
+
+# ---------- レポート：プレビュー & 送信 ----------------------------------------
+@app.get("/reports/weekly/preview")
+def report_weekly_preview():
+    title, start_dt, end_dt = _report_range("weekly")
+    html = render_report_html(title, start_dt, end_dt)
+    return html
+
+@app.post("/reports/weekly/send")
+def report_weekly_send():
+    ok, info = send_report("weekly")
+    flash("週次レポートを送信しました。" if ok else f"週次レポート送信に失敗：{info}")
+    return redirect(url_for("setting"))
+
+@app.get("/reports/monthly/preview")
+def report_monthly_preview():
+    title, start_dt, end_dt = _report_range("monthly")
+    html = render_report_html(title, start_dt, end_dt)
+    return html
+
+@app.post("/reports/monthly/send")
+def report_monthly_send():
+    ok, info = send_report("monthly")
+    flash("月次レポートを送信しました。" if ok else f"月次レポート送信に失敗：{info}")
+    return redirect(url_for("setting"))
 
 # ---------- その他ページ -------------------------------------------------------
 @app.route("/ocr", methods=["GET", "POST"])
