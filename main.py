@@ -1,175 +1,157 @@
-import os, csv, json, ssl, smtplib
-from io import StringIO, BytesIO
-from datetime import datetime, timedelta
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+# main.py
+from __future__ import annotations
+import os
+from datetime import datetime
+from typing import Dict, Any, Optional
 
 from flask import (
-    Flask, render_template, request, redirect, url_for,
-    flash, send_file, jsonify
+    Flask, render_template, request, redirect, url_for, flash
 )
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
 
-# =============================================================================
-# Flask / DB
-# =============================================================================
+# ---- DB（SQLAlchemy Core） -----------------------------
+from sqlalchemy import (
+    create_engine, text
+)
+from sqlalchemy.engine import Engine
+
+# ---- メール --------------------------------------------
+import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
+
+# ========================================================
+# Flask
+# ========================================================
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "research-navi-dev")
+app.secret_key = os.environ.get("FLASK_SECRET", "research-navi-dev")
 
-raw_db_url = os.getenv("DATABASE_URL", "sqlite:///data/app.db")
-# Render の Postgres を SQLAlchemy で使える形式へ変換
-if raw_db_url.startswith("postgresql://"):
-    raw_db_url = raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+# ========================================================
+# DB 接続（Render の Postgres を優先。なければローカル SQLite）
+# ========================================================
+def _build_engine() -> Engine:
+    db_url = os.environ.get("DATABASE_URL")
+    if db_url:
+        # Render の DSN は postgresql:// 形式なので psycopg 用に変換
+        if db_url.startswith("postgresql://"):
+            db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    else:
+        os.makedirs("data", exist_ok=True)
+        db_url = "sqlite:///data/research_navi.db"
+    return create_engine(db_url, future=True)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = raw_db_url
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
-db = SQLAlchemy(app)
+engine: Engine = _build_engine()
 
-# =============================================================================
-# モデル
-# =============================================================================
-class ProfitHistory(db.Model):
-    __tablename__ = "profit_history"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    platform = db.Column(db.String(50), nullable=False)
-    price = db.Column(db.Integer, nullable=False, default=0)
-    cost = db.Column(db.Integer, nullable=False, default=0)
-    ship = db.Column(db.Integer, nullable=False, default=0)
-    fee = db.Column(db.Integer, nullable=False, default=0)
-    profit = db.Column(db.Integer, nullable=False, default=0)
-    margin = db.Column(db.Float, nullable=False, default=0.0)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+# 初期化（設定テーブルと 1 レコードを用意）
+def init_db() -> None:
+    with engine.begin() as conn:
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS app_settings (
+            id               INTEGER PRIMARY KEY,
+            mail_enabled     INTEGER NOT NULL DEFAULT 0,
+            mail_provider    TEXT    NOT NULL DEFAULT 'gmail',
+            mail_from        TEXT    NOT NULL DEFAULT '',
+            mail_to          TEXT    NOT NULL DEFAULT '',
+            mail_pass        TEXT    NOT NULL DEFAULT '',
+            profit_threshold INTEGER NOT NULL DEFAULT 5000,
+            updated_at       TEXT    NOT NULL
+        );
+        """))
+        # SQLite は AUTOINCREMENT、Postgres は SERIAL の代わりに上記 PK でOK
+        row = conn.execute(text("SELECT id FROM app_settings WHERE id = 1")).fetchone()
+        if not row:
+            conn.execute(text("""
+                INSERT INTO app_settings
+                (id, mail_enabled, mail_provider, mail_from, mail_to, mail_pass, profit_threshold, updated_at)
+                VALUES (1, 0, 'gmail', '', '', '', 5000, :now)
+            """), {"now": datetime.utcnow().isoformat()})
 
-class Notification(db.Model):
-    __tablename__ = "notifications"
-    id = db.Column(db.Integer, primary_key=True)
-    kind = db.Column(db.String(20), nullable=False, default="info")  # profit/pricedrop/stock/info
-    title = db.Column(db.String(255), nullable=False)
-    body = db.Column(db.Text, default="")
-    meta_json = db.Column(db.Text, default="{}")
-    unread = db.Column(db.Boolean, default=True, nullable=False)
-    snooze_until = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+init_db()
 
-    @property
-    def meta(self):
-        try:
-            return json.loads(self.meta_json or "{}")
-        except Exception:
-            return {}
+# ========================================================
+# 設定の読み書き
+# ========================================================
+def get_settings() -> Dict[str, Any]:
+    with engine.begin() as conn:
+        row = conn.execute(text("SELECT * FROM app_settings WHERE id = 1")).mappings().first()
+        return dict(row)
 
-# =============================================================================
-# テンプレフィルタ / 共通関数
-# =============================================================================
-def calc_profit(price: int, cost: int, ship: int, fee: int):
-    p = int(price) - int(cost) - int(ship) - int(fee)
-    m = round((p / int(price) * 100.0), 2) if int(price) > 0 else 0.0
-    return p, m
+def save_settings(data: Dict[str, Any], keep_password_if_blank: bool = True) -> None:
+    # パスワードの空保存は「保持」にする
+    if keep_password_if_blank:
+        if not data.get("mail_pass"):
+            current = get_settings()
+            data["mail_pass"] = current.get("mail_pass", "")
 
+    data["updated_at"] = datetime.utcnow().isoformat()
+    with engine.begin() as conn:
+        conn.execute(text("""
+            UPDATE app_settings SET
+              mail_enabled     = :mail_enabled,
+              mail_provider    = :mail_provider,
+              mail_from        = :mail_from,
+              mail_to          = :mail_to,
+              mail_pass        = :mail_pass,
+              profit_threshold = :profit_threshold,
+              updated_at       = :updated_at
+            WHERE id = 1
+        """), {
+            "mail_enabled":     1 if str(data.get("mail_enabled", "0")) in ("1", "true", "on") else 0,
+            "mail_provider":    data.get("mail_provider", "gmail"),
+            "mail_from":        data.get("mail_from", "").strip(),
+            "mail_to":          data.get("mail_to", "").strip(),
+            "mail_pass":        data.get("mail_pass", ""),
+            "profit_threshold": int(data.get("profit_threshold") or 0),
+            "updated_at":       data["updated_at"],
+        })
+
+# ========================================================
+# メール送信（Gmail アプリパスワード対応）
+# ========================================================
+def send_mail(subject: str, body: str, settings: Optional[Dict[str, Any]] = None) -> bool:
+    s = settings or get_settings()
+
+    if not s.get("mail_enabled"):
+        return False  # 無効化時は送らない
+
+    provider = (s.get("mail_provider") or "gmail").lower()
+    mail_from = s.get("mail_from", "")
+    mail_to   = s.get("mail_to", "")
+    mail_pass = s.get("mail_pass", "")
+
+    if provider != "gmail":
+        # 将来拡張用（今は Gmail のみ）
+        raise RuntimeError("現在は Gmail のみ対応です。")
+
+    if not (mail_from and mail_to and mail_pass):
+        raise RuntimeError("メール設定（送信元 / 宛先 / アプリパスワード）が不足しています。")
+
+    msg = MIMEText(body, _charset="utf-8")
+    msg["Subject"] = Header(subject, "utf-8")
+    msg["From"]    = mail_from
+    msg["To"]      = mail_to
+
+    with smtplib.SMTP("smtp.gmail.com", 587, timeout=20) as smtp:
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.login(mail_from, mail_pass)
+        smtp.sendmail(mail_from, [a.strip() for a in mail_to.split(",") if a.strip()], msg.as_string())
+
+    return True
+
+# ========================================================
+# Jinja フィルタ
+# ========================================================
 @app.template_filter("yen")
-def yen(v):
+def yen(v) -> str:
     try:
-        return f"¥{int(v):,}"
+        n = int(float(v))
     except Exception:
-        return v
+        return str(v)
+    return f"¥{n:,}"
 
-@app.template_filter("fmt")
-def fmt(dt):
-    try:
-        return dt.strftime("%Y-%m-%d %H:%M")
-    except Exception:
-        return dt
-
-# -------------------------- メール送信ユーティリティ ---------------------------
-MAIL_ENABLED = os.getenv("MAIL_ENABLED", "0") == "1"
-MAIL_PROVIDER = os.getenv("MAIL_PROVIDER", "gmail").strip().lower()
-MAIL_FROM = os.getenv("MAIL_FROM", "")
-MAIL_PASS = os.getenv("MAIL_PASS", "")
-MAIL_TO = [x.strip() for x in os.getenv("MAIL_TO", "").split(",") if x.strip()]
-
-def _smtp_profile(provider: str):
-    """プロバイダ別のSMTP設定を返す (host, port, use_ssl, use_starttls)"""
-    # 代表的なプロバイダを内蔵。未対応は provider をホスト名として扱う
-    table = {
-        "gmail":   ("smtp.gmail.com", 465, True,  False),
-        "icloud":  ("smtp.mail.me.com", 587, False, True),
-        "outlook": ("smtp.office365.com", 587, False, True),
-        "yahoo":   ("smtp.mail.yahoo.co.jp", 465, True, False),
-    }
-    if provider in table:
-        return table[provider]
-    # 独自SMTPホスト名が来たケース
-    if "." in provider:
-        return (provider, 587, False, True)
-    # デフォルトは Gmail
-    return table["gmail"]
-
-def send_mail(subject: str, html: str, text_fallback: str = ""):
-    """環境変数の設定に基づきメールを送る。失敗してもアプリは止めない。"""
-    if not MAIL_ENABLED:
-        return False, "MAIL_ENABLED=0"
-
-    if not (MAIL_FROM and MAIL_PASS and MAIL_TO):
-        return False, "MAIL_* が未設定"
-
-    host, port, use_ssl, use_tls = _smtp_profile(MAIL_PROVIDER)
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = MAIL_FROM
-    msg["To"] = ", ".join(MAIL_TO)
-
-    if text_fallback:
-        msg.attach(MIMEText(text_fallback, "plain", "utf-8"))
-    msg.attach(MIMEText(html, "html", "utf-8"))
-
-    try:
-        if use_ssl:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(host, port, context=context) as s:
-                s.login(MAIL_FROM, MAIL_PASS)
-                s.sendmail(MAIL_FROM, MAIL_TO, msg.as_string())
-        else:
-            with smtplib.SMTP(host, port) as s:
-                if use_tls:
-                    s.starttls()
-                s.login(MAIL_FROM, MAIL_PASS)
-                s.sendmail(MAIL_FROM, MAIL_TO, msg.as_string())
-        return True, "sent"
-    except Exception as e:
-        # 落ちないようにする（ログだけ出す）
-        print(f"[MAIL ERROR] {e}")
-        return False, str(e)
-
-# =============================================================================
-# 初期化
-# =============================================================================
-with app.app_context():
-    db.create_all()
-    if Notification.query.count() == 0:
-        demo = [
-            Notification(
-                kind="profit",
-                title="利益アラート：Switch 有機EL（利益 ¥8,900 / 21%）",
-                body="条件：利益≥¥8,000 AND 利益率≥18% AND 回転≥70",
-                meta_json=json.dumps({"販売":"¥44,800","仕入":"¥33,000","在庫":"◯（出品者 6）"}, ensure_ascii=False)
-            ),
-            Notification(
-                kind="pricedrop",
-                title="値下げ検知：Anker 100W 充電器（-12%）",
-                body="前回比 -¥980 / クーポンでさらに -¥500",
-                meta_json=json.dumps({"最安":"¥6,980","実質":"¥6,480"}, ensure_ascii=False)
-            ),
-        ]
-        db.session.add_all(demo)
-        db.session.commit()
-
-# =============================================================================
-# ルーティング
-# =============================================================================
+# ========================================================
+# ルーティング（主要ページ）
+# ========================================================
 @app.route("/")
 def home():
     return render_template("pages/home.html")
@@ -178,157 +160,23 @@ def home():
 def search():
     return render_template("pages/search.html")
 
-@app.route("/profit", methods=["GET", "POST"])
+@app.route("/profit")
 def profit():
-    if request.method == "POST":
-        name = (request.form.get("name") or "商品名未設定").strip()
-        platform = (request.form.get("platform") or "Unknown").strip()
-        price = int(request.form.get("price") or 0)
-        cost  = int(request.form.get("cost")  or 0)
-        ship  = int(request.form.get("ship")  or 0)
-        fee   = int(request.form.get("fee")   or 0)
-
-        p, m = calc_profit(price, cost, ship, fee)
-
-        # 履歴保存
-        row = ProfitHistory(
-            name=name, platform=platform, price=price, cost=cost,
-            ship=ship, fee=fee, profit=p, margin=m
-        )
-        db.session.add(row)
-        db.session.commit()
-
-        # 条件に達したら 通知 + メール
-        threshold = int(os.getenv("PROFIT_THRESHOLD", "5000") or 0)
-        margin_min = float(os.getenv("MARGIN_THRESHOLD", "0") or 0.0)
-        cond_ok = (p >= threshold) and (m >= margin_min)
-
-        if cond_ok:
-            title = f"利益アラート：{name}（利益 ¥{p:,} / {m}%）"
-            body  = "条件：利益≥¥{:,}".format(threshold)
-            if margin_min > 0:
-                body += f" AND 利益率≥{margin_min}%"
-
-            meta = {
-                "販売": f"¥{price:,}",
-                "仕入": f"¥{cost:,}",
-                "送料": f"¥{ship:,}",
-                "手数料": f"¥{fee:,}",
-                "PF": platform,
-                "履歴ID": row.id,
-            }
-            n = Notification(kind="profit", title=title, body=body,
-                             meta_json=json.dumps(meta, ensure_ascii=False))
-            db.session.add(n)
-            db.session.commit()
-
-            # ---- メール送信（テンプレが無くても動くようフォールバックあり）
-            try:
-                html = render_template(
-                    "email/profit_notice.html",
-                    name=name, platform=platform,
-                    profit_val=p, margin=m, price=price, cost=cost,
-                    ship=ship, fee_calc=fee, threshold=threshold,
-                    now=datetime.utcnow().strftime("%Y-%m-%d %H:%M")
-                )
-            except Exception:
-                html = (
-                    f"<h2>利益アラート</h2>"
-                    f"<p>商品名：{name} / PF：{platform}</p>"
-                    f"<p>利益：¥{p:,}（{m}%）</p>"
-                    f"<p>販売：¥{price:,} / 仕入：¥{cost:,} / 送料：¥{ship:,} / 手数料：¥{fee:,}</p>"
-                )
-            text_alt = f"[利益アラート] {name} 利益 ¥{p:,}（{m}%） / 販売 {price} 仕入 {cost} 送料 {ship} 手数料 {fee}"
-            subj = f"【RN】利益アラート：{name} 利益 ¥{p:,}（{m}%）"
-
-            ok, info = send_mail(subj, html, text_alt)
-            if not ok:
-                print(f"[MAIL NOT SENT] {info}")
-
-        flash(f"保存しました：{name} / 利益 {p:,} 円（{m}%）")
-        return redirect(url_for("history"))
-
     return render_template("pages/profit.html")
 
 @app.route("/history")
 def history():
-    rows = ProfitHistory.query.order_by(ProfitHistory.created_at.desc()).limit(200).all()
-    return render_template("pages/history.html", rows=rows)
-
-@app.route("/export/history.csv")
-def export_history():
-    sio = StringIO()
-    w = csv.writer(sio)
-    w.writerow(["日時","商品名","PF","販売","仕入","送料","手数料","利益","利益率(%)"])
-    for r in ProfitHistory.query.order_by(ProfitHistory.created_at.desc()).all():
-        w.writerow([
-            r.created_at.strftime("%Y-%m-%d %H:%M"),
-            r.name, r.platform, r.price, r.cost, r.ship, r.fee, r.profit, r.margin
-        ])
-    data = sio.getvalue().encode("utf-8-sig")
-    fname = f"profit_history_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.csv"
-    return send_file(BytesIO(data), as_attachment=True,
-                     download_name=fname, mimetype="text/csv; charset=utf-8")
+    return render_template("pages/history.html")
 
 @app.route("/ranking")
 def ranking():
-    days = (request.args.get("days") or "30").lower()
-    q = ProfitHistory.query
-    label = "直近30日"
-    if days != "all":
-        try:
-            n = int(days)
-            since = datetime.utcnow() - timedelta(days=n)
-            q = q.filter(ProfitHistory.created_at >= since)
-            label = f"直近{n}日"
-        except Exception:
-            pass
-    else:
-        label = "全期間"
-    rows = q.order_by(ProfitHistory.profit.desc()).limit(50).all()
-    return render_template("pages/ranking.html", rows=rows, days=days, label=label)
+    return render_template("pages/ranking.html")
 
-# ----------------------------- 通知 UI / API ---------------------------------
 @app.route("/notifications")
 def notifications():
-    now = datetime.utcnow()
-    rows = (Notification.query
-            .filter((Notification.snooze_until.is_(None)) |
-                    (Notification.snooze_until <= now))
-            .order_by(Notification.unread.desc(),
-                      Notification.created_at.desc())
-            .limit(200).all())
-    return render_template("pages/notifications.html", rows=rows)
+    return render_template("pages/notifications.html")
 
-@app.post("/api/notifications/mark_read")
-def api_notif_mark_read():
-    data = request.get_json(silent=True) or {}
-    ids = data.get("ids") or []
-    if not isinstance(ids, list):
-        ids = [ids]
-    q = Notification.query.filter(Notification.id.in_(ids))
-    updated = 0
-    for n in q:
-        if n.unread:
-            n.unread = False
-            updated += 1
-    db.session.commit()
-    return jsonify(ok=True, updated=updated)
-
-@app.post("/api/notifications/snooze")
-def api_notif_snooze():
-    data = request.get_json(silent=True) or {}
-    nid = int(data.get("id") or 0)
-    minutes = int(data.get("minutes") or 60)
-    n = Notification.query.get(nid)
-    if not n:
-        return jsonify(ok=False, error="not_found"), 404
-    n.snooze_until = datetime.utcnow() + timedelta(minutes=minutes)
-    db.session.commit()
-    return jsonify(ok=True, snooze_until=n.snooze_until.isoformat())
-
-# ----------------------------- その他ページ -----------------------------------
-@app.route("/ocr", methods=["GET", "POST"])
+@app.route("/ocr")
 def ocr():
     return render_template("pages/ocr.html")
 
@@ -336,51 +184,62 @@ def ocr():
 def suppliers():
     return render_template("pages/suppliers.html")
 
+# ========================================================
+# 設定（GUI） + テスト送信
+# ========================================================
 @app.route("/setting", methods=["GET", "POST"])
 def setting():
-    return render_template("pages/setting.html")
+    if request.method == "POST":
+        form = {
+            "mail_enabled":     request.form.get("mail_enabled"),
+            "mail_provider":    request.form.get("mail_provider", "gmail"),
+            "mail_from":        request.form.get("mail_from", ""),
+            "mail_to":          request.form.get("mail_to", ""),
+            "mail_pass":        request.form.get("mail_pass", ""),   # 空なら保持
+            "profit_threshold": request.form.get("profit_threshold", "5000"),
+        }
+        save_settings(form, keep_password_if_blank=True)
+        flash("設定を保存しました。")
+        return redirect(url_for("setting"))
 
-@app.route("/about")
-def about():
-    return render_template("pages/about.html")
+    s = get_settings()
+    return render_template("pages/setting.html", s=s)
 
-@app.route("/faq")
-def faq():
-    return render_template("pages/faq.html")
-
-@app.route("/support")
-def support():
-    return render_template("pages/support.html")
-
-@app.route("/dashboard")
-def dashboard():
-    return render_template("pages/dashboard.html")
-
-@app.route("/report")
-def report():
-    return render_template("pages/report.html")
-
-# 健康チェック
-@app.route("/healthz")
-def healthz():
-    return "ok", 200
-
-# DBチェック
-@app.route("/dbcheck")
-def dbcheck():
+@app.post("/setting/test-mail")
+def setting_test_mail():
+    s = get_settings()
     try:
-        v = db.session.execute(text("SELECT 1")).scalar_one()
-        return f"DB OK ({v})"
+        ok = send_mail(
+            subject="【リサーチナビ】テスト送信",
+            body=(
+                "これはテストメールです。\n\n"
+                f"送信元: {s.get('mail_from')}\n"
+                f"送信先: {s.get('mail_to')}\n"
+                f"閾値  : {s.get('profit_threshold')} 円\n"
+                f"時刻  : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            ),
+            settings=s
+        )
+        if ok:
+            flash("テストメールを送信しました。Gmail の受信トレイをご確認ください。")
+        else:
+            flash("通知は無効です（チェックを入れて保存してください）。")
     except Exception as e:
-        return f"DB ERROR: {e}", 500
+        flash(f"テスト送信に失敗しました：{e}")
+    return redirect(url_for("setting"))
 
+# ========================================================
+# エラーハンドラ
+# ========================================================
 @app.errorhandler(404)
-def _404(e):
+def not_found(e):
     return render_template("errors/404.html"), 404
 
 @app.errorhandler(500)
-def _500(e):
+def server_error(e):
     return render_template("errors/500.html"), 500
 
+# ========================================================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # ローカル開発用
+    app.run(debug=True, host="0.0.0.0", port=5000)
