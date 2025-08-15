@@ -13,32 +13,31 @@
     <label class="col">
       <span>プラットフォーム</span>
       <select name="platform">
-        <option value="Amazon">Amazon</option>
-        <option value="楽天">楽天</option>
-        <option value="ヤフショ">ヤフショ</option>
-        <option value="メルカリ">メルカリ</option>
-        <option value="その他">その他</option>
+        {% set pf = request.args.get('platform','') %}
+        {% for opt in ['Amazon','楽天','ヤフショ','メルカリ','その他'] %}
+          <option value="{{ opt }}" {% if pf==opt %}selected{% endif %}>{{ opt }}</option>
+        {% endfor %}
       </select>
     </label>
 
     <label class="col">
       <span>販売価格（円）</span>
-      <input name="price" type="number" inputmode="numeric" min="0" step="1" required>
+      <input name="price" type="number" inputmode="numeric" min="0" step="1" value="{{ request.args.get('price','') }}" required>
     </label>
 
     <label class="col">
       <span>仕入価格（円）</span>
-      <input name="cost" type="number" inputmode="numeric" min="0" step="1" required>
+      <input name="cost" type="number" inputmode="numeric" min="0" step="1" value="{{ request.args.get('cost','') }}" required>
     </label>
 
     <label class="col">
       <span>送料（円）</span>
-      <input name="ship" type="number" inputmode="numeric" min="0" step="1" value="0">
+      <input name="ship" type="number" inputmode="numeric" min="0" step="1" value="{{ request.args.get('ship','0') }}">
     </label>
 
     <label class="col">
       <span>手数料（円）</span>
-      <input name="fee" type="number" inputmode="numeric" min="0" step="1" value="0">
+      <input name="fee" type="number" inputmode="numeric" min="0" step="1" value="{{ request.args.get('fee','0') }}">
     </label>
   </div>
 
