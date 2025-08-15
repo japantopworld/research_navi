@@ -1,24 +1,53 @@
 {% extends "base/layout.html" %}
 {% block title %}設定 | リサーチナビ{% endblock %}
 {% block content %}
-<h1>⚙️ 設定</h1>
-<form method="post" class="form-grid">
-  <label><input type="checkbox" name="mail_enabled" {% if s.mail_enabled %}checked{% endif %}> メール通知を有効化</label>
-  <label>プロバイダ
+<h1>設定</h1>
+
+<form method="post" action="{{ url_for('setting') }}" class="card">
+  <h2>通知メール</h2>
+
+  <label class="row">
+    <input type="checkbox" name="mail_enabled" {% if s.mail_enabled %}checked{% endif %}>
+    メール通知を有効化する
+  </label>
+
+  <label class="row">
+    <span>プロバイダ</span>
     <select name="mail_provider">
       <option value="gmail" {% if s.mail_provider=='gmail' %}selected{% endif %}>Gmail</option>
-      <option value="smtp"  {% if s.mail_provider=='smtp' %}selected{% endif %}>SMTP</option>
     </select>
   </label>
-  <label>送信元メール（MAIL_FROM）<input name="mail_from" value="{{ s.mail_from or '' }}"></label>
-  <label>送信先（カンマ区切り MAIL_TO）<input name="mail_to" value="{{ s.mail_to or '' }}"></label>
-  <label>アプリパスワード（MAIL_PASS）<input name="mail_pass" placeholder="変更時のみ入力"></label>
 
-  <hr>
-  <label>通知の利益しきい値（円）
-    <input type="number" name="profit_threshold" value="{{ s.profit_threshold }}">
+  <label class="row">
+    <span>送信元メール（MAIL_FROM）</span>
+    <input type="email" name="mail_from" value="{{ s.mail_from }}" placeholder="example@gmail.com" required>
   </label>
 
-  <div class="actions"><button type="submit">保存</button></div>
+  <label class="row">
+    <span>送信先メール（MAIL_TO, カンマ区切り可）</span>
+    <input type="text" name="mail_to" value="{{ s.mail_to }}" placeholder="taro@example.com,hanako@example.com" required>
+  </label>
+
+  <label class="row">
+    <span>アプリパスワード（MAIL_PASS）</span>
+    <input type="password" name="mail_pass" placeholder="変更しない場合は空欄のまま">
+  </label>
+
+  <label class="row">
+    <span>通知の利益閾値（円）</span>
+    <input type="number" name="profit_threshold" min="0" step="1" value="{{ s.profit_threshold }}">
+  </label>
+
+  <div class="actions">
+    <button type="submit">保存</button>
+    <button form="testmail" type="submit" class="secondary">テスト送信</button>
+  </div>
 </form>
+
+<form id="testmail" method="post" action="{{ url_for('setting_test_mail') }}"></form>
+
+<p class="help">
+※ Gmailは「2段階認証」＋「アプリ パスワード（16桁）」が必要です。<br>
+※ パスワード欄を空で保存すると現在のパスワードを維持します。
+</p>
 {% endblock %}
