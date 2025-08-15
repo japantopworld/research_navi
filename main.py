@@ -87,10 +87,35 @@ class AppSettings(db.Model):
 # =============================================================================
 # ユーティリティ / テンプレフィルタ
 # =============================================================================
+def _to_int(x):
+    try:
+        if x is None: return 0
+        if isinstance(x, (int, float)): return int(round(x))
+        s = str(x).replace(",", "").replace("¥", "").replace("円", "").strip()
+        if s == "": return 0
+        return int(round(float(s)))
+    except Exception:
+        return 0
+
 def calc_profit(price: int, cost: int, ship: int, fee: int):
     p = int(price) - int(cost) - int(ship) - int(fee)
     m = round((p / int(price) * 100.0), 2) if int(price) > 0 else 0.0
     return p, m
+
+def estimate_fee(platform: str, price: int) -> int:
+    """PF別の簡易手数料。フロントJSと同じロジック。"""
+    pf = (platform or "").lower()
+    pr = int(price or 0)
+    if pr <= 0: return 0
+    if "amazon" in pf or "アマゾン" in pf:
+        return round(pr * 0.10) + 100   # 10% + 100円（簡易）
+    if "楽天" in platform or "rakuten" in pf:
+        return round(pr * 0.07)         # 7%
+    if "ヤフ" in platform or "yahoo" in pf:
+        return round(pr * 0.08)         # 8%
+    if "メルカリ" in platform or "mercari" in pf:
+        return round(pr * 0.10)         # 10%
+    return round(pr * 0.05)             # その他 5%
 
 @app.template_filter("yen")
 def yen(v):
@@ -107,8 +132,7 @@ def fmt(dt):
         return dt
 
 def _parse_date(s: str):
-    if not s:
-        return None
+    if not s: return None
     for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d", "%Y/%m/%d %H:%M", "%Y/%m/%d"):
         try:
             return datetime.strptime(s.strip(), fmt)
@@ -116,17 +140,7 @@ def _parse_date(s: str):
             continue
     return None
 
-def _to_int(x):
-    try:
-        if x is None: return 0
-        if isinstance(x, (int, float)): return int(round(x))
-        s = str(x).replace(",", "").replace("¥", "").replace("円", "").strip()
-        if s == "": return 0
-        return int(round(float(s)))
-    except Exception:
-        return 0
-
-# ---- メール送信（設定テーブルを使用） -----------------------------------------
+# ---- メール送信 ---------------------------------------------------------------
 def _smtp_profile(provider: str):
     table = {
         "gmail":   ("smtp.gmail.com", 465, True,  False),
@@ -200,7 +214,12 @@ def profit():
         price = _to_int(request.form.get("price"))
         cost  = _to_int(request.form.get("cost"))
         ship  = _to_int(request.form.get("ship"))
-        fee   = _to_int(request.form.get("fee"))
+
+        fee_mode = (request.form.get("fee_mode") or "auto").lower()
+        if fee_mode == "auto":
+            fee = estimate_fee(platform, price)
+        else:
+            fee = _to_int(request.form.get("fee"))
 
         p, m = calc_profit(price, cost, ship, fee)
 
@@ -240,7 +259,6 @@ def profit():
 def _build_history_query(args):
     q = ProfitHistory.query
     label = []
-    # 期間
     start_s = (args.get("start") or "").strip()
     end_s   = (args.get("end") or "").strip()
     start_dt = _parse_date(start_s)
@@ -255,17 +273,14 @@ def _build_history_query(args):
             label.append(f"〜{end_dt.strftime('%Y-%m-%d')}")
         else:
             label[-1] = f"{start_dt.strftime('%Y-%m-%d')}〜{end_dt.strftime('%Y-%m-%d')}"
-    # PF
     pf = (args.get("platform") or "").strip()
     if pf and pf.lower() != "all":
         q = q.filter(ProfitHistory.platform == pf)
         label.append(f"PF={pf}")
-    # キーワード
     kw = (args.get("keyword") or "").strip()
     if kw:
         q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
         label.append(f"KW='{kw}'")
-    # 最小利益
     try:
         min_profit = int(args.get("min_profit") or 0)
     except Exception:
@@ -273,7 +288,6 @@ def _build_history_query(args):
     if min_profit > 0:
         q = q.filter(ProfitHistory.profit >= min_profit)
         label.append(f"利益≥¥{min_profit:,}")
-
     label_text = " / ".join(label) if label else "全件"
     return q, label_text, {"start": start_s, "end": end_s, "platform": pf, "keyword": kw, "min_profit": min_profit}
 
@@ -287,7 +301,6 @@ def history():
                            rows=rows, total=total, label=label,
                            params=params, platforms=platforms)
 
-# ---------- CSV エクスポート（検索条件をそのまま適用） -------------------------
 @app.route("/export/history.csv")
 def export_history():
     q, _, _ = _build_history_query(request.args)
@@ -302,73 +315,58 @@ def export_history():
     return send_file(BytesIO(data), as_attachment=True,
                      download_name=fname, mimetype="text/csv; charset=utf-8")
 
-# ---------- CSV インポート（履歴を一括取り込み） -------------------------------
+# ---------- CSV インポート（履歴一括取り込み） ---------------------------------
 @app.post("/import/history")
 def import_history():
     f = request.files.get("file")
     if not f or f.filename == "":
         flash("CSVファイルを選択してください。")
         return redirect(url_for("history"))
-
-    # デコード（BOM付きUTF-8優先 → UTF-8 → CP932）
     raw = f.read()
     text = None
     for enc in ("utf-8-sig", "utf-8", "cp932"):
         try:
-            text = raw.decode(enc)
-            break
-        except Exception:
-            continue
+            text = raw.decode(enc); break
+        except Exception: continue
     if text is None:
-        flash("文字コードの判定に失敗しました（UTF-8 / CP932 を推奨）。")
+        flash("文字コードの判定に失敗しました（UTF-8 / CP932 推奨）。")
         return redirect(url_for("history"))
 
-    # ヘッダ名を正規化（日本語・英語どちらもOK）
     def norm(h):
         h = (h or "").strip().lower()
-        replace = {
-            "日時":"dt","date":"dt","created_at":"dt","time":"dt",
-            "商品名":"name","name":"name","title":"name",
-            "pf":"platform","プラットフォーム":"platform","platform":"platform",
-            "販売":"price","売価":"price","価格":"price","price":"price","sell":"price",
-            "仕入":"cost","原価":"cost","cost":"cost","buy":"cost",
-            "送料":"ship","配送料":"ship","ship":"ship","shipping":"ship",
-            "手数料":"fee","販売手数料":"fee","fee":"fee","commission":"fee",
-            "利益":"profit","profit":"profit",
-            "利益率":"margin","利益率(%)":"margin","margin":"margin",
-        }
-        return replace.get(h, h)
+        rep = {"日時":"dt","date":"dt","created_at":"dt","time":"dt",
+               "商品名":"name","name":"name","title":"name",
+               "pf":"platform","プラットフォーム":"platform","platform":"platform",
+               "販売":"price","売価":"price","価格":"price","price":"price","sell":"price",
+               "仕入":"cost","原価":"cost","cost":"cost","buy":"cost",
+               "送料":"ship","配送料":"ship","ship":"ship","shipping":"ship",
+               "手数料":"fee","販売手数料":"fee","fee":"fee","commission":"fee",
+               "利益":"profit","profit":"profit",
+               "利益率":"margin","利益率(%)":"margin","margin":"margin"}
+        return rep.get(h, h)
 
     rdr = csv.reader(StringIO(text))
     rows = list(rdr)
-    if not rows:
-        flash("CSVが空です。")
+    if not rows: 
+        flash("CSVが空です。"); 
         return redirect(url_for("history"))
 
-    # 1行目がヘッダと仮定（先頭セルに日本語/英語ヘッダがくる想定）
-    header = [norm(h) for h in rows[0]]
-    data_rows = rows[1:]
+    header = [norm(h) for h in rows[0]]; data_rows = rows[1:]
+    col = {h:i for i,h in enumerate(header)}
 
-    col_index = {h:i for i,h in enumerate(header)}
-    # 必須（最低限 name / platform / price / cost があるとよいが、無ければ0に）
-    created_i = col_index.get("dt")
-    name_i    = col_index.get("name")
-    pf_i      = col_index.get("platform")
-    price_i   = col_index.get("price")
-    cost_i    = col_index.get("cost")
-    ship_i    = col_index.get("ship")
-    fee_i     = col_index.get("fee")
-    profit_i  = col_index.get("profit")
-    margin_i  = col_index.get("margin")
+    created_i = col.get("dt")
+    name_i    = col.get("name")
+    pf_i      = col.get("platform")
+    price_i   = col.get("price")
+    cost_i    = col.get("cost")
+    ship_i    = col.get("ship")
+    fee_i     = col.get("fee")
+    profit_i  = col.get("profit")
+    margin_i  = col.get("margin")
 
     imported = 0
-    MAX = 10000
-
-    for r in data_rows[:MAX]:
-        # 空行スキップ
-        if not any(str(c).strip() for c in r):
-            continue
-
+    for r in data_rows[:10000]:
+        if not any(str(c).strip() for c in r): continue
         dt = _parse_date(r[created_i]) if created_i is not None and created_i < len(r) else None
         name = (r[name_i].strip() if (name_i is not None and name_i < len(r) and r[name_i]) else "不明商品")
         pf   = (r[pf_i].strip()   if (pf_i   is not None and pf_i   < len(r) and r[pf_i])   else "Unknown")
@@ -376,12 +374,14 @@ def import_history():
         price = _to_int(r[price_i]) if price_i is not None and price_i < len(r) else 0
         cost  = _to_int(r[cost_i])  if cost_i  is not None and cost_i  < len(r) else 0
         ship  = _to_int(r[ship_i])  if ship_i  is not None and ship_i  < len(r) else 0
-        fee   = _to_int(r[fee_i])   if fee_i   is not None and fee_i   < len(r) else 0
 
-        # CSVに profit/margin があっても再計算で整合性を担保（空なら計算）
+        if fee_i is not None and fee_i < len(r) and str(r[fee_i]).strip() != "":
+            fee = _to_int(r[fee_i])
+        else:
+            fee = estimate_fee(pf, price)
+
         if profit_i is not None and profit_i < len(r) and str(r[profit_i]).strip() != "":
             profit = _to_int(r[profit_i])
-            # こちらを優先する場合は下の再計算をコメントアウト
         else:
             profit, _ = calc_profit(price, cost, ship, fee)
 
@@ -391,21 +391,19 @@ def import_history():
             except Exception:
                 margin = 0.0
         else:
-            # 再計算
             margin = round((profit / price * 100.0), 2) if price > 0 else 0.0
 
         row = ProfitHistory(
             name=name, platform=pf, price=price, cost=cost, ship=ship, fee=fee,
             profit=profit, margin=margin, created_at=(dt or datetime.utcnow())
         )
-        db.session.add(row)
-        imported += 1
+        db.session.add(row); imported += 1
 
     db.session.commit()
-    flash(f"CSVを取り込みました：{imported}件（最大{MAX}件まで）")
+    flash(f"CSVを取り込みました：{imported}件")
     return redirect(url_for("history"))
 
-# ---------- ランキング：期間/PF/キーワードで集計（商品×PF） -------------------
+# ---------- ランキング ----------------------------------------------------------
 def _build_ranking_query(args):
     q = db.session.query(
         ProfitHistory.name.label("name"),
