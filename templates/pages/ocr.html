@@ -1,6 +1,160 @@
-﻿{% extends "base/layout.html" %}
-{% block title %}ocr | リサーチナビ{% endblock %}
+{% extends "base/layout.html" %}
+{% block title %}OCR読取 | リサーチナビ{% endblock %}
 {% block content %}
-  <h1>ocr</h1>
-  <p>このページは雛形です（テンプレ有り）。</p>
+<h1>OCR読取</h1>
+
+<div class="card">
+  <div class="grid">
+    <label class="col">
+      <span>画像ファイル（レシート/値札/スクショなど）</span>
+      <input id="file" type="file" accept="image/*">
+    </label>
+    <label class="col">
+      <span>言語</span>
+      <select id="lang">
+        <option value="jpn" selected>日本語（jpn）</option>
+        <option value="eng">英語（eng）</option>
+        <option value="jpn+eng">日本語+英語（jpn+eng）</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="preview-wrap">
+    <img id="preview" alt="preview" />
+  </div>
+
+  <div class="progress">
+    <div id="bar"></div>
+    <span id="status">未開始</span>
+  </div>
+
+  <div class="result-wrap">
+    <label><span>OCR結果</span>
+      <textarea id="result" rows="10" placeholder="ここに認識結果が入ります"></textarea>
+    </label>
+    <div class="actions">
+      <button id="copy">結果をコピー</button>
+      <button id="toProfit">利益計算へ送る（1行目）</button>
+      <button id="cleanup" class="secondary">ノイズ除去（空白/連続空白を整理）</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:16px;margin:10px 0}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.col{display:flex;flex-direction:column;gap:6px}
+.col span{font-size:12px;color:#6b7280}
+input[type="file"],select,textarea{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.preview-wrap{margin:12px 0}
+#preview{max-width:100%;height:auto;border:1px dashed #e5e7eb;border-radius:8px;display:none}
+.progress{position:relative;height:10px;background:#f1f5f9;border-radius:999px;overflow:hidden;margin:12px 0}
+#bar{position:absolute;left:0;top:0;height:100%;width:0;background:#111;transition:width .2s}
+#status{display:inline-block;margin-top:6px;font-size:12px;color:#6b7280}
+.result-wrap{margin-top:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#111;color:#fff;cursor:pointer}
+button.secondary{background:#fff;color:#111}
+@media (max-width:720px){.grid{grid-template-columns:1fr}}
+</style>
+
+<!-- Tesseract.js（CDN） -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+<script>
+(() => {
+  const $ = (q)=>document.querySelector(q);
+  const file = $('#file');
+  const lang = $('#lang');
+  const img  = $('#preview');
+  const bar  = $('#bar');
+  const status = $('#status');
+  const result = $('#result');
+  const btnCopy = $('#copy');
+  const btnToProfit = $('#toProfit');
+  const btnCleanup = $('#cleanup');
+
+  function setProgress(pct, text){
+    bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    status.textContent = text || (pct ? pct + '%' : '未開始');
+  }
+
+  function dataURLFromFile(f){
+    return new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(f);
+    });
+  }
+
+  async function runOCR(fileObj){
+    if(!fileObj){ alert('画像を選んでください'); return; }
+    try{
+      // プレビュー
+      const url = await dataURLFromFile(fileObj);
+      img.src = url; img.style.display = 'block';
+
+      result.value = '';
+      setProgress(0, '初期化中…');
+
+      const { createWorker } = Tesseract;
+      const worker = await createWorker({
+        logger: m => {
+          if(m.status === 'recognizing text' && m.progress != null){
+            setProgress(Math.round(m.progress * 100), '解析中… ' + Math.round(m.progress * 100) + '%');
+          }else if(m.status){
+            status.textContent = m.status;
+          }
+        },
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0', // 言語データCDN
+        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.2/tesseract-core.wasm.js'
+      });
+
+      await worker.loadLanguage(lang.value);
+      await worker.initialize(lang.value);
+
+      setProgress(5, '解析開始…');
+      const { data } = await worker.recognize(fileObj);
+      await worker.terminate();
+
+      result.value = (data && data.text) ? data.text.trim() : '';
+      setProgress(100, '完了');
+    }catch(err){
+      console.error(err);
+      status.textContent = 'エラー：' + (err && err.message ? err.message : err);
+      alert('OCRに失敗しました。ネットワーク（CDN）や画像を確認してください。');
+    }
+  }
+
+  file.addEventListener('change', e=>{
+    const f = e.target.files && e.target.files[0];
+    if(f){ runOCR(f); }
+  });
+
+  btnCopy.addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText(result.value || '');
+      btnCopy.textContent = 'コピーしました';
+      setTimeout(()=>btnCopy.textContent='結果をコピー', 1200);
+    }catch(_){
+      alert('コピーに失敗しました。手動で選択してください。');
+    }
+  });
+
+  btnCleanup.addEventListener('click', ()=>{
+    let t = result.value || '';
+    t = t.replace(/\r/g,'\n');            // CR→LF
+    t = t.replace(/[ \t]+/g,' ');         // 連続空白→1スペース
+    t = t.replace(/\n{3,}/g,'\n\n');      // 3連改行→2
+    result.value = t.trim();
+  });
+
+  btnToProfit.addEventListener('click', ()=>{
+    const firstLine = (result.value || '').split(/\r?\n/).map(s=>s.trim()).find(Boolean) || '';
+    if(!firstLine){ alert('送るテキストがありません'); return; }
+    // 利益計算の「商品名」へクエリで渡す（テンプレ側で request.args.get('name') を使って初期値にする）
+    location.href = '/profit?name=' + encodeURIComponent(firstLine);
+  });
+})();
+</script>
 {% endblock %}
