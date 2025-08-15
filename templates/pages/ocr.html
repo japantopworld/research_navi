@@ -1,13 +1,357 @@
-services:
-  - type: web
-    name: research-navi
-    env: python
-    plan: free
-    region: singapore
-    buildCommand: pip install -r requirements.txt
-    startCommand: python -m waitress --listen=0.0.0.0:$PORT main:app
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      # DATABASE_URL は Render のダッシュボード > Environment で既に設定済みなのでここは不要
+{% extends "base/layout.html" %}
+{% block title %}OCR読取 | リサーチナビ{% endblock %}
+{% block content %}
+<h1>OCR読取（自動抽出つき）</h1>
 
+<div class="card">
+  <div class="grid">
+    <label class="col">
+      <span>画像ファイル（レシート/値札/スクショなど）</span>
+      <input id="file" type="file" accept="image/*">
+    </label>
+    <label class="col">
+      <span>言語</span>
+      <select id="lang">
+        <option value="jpn" selected>日本語（jpn）</option>
+        <option value="eng">英語（eng）</option>
+        <option value="jpn+eng">日本語+英語（jpn+eng）</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="preview-wrap">
+    <img id="preview" alt="preview" />
+  </div>
+
+  <div class="progress">
+    <div id="bar"></div>
+    <span id="status">未開始</span>
+  </div>
+
+  <div class="result-wrap">
+    <label><span>OCR結果テキスト</span>
+      <textarea id="result" rows="10" placeholder="ここに認識結果が入ります"></textarea>
+    </label>
+
+    <div class="actions">
+      <button id="copy">結果をコピー</button>
+      <button id="cleanup" class="secondary">ノイズ除去</button>
+      <button id="toProfitName">利益計算へ送る（1行目のみ）</button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0">自動抽出（販売/仕入/送料/手数料・プラットフォーム）</h2>
+
+  <div class="chips-wrap">
+    <div class="chip-group">
+      <div class="chip-title">販売候補</div>
+      <div id="cands-price" class="chips"></div>
+    </div>
+    <div class="chip-group">
+      <div class="chip-title">仕入候補</div>
+      <div id="cands-cost" class="chips"></div>
+    </div>
+    <div class="chip-group">
+      <div class="chip-title">送料候補</div>
+      <div id="cands-ship" class="chips"></div>
+    </div>
+    <div class="chip-group">
+      <div class="chip-title">手数料候補</div>
+      <div id="cands-fee" class="chips"></div>
+    </div>
+    <div class="chip-group">
+      <div class="chip-title">プラットフォーム候補</div>
+      <div id="cands-pf" class="chips"></div>
+    </div>
+  </div>
+
+  <div class="picked">
+    <label><span>商品名</span><input id="pick-name" type="text" placeholder="1行目から自動セットされます"></label>
+    <label><span>プラットフォーム</span>
+      <select id="pick-pf">
+        <option value="">未選択</option>
+        <option>Amazon</option><option>楽天</option><option>ヤフショ</option><option>メルカリ</option><option>その他</option>
+      </select>
+    </label>
+    <label><span>販売</span><input id="pick-price" type="number" inputmode="numeric" min="0" step="1"></label>
+    <label><span>仕入</span><input id="pick-cost"  type="number" inputmode="numeric" min="0" step="1"></label>
+    <label><span>送料</span><input id="pick-ship"  type="number" inputmode="numeric" min="0" step="1" value="0"></label>
+    <label><span>手数料</span><input id="pick-fee"   type="number" inputmode="numeric" min="0" step="1" value="0"></label>
+  </div>
+
+  <div class="actions">
+    <button id="toProfitFull">利益計算へ送る（全フィールド）</button>
+  </div>
+</div>
+
+<style>
+.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:16px;margin:10px 0}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.col{display:flex;flex-direction:column;gap:6px}
+.col span{font-size:12px;color:#6b7280}
+input[type="file"],select,textarea,input{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.preview-wrap{margin:12px 0}
+#preview{max-width:100%;height:auto;border:1px dashed #e5e7eb;border-radius:8px;display:none}
+.progress{position:relative;height:10px;background:#f1f5f9;border-radius:999px;overflow:hidden;margin:12px 0}
+#bar{position:absolute;left:0;top:0;height:100%;width:0;background:#111;transition:width .2s}
+#status{display:inline-block;margin-top:6px;font-size:12px;color:#6b7280}
+.result-wrap{margin-top:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#111;color:#fff;cursor:pointer}
+button.secondary{background:#fff;color:#111}
+.chips-wrap{display:grid;gap:10px}
+.chip-group{display:flex;flex-direction:column;gap:6px}
+.chip-title{font-size:12px;color:#6b7280}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:6px 10px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;cursor:pointer}
+.chip:hover{border-color:#94a3b8}
+.picked{display:grid;gap:10px;grid-template-columns:repeat(6,1fr);margin-top:12px}
+.picked label{display:flex;flex-direction:column;gap:6px}
+.picked label span{font-size:12px;color:#6b7280}
+@media (max-width:980px){.grid{grid-template-columns:1fr}.picked{grid-template-columns:1fr 1fr}}
+</style>
+
+<!-- Tesseract.js（CDN） -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+<script>
+(() => {
+  const $  = (q)=>document.querySelector(q);
+  const $$ = (q)=>document.querySelectorAll(q);
+
+  const file = $('#file');
+  const lang = $('#lang');
+  const img  = $('#preview');
+  const bar  = $('#bar');
+  const status = $('#status');
+  const result = $('#result');
+
+  const pick = {
+    name:  $('#pick-name'),
+    pf:    $('#pick-pf'),
+    price: $('#pick-price'),
+    cost:  $('#pick-cost'),
+    ship:  $('#pick-ship'),
+    fee:   $('#pick-fee'),
+  };
+
+  function setProgress(pct, text){
+    bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    status.textContent = text || (pct ? pct + '%' : '未開始');
+  }
+  function dataURLFromFile(f){
+    return new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(f);
+    });
+  }
+
+  // ------------------- OCR 本体 -------------------
+  async function runOCR(fileObj){
+    if(!fileObj){ alert('画像を選んでください'); return; }
+    try{
+      // プレビュー
+      const url = await dataURLFromFile(fileObj);
+      img.src = url; img.style.display = 'block';
+
+      result.value = '';
+      setProgress(0, '初期化中…');
+
+      const { createWorker } = Tesseract;
+      const worker = await createWorker({
+        logger: m => {
+          if(m.status === 'recognizing text' && m.progress != null){
+            setProgress(Math.round(m.progress * 100), '解析中… ' + Math.round(m.progress * 100) + '%');
+          }else if(m.status){
+            status.textContent = m.status;
+          }
+        },
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.2/tesseract-core.wasm.js'
+      });
+
+      await worker.loadLanguage(lang.value);
+      await worker.initialize(lang.value);
+
+      setProgress(5, '解析開始…');
+      const { data } = await worker.recognize(fileObj);
+      await worker.terminate();
+
+      const text = (data && data.text) ? data.text.trim() : '';
+      result.value = text;
+      setProgress(100, '完了');
+
+      // 1行目 → 商品名に仮入れ
+      const firstLine = (text.split(/\r?\n/).map(s=>s.trim()).find(Boolean) || '');
+      pick.name.value = firstLine;
+
+      // 自動抽出
+      extractCandidates(text);
+    }catch(err){
+      console.error(err);
+      status.textContent = 'エラー：' + (err && err.message ? err.message : err);
+      alert('OCRに失敗しました。ネットワーク（CDN）や画像を確認してください。');
+    }
+  }
+
+  // ------------------- 抽出処理 -------------------
+  function normalizeNum(s){
+    if(!s) return null;
+    s = s.replace(/[円¥￥,，\s]/g,'').replace(/[^\d.]/g,'');
+    if(!s) return null;
+    // 小数は四捨五入
+    const n = Math.round(parseFloat(s));
+    return isNaN(n) ? null : n;
+  }
+
+  function explodeCandidates(text){
+    const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    const cands = [];
+
+    for(const line of lines){
+      // 金額らしきものを全部拾う
+      const re = /(?:¥|￥)?\s?[\d,]+(?:\.\d+)?\s*(?:円)?/g;
+      const found = line.match(re) || [];
+      for(const raw of found){
+        const n = normalizeNum(raw);
+        if(n!=null){
+          cands.push({ line, raw, value:n });
+        }
+      }
+    }
+    return { lines, cands };
+  }
+
+  function guessPlatform(text){
+    const t = text.toLowerCase();
+    if(/amazon|アマゾン|プライム/.test(t)) return "Amazon";
+    if(/楽天|rakuten/.test(t)) return "楽天";
+    if(/paypay|ヤフー|yahoo/.test(t)) return "ヤフショ";
+    if(/メルカリ|mercari/.test(t)) return "メルカリ";
+    return "";
+  }
+
+  function extractCandidates(text){
+    const { lines, cands } = explodeCandidates(text);
+
+    // ラベル規則
+    const key = {
+      price: /(販売|売価|価格|定価|合計|total|出品)/i,
+      cost:  /(仕入|購入|支払|出金|小計|原価|tax|税込|税抜)/i,
+      ship:  /(送料|配送料|運賃|postage|delivery)/i,
+      fee:   /(手数料|販売手数料|決済手数料|commission|fee)/i,
+    };
+
+    const buckets = { price:[], cost:[], ship:[], fee:[] };
+
+    for(const c of cands){
+      const line = c.line;
+      if(key.fee.test(line))   buckets.fee.push(c);
+      if(key.ship.test(line))  buckets.ship.push(c);
+      if(key.cost.test(line))  buckets.cost.push(c);
+      if(key.price.test(line)) buckets.price.push(c);
+    }
+
+    // ラベルが付かなかった数値はヒューリスティック
+    const unlabeled = cands.filter(c =>
+      !buckets.price.includes(c) &&
+      !buckets.cost.includes(c)  &&
+      !buckets.ship.includes(c)  &&
+      !buckets.fee.includes(c)
+    ).sort((a,b)=>b.value-a.value);
+
+    // 価格が空なら最大値を価格に、2番目を仕入に推定
+    if(buckets.price.length===0 && unlabeled[0]) buckets.price.push(unlabeled[0]);
+    if(buckets.cost.length===0  && unlabeled[1]) buckets.cost.push(unlabeled[1]);
+
+    // UI へ描画
+    const pf = guessPlatform(text);
+    renderChips('cands-price', buckets.price);
+    renderChips('cands-cost',  buckets.cost);
+    renderChips('cands-ship',  buckets.ship);
+    renderChips('cands-fee',   buckets.fee);
+    renderPfChips('cands-pf',  pf ? [pf] : ["Amazon","楽天","ヤフショ","メルカリ","その他"]);
+  }
+
+  function renderChips(id, arr){
+    const box = document.getElementById(id);
+    box.innerHTML = "";
+    if(!arr || arr.length===0){
+      const empty = document.createElement('div');
+      empty.className = 'chip';
+      empty.textContent = '候補なし';
+      empty.style.opacity = .6;
+      box.appendChild(empty);
+      return;
+    }
+    for(const c of arr.slice(0,8)){
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip';
+      btn.title = c.line;
+      btn.textContent = `¥${c.value.toLocaleString()}`;
+      btn.addEventListener('click', ()=>{
+        if(id==='cands-price') pick.price.value = c.value;
+        if(id==='cands-cost')  pick.cost.value  = c.value;
+        if(id==='cands-ship')  pick.ship.value  = c.value;
+        if(id==='cands-fee')   pick.fee.value   = c.value;
+      });
+      box.appendChild(btn);
+    }
+  }
+
+  function renderPfChips(id, list){
+    const box = document.getElementById(id);
+    box.innerHTML = "";
+    for(const label of list){
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip';
+      btn.textContent = label;
+      btn.addEventListener('click', ()=>{ pick.pf.value = label; });
+      box.appendChild(btn);
+    }
+  }
+
+  // ------------------- ボタン系 -------------------
+  file.addEventListener('change', e=>{
+    const f = e.target.files && e.target.files[0];
+    if(f){ runOCR(f); }
+  });
+
+  $('#copy').addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(result.value||''); }
+    catch(_){ return alert('コピーに失敗しました'); }
+    const b = $('#copy'); const t=b.textContent; b.textContent='コピーしました'; setTimeout(()=>b.textContent=t,1200);
+  });
+
+  $('#cleanup').addEventListener('click', ()=>{
+    let t = result.value || '';
+    t = t.replace(/\r/g,'\n');
+    t = t.replace(/[ \t]+/g,' ');
+    t = t.replace(/\n{3,}/g,'\n\n');
+    result.value = t.trim();
+  });
+
+  $('#toProfitName').addEventListener('click', ()=>{
+    const firstLine = (result.value || '').split(/\r?\n/).map(s=>s.trim()).find(Boolean) || '';
+    if(!firstLine) return alert('送るテキストがありません');
+    location.href = '/profit?name=' + encodeURIComponent(firstLine);
+  });
+
+  $('#toProfitFull').addEventListener('click', ()=>{
+    const qs = new URLSearchParams();
+    if(pick.name.value)  qs.set('name', pick.name.value);
+    if(pick.pf.value)    qs.set('platform', pick.pf.value);
+    if(pick.price.value) qs.set('price', pick.price.value);
+    if(pick.cost.value)  qs.set('cost',  pick.cost.value);
+    if(pick.ship.value)  qs.set('ship',  pick.ship.value);
+    if(pick.fee.value)   qs.set('fee',   pick.fee.value);
+    location.href = '/profit?' + qs.toString();
+  });
+})();
+</script>
+{% endblock %}
