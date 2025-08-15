@@ -68,7 +68,7 @@ class AppSettings(db.Model):
     mail_enabled = db.Column(db.Boolean, nullable=False, default=False)
     mail_provider = db.Column(db.String(50), nullable=False, default="gmail")
     mail_from = db.Column(db.String(255), nullable=False, default="")
-    mail_to = db.Column(db.String(1000), nullable=False, default="")   # カンマ区切り対応
+    mail_to = db.Column(db.String(1000), nullable=False, default="")   # カンマ区切り
     mail_pass = db.Column(db.String(255), nullable=False, default="")
     profit_threshold = db.Column(db.Integer, nullable=False, default=5000)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -106,7 +106,7 @@ def fmt(dt):
     except Exception:
         return dt
 
-# ---- メール送信ユーティリティ（設定テーブルを使用） ---------------------------
+# ---- メール送信（設定テーブルを使用） -----------------------------------------
 def _smtp_profile(provider: str):
     table = {
         "gmail":   ("smtp.gmail.com", 465, True,  False),
@@ -117,14 +117,13 @@ def _smtp_profile(provider: str):
     if provider in table:
         return table[provider]
     if "." in provider:
-        return (provider, 587, False, True)  # 独自SMTPホスト名
+        return (provider, 587, False, True)  # 独自SMTP
     return table["gmail"]
 
 def send_mail_by_settings(subject: str, html: str, text_alt: str = ""):
     s = AppSettings.get()
     if not s.mail_enabled:
         return False, "disabled"
-
     if not (s.mail_from and s.mail_pass and s.mail_to):
         return False, "settings_incomplete"
 
@@ -134,7 +133,6 @@ def send_mail_by_settings(subject: str, html: str, text_alt: str = ""):
     msg["Subject"] = subject
     msg["From"] = s.mail_from
     msg["To"]   = s.mail_to
-
     if text_alt:
         msg.attach(MIMEText(text_alt, "plain", "utf-8"))
     msg.attach(MIMEText(html, "html", "utf-8"))
@@ -161,11 +159,7 @@ def send_mail_by_settings(subject: str, html: str, text_alt: str = ""):
 # =============================================================================
 with app.app_context():
     db.create_all()
-    AppSettings.get()  # 設定1行を確実に作成
-    # 初回デモ通知が必要なら以下を解除
-    # if Notification.query.count() == 0:
-    #     demo = Notification(kind="info", title="ようこそ！", body="通知のテストです。")
-    #     db.session.add(demo); db.session.commit()
+    AppSettings.get()
 
 # =============================================================================
 # ルーティング
@@ -190,71 +184,109 @@ def profit():
 
         p, m = calc_profit(price, cost, ship, fee)
 
-        # 履歴保存
         row = ProfitHistory(name=name, platform=platform, price=price,
                             cost=cost, ship=ship, fee=fee, profit=p, margin=m)
-        db.session.add(row)
-        db.session.commit()
+        db.session.add(row); db.session.commit()
 
-        # 閾値チェック（設定テーブル）
         s = AppSettings.get()
         threshold = int(s.profit_threshold or 0)
-        cond_ok = p >= threshold
+        if p >= threshold:
+            meta = {"販売": f"¥{price:,}","仕入": f"¥{cost:,}","送料": f"¥{ship:,}",
+                    "手数料": f"¥{fee:,}","PF": platform,"履歴ID": row.id}
+            n = Notification(kind="profit",
+                             title=f"利益アラート：{name}（利益 ¥{p:,} / {m}%）",
+                             body=f"条件：利益≥¥{threshold:,}",
+                             meta_json=json.dumps(meta, ensure_ascii=False))
+            db.session.add(n); db.session.commit()
 
-        if cond_ok:
-            # 通知レコード
-            meta = {
-                "販売": f"¥{price:,}",
-                "仕入": f"¥{cost:,}",
-                "送料": f"¥{ship:,}",
-                "手数料": f"¥{fee:,}",
-                "PF": platform,
-                "履歴ID": row.id,
-            }
-            n = Notification(
-                kind="profit",
-                title=f"利益アラート：{name}（利益 ¥{p:,} / {m}%）",
-                body=f"条件：利益≥¥{threshold:,}",
-                meta_json=json.dumps(meta, ensure_ascii=False)
-            )
-            db.session.add(n)
-            db.session.commit()
-
-            # メール（設定ON時のみ）
             try:
-                html = render_template(
-                    "email/profit_notice.html",
-                    name=name, platform=platform,
-                    profit_val=p, margin=m,
+                html = render_template("email/profit_notice.html",
+                    name=name, platform=platform, profit_val=p, margin=m,
                     price=price, cost=cost, ship=ship, fee_calc=fee,
-                    threshold=threshold, now=datetime.utcnow().strftime("%Y-%m-%d %H:%M")
-                )
+                    threshold=threshold, now=datetime.utcnow().strftime("%Y-%m-%d %H:%M"))
             except Exception:
-                html = (
-                    f"<h2>利益アラート</h2>"
-                    f"<p>商品名：{name} / PF：{platform}</p>"
-                    f"<p>利益：¥{p:,}（{m}%）</p>"
-                    f"<p>販売：¥{price:,} / 仕入：¥{cost:,} / 送料：¥{ship:,} / 手数料：¥{fee:,}</p>"
-                )
+                html = (f"<h2>利益アラート</h2>"
+                        f"<p>商品名：{name} / PF：{platform}</p>"
+                        f"<p>利益：¥{p:,}（{m}%）</p>"
+                        f"<p>販売：¥{price:,} / 仕入：¥{cost:,} / 送料：¥{ship:,} / 手数料：¥{fee:,}</p>")
             subj = f"【RN】利益アラート：{name} 利益 ¥{p:,}（{m}%）"
-            text_alt = f"[利益アラート] {name} / 利益 ¥{p:,}（{m}%）"
-            send_mail_by_settings(subj, html, text_alt)
+            send_mail_by_settings(subj, html, f"[利益アラート] {name} / 利益 ¥{p:,}")
 
         flash(f"保存しました：{name} / 利益 {p:,} 円（{m}%）")
         return redirect(url_for("history"))
-
     return render_template("pages/profit.html")
+
+# ---------- 履歴：検索/絞り込み & 表示 ----------------------------------------
+def _parse_date(s: str):
+    try:
+        return datetime.strptime(s, "%Y-%m-%d")
+    except Exception:
+        return None
+
+def _build_history_query(args):
+    q = ProfitHistory.query
+    label = []
+    # 期間
+    start_s = (args.get("start") or "").strip()
+    end_s   = (args.get("end") or "").strip()
+    start_dt = _parse_date(start_s)
+    end_dt   = _parse_date(end_s)
+    if start_dt:
+        q = q.filter(ProfitHistory.created_at >= start_dt)
+        label.append(f"{start_dt.strftime('%Y-%m-%d')}〜")
+    if end_dt:
+        end_next = end_dt + timedelta(days=1)  # 当日23:59:59まで含める
+        q = q.filter(ProfitHistory.created_at < end_next)
+        if not start_dt:
+            label.append(f"〜{end_dt.strftime('%Y-%m-%d')}")
+        else:
+            label[-1] = f"{start_dt.strftime('%Y-%m-%d')}〜{end_dt.strftime('%Y-%m-%d')}"
+
+    # プラットフォーム
+    pf = (args.get("platform") or "").strip()
+    if pf and pf.lower() != "all":
+        q = q.filter(ProfitHistory.platform == pf)
+        label.append(f"PF={pf}")
+
+    # キーワード（商品名）
+    kw = (args.get("keyword") or "").strip()
+    if kw:
+        q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
+        label.append(f"KW='{kw}'")
+
+    # 最小利益
+    try:
+        min_profit = int(args.get("min_profit") or 0)
+    except Exception:
+        min_profit = 0
+    if min_profit > 0:
+        q = q.filter(ProfitHistory.profit >= min_profit)
+        label.append(f"利益≥¥{min_profit:,}")
+
+    label_text = " / ".join(label) if label else "全件"
+    return q, label_text, {"start": start_s, "end": end_s, "platform": pf, "keyword": kw, "min_profit": min_profit}
 
 @app.route("/history")
 def history():
-    rows = ProfitHistory.query.order_by(ProfitHistory.created_at.desc()).limit(200).all()
-    return render_template("pages/history.html", rows=rows)
+    # プラットフォーム候補
+    platforms = [r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
+    q, label, params = _build_history_query(request.args)
 
+    total = q.count()
+    rows = q.order_by(ProfitHistory.created_at.desc()).limit(500).all()
+
+    return render_template("pages/history.html",
+                           rows=rows, total=total, label=label,
+                           params=params, platforms=platforms)
+
+# ---------- CSV エクスポート（検索条件をそのまま適用） -------------------------
 @app.route("/export/history.csv")
 def export_history():
+    q, _, _ = _build_history_query(request.args)
+    q = q.order_by(ProfitHistory.created_at.desc())
     sio = StringIO(); w = csv.writer(sio)
     w.writerow(["日時","商品名","PF","販売","仕入","送料","手数料","利益","利益率(%)"])
-    for r in ProfitHistory.query.order_by(ProfitHistory.created_at.desc()).all():
+    for r in q.all():
         w.writerow([r.created_at.strftime("%Y-%m-%d %H:%M"),
                     r.name, r.platform, r.price, r.cost, r.ship, r.fee, r.profit, r.margin])
     data = sio.getvalue().encode("utf-8-sig")
@@ -262,6 +294,7 @@ def export_history():
     return send_file(BytesIO(data), as_attachment=True,
                      download_name=fname, mimetype="text/csv; charset=utf-8")
 
+# ---------- ランキング・通知・設定は現状維持 -----------------------------------
 @app.route("/ranking")
 def ranking():
     days = (request.args.get("days") or "30").lower()
@@ -277,14 +310,14 @@ def ranking():
     rows = q.order_by(ProfitHistory.profit.desc()).limit(50).all()
     return render_template("pages/ranking.html", rows=rows, days=days, label=label)
 
-# ---- 通知（表示/既読/スヌーズ） ----------------------------------------------
 @app.route("/notifications")
 def notifications():
     now = datetime.utcnow()
     rows = (Notification.query
             .filter((Notification.snooze_until.is_(None)) |
                     (Notification.snooze_until <= now))
-            .order_by(Notification.unread.desc(), Notification.created_at.desc())
+            .order_by(Notification.unread.desc(),
+                      Notification.created_at.desc())
             .limit(200).all())
     return render_template("pages/notifications.html", rows=rows)
 
@@ -292,8 +325,7 @@ def notifications():
 def api_notif_mark_read():
     data = request.get_json(silent=True) or {}
     ids = data.get("ids") or []
-    if not isinstance(ids, list):
-        ids = [ids]
+    if not isinstance(ids, list): ids = [ids]
     q = Notification.query.filter(Notification.id.in_(ids))
     updated = 0
     for n in q:
@@ -308,13 +340,11 @@ def api_notif_snooze():
     nid = int(data.get("id") or 0)
     minutes = int(data.get("minutes") or 60)
     n = Notification.query.get(nid)
-    if not n:
-        return jsonify(ok=False, error="not_found"), 404
+    if not n: return jsonify(ok=False, error="not_found"), 404
     n.snooze_until = datetime.utcnow() + timedelta(minutes=minutes)
     db.session.commit()
     return jsonify(ok=True, snooze_until=n.snooze_until.isoformat())
 
-# ---- その他ページ -------------------------------------------------------------
 @app.route("/ocr", methods=["GET", "POST"])
 def ocr():
     return render_template("pages/ocr.html")
@@ -323,20 +353,15 @@ def ocr():
 def suppliers():
     return render_template("pages/suppliers.html")
 
-# ---- 設定（GUI） -------------------------------------------------------------
 @app.route("/setting", methods=["GET", "POST"])
 def setting():
     s = AppSettings.get()
     if request.method == "POST":
-        # 空のパスワードは維持
-        new_pass = (request.form.get("mail_pass") or "").strip()
-        if not new_pass:
-            new_pass = s.mail_pass
-
-        s.mail_enabled = request.form.get("mail_enabled") in ("on", "1", "true")
+        new_pass = (request.form.get("mail_pass") or "").strip() or s.mail_pass
+        s.mail_enabled = request.form.get("mail_enabled") in ("on","1","true")
         s.mail_provider = (request.form.get("mail_provider") or "gmail").strip().lower()
         s.mail_from = (request.form.get("mail_from") or "").strip()
-        s.mail_to = (request.form.get("mail_to") or "").strip()
+        s.mail_to   = (request.form.get("mail_to") or "").strip()
         s.mail_pass = new_pass
         s.profit_threshold = int(request.form.get("profit_threshold") or 0)
         s.updated_at = datetime.utcnow()
@@ -357,7 +382,6 @@ def setting_test_mail():
     flash("テストメールを送信しました。" if ok else f"テスト送信に失敗：{info}")
     return redirect(url_for("setting"))
 
-# ---- 健康診断 / エラー -------------------------------------------------------
 @app.route("/healthz")
 def healthz():
     return "ok", 200
