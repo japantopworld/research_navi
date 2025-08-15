@@ -2,18 +2,12 @@
 {% block title %}履歴一覧 | リサーチナビ{% endblock %}
 {% block content %}
 
-<h1>履歴一覧 <small style="color:#6b7280;font-size:.8em">（{{ label }} / {{ total }}件）</small></h1>
+<h1>履歴一覧 <small style="color:#6b7280;font-size:.85em">{{ label }}</small></h1>
 
-<form method="get" class="search-card">
+<form method="get" class="card">
   <div class="grid">
-    <label>
-      <span>開始日</span>
-      <input type="date" name="start" value="{{ params.start }}">
-    </label>
-    <label>
-      <span>終了日</span>
-      <input type="date" name="end" value="{{ params.end }}">
-    </label>
+    <label><span>開始日</span><input type="date" name="start" value="{{ params.start }}"></label>
+    <label><span>終了日</span><input type="date" name="end" value="{{ params.end }}"></label>
     <label>
       <span>プラットフォーム</span>
       <select name="platform">
@@ -24,113 +18,201 @@
         {% endfor %}
       </select>
     </label>
-    <label>
-      <span>キーワード（商品名）</span>
-      <input type="text" name="keyword" value="{{ params.keyword }}" placeholder="例：Switch">
-    </label>
-    <label>
-      <span>最小利益（円）</span>
-      <input type="number" name="min_profit" min="0" step="1" value="{{ params.min_profit or '' }}">
-    </label>
+    <label><span>キーワード</span><input type="text" name="keyword" value="{{ params.keyword }}" placeholder="例：Switch"></label>
+    <label><span>最小利益（円）</span><input type="number" name="min_profit" min="0" step="1" value="{{ params.min_profit or ''}}"></label>
   </div>
   <div class="actions">
-    <button type="submit">この条件で検索</button>
+    <button type="submit">絞り込む</button>
     <a class="btn" href="{{ url_for('history') }}">条件クリア</a>
-
     <a class="btn" href="{{ url_for('export_history',
-                                     start=params.start, end=params.end,
-                                     platform=params.platform, keyword=params.keyword,
-                                     min_profit=params.min_profit) }}">CSVエクスポート</a>
+        start=params.start, end=params.end, platform=params.platform,
+        keyword=params.keyword, min_profit=params.min_profit) }}">CSVエクスポート</a>
   </div>
 </form>
 
-<form class="import-card" method="post" action="{{ url_for('import_history') }}" enctype="multipart/form-data">
-  <div class="row">
+<div class="card soft">
+  <form method="post" action="{{ url_for('import_history') }}" enctype="multipart/form-data" class="importer">
     <label class="file">
-      <span>CSVインポート（初回一括取り込み）</span>
-      <input type="file" name="file" accept=".csv" required>
+      <input type="file" name="file" accept=".csv">
     </label>
-    <button type="submit">取り込む</button>
-  </div>
-  <p class="help">
-    ヘッダ例：<code>日時, 商品名, PF, 販売, 仕入, 送料, 手数料, 利益, 利益率(%)</code>（UTF-8 or CP932）<br>
-    ※ ヘッダは日本語・英語どちらでもOK（name/platform/price/cost/ship/fee/profit/margin/dt）
-  </p>
-</form>
+    <button type="submit" class="secondary">CSVインポート</button>
+    <span class="muted">※ ヘッダは「日時,商品名,PF,販売,仕入,送料,手数料,利益,利益率(%)」などに対応</span>
+  </form>
+</div>
 
-{% if rows and rows|length %}
-  <div class="table-wrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>日時</th>
-          <th>商品名</th>
-          <th>PF</th>
-          <th class="num">販売</th>
-          <th class="num">仕入</th>
-          <th class="num">送料</th>
-          <th class="num">手数料</th>
-          <th class="num">利益</th>
-          <th class="num">利益率</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-        <tr>
-          <td>{{ r.created_at|fmt }}</td>
-          <td class="name">{{ r.name }}</td>
-          <td>{{ r.platform }}</td>
-          <td class="num">{{ r.price|yen }}</td>
-          <td class="num">{{ r.cost|yen }}</td>
-          <td class="num">{{ r.ship|yen }}</td>
-          <td class="num">{{ r.fee|yen }}</td>
-          <td class="num {% if r.profit>=0 %}pos{% else %}neg{% endif %}">{{ r.profit|yen }}</td>
-          <td class="num">{{ r.margin }}%</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-{% else %}
-  <p>該当データがありません。条件をゆるくして再検索してみてください。</p>
-{% endif %}
+<div class="table-wrap">
+  <table class="table" id="hist">
+    <thead>
+      <tr>
+        <th>日時</th>
+        <th>商品名</th>
+        <th>PF</th>
+        <th class="num">販売</th>
+        <th class="num">仕入</th>
+        <th class="num">送料</th>
+        <th class="num">手数料</th>
+        <th class="num">利益</th>
+        <th class="num">利益率</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr data-id="{{ r.id }}">
+        <td data-k="created_at">{{ r.created_at|fmt }}</td>
+        <td data-k="name" class="name">{{ r.name }}</td>
+        <td data-k="platform">{{ r.platform }}</td>
+        <td data-k="price" class="num">{{ r.price|yen }}</td>
+        <td data-k="cost" class="num">{{ r.cost|yen }}</td>
+        <td data-k="ship" class="num">{{ r.ship|yen }}</td>
+        <td data-k="fee" class="num">{{ r.fee|yen }}</td>
+        <td data-k="profit" class="num {{ 'pos' if r.profit>=0 else 'neg' }}">{{ r.profit|yen }}</td>
+        <td data-k="margin" class="num">{{ ('%.2f' % r.margin) }}%</td>
+        <td class="ops">
+          <button class="edit">編集</button>
+          <button class="del secondary">削除</button>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if total==0 %}
+      <tr><td colspan="10" style="text-align:center;color:#6b7280">データがありません</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
 
 <style>
-.search-card{
-  border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0 14px;
-}
-.search-card .grid{display:grid;gap:10px;grid-template-columns:repeat(1,minmax(0,1fr))}
-.search-card label{display:flex;flex-direction:column;gap:6px}
-.search-card label>span{font-size:12px;color:#6b7280}
-.search-card input,.search-card select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
-.actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0}
+.card.soft{background:#f8fafc}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(0,1fr))}
+label{display:flex;flex-direction:column;gap:6px}
+label>span{font-size:12px;color:#6b7280}
+input,select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .actions .btn, .actions button{padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer}
 .actions button{background:#111;color:#fff;border-color:#111}
-.actions .btn:hover{border-color:#cbd5e1}
+.secondary{background:#fff !important;color:#111 !important}
+.importer{display:flex;gap:8px;align-items:center}
+.muted{color:#6b7280}
 
-.import-card{border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;padding:12px;margin:0 0 14px}
-.import-card .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.import-card .file{display:flex;flex-direction:column;gap:6px}
-.import-card .file span{font-size:12px;color:#6b7280}
-.import-card input[type="file"]{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
-.import-card button{padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#111;color:#fff;cursor:pointer}
-.help{color:#6b7280;font-size:12px;margin-top:6px}
-
-.table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:10px}
-.table{width:100%;border-collapse:collapse;background:#fff}
+.table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
+.table{width:100%;border-collapse:collapse}
 .table th,.table td{padding:10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
-.table thead th{position:sticky;top:0;background:#f8fafc;font-weight:700}
+.table thead th{position:sticky;top:0;background:#f8fafc}
 .table .num{text-align:right}
-.table td.name{max-width:380px;overflow:hidden;text-overflow:ellipsis}
-.pos{color:#0a7f20;font-weight:600}
-.neg{color:#b91c1c;font-weight:600}
-
-@media (min-width:900px){
-  .search-card .grid{grid-template-columns: repeat(5, minmax(0,1fr));}
-}
-@media (min-width:600px) and (max-width:899px){
-  .search-card .grid{grid-template-columns: repeat(3, minmax(0,1fr));}
-}
+.table .name{max-width:360px;overflow:hidden;text-overflow:ellipsis}
+.pos{color:#0a7f20}.neg{color:#b91c1c}
+.ops button{padding:6px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer}
+.ops .edit{background:#111;color:#fff;border-color:#111}
+.inline input{width:110px}
+.inline .name input{width:260px}
+.inline select{width:120px}
+@media (max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
+
+<script>
+(() => {
+  const $ = q => document.querySelector(q);
+  const $$ = q => Array.from(document.querySelectorAll(q));
+  const jpy = n => '¥' + (Math.round(n||0)).toLocaleString();
+  const toInt = v => { const s=String(v||'').replace(/[^\d.-]/g,''); const x=parseFloat(s); return isFinite(x)? Math.round(x):0; };
+
+  // 行を編集モードに切替
+  function enterEdit(tr){
+    if(tr.classList.contains('inline')) return;
+    tr.classList.add('inline');
+    const name = tr.querySelector('[data-k="name"]');
+    const pf   = tr.querySelector('[data-k="platform"]');
+    const price= tr.querySelector('[data-k="price"]');
+    const cost = tr.querySelector('[data-k="cost"]');
+    const ship = tr.querySelector('[data-k="ship"]');
+    const fee  = tr.querySelector('[data-k="fee"]');
+
+    name.innerHTML  = `<input value="${name.textContent.trim()}">`;
+    pf.innerHTML    = `<select>
+        ${['Amazon','楽天','ヤフショ','メルカリ','その他'].map(x=>{
+           const sel = (pf.textContent.trim()===x)?'selected':'';
+           return `<option ${sel}>${x}</option>`;
+        }).join('')}
+      </select>`;
+    price.innerHTML = `<input inputmode="numeric" value="${toInt(price.textContent)}">`;
+    cost.innerHTML  = `<input inputmode="numeric" value="${toInt(cost.textContent)}">`;
+    ship.innerHTML  = `<input inputmode="numeric" value="${toInt(ship.textContent)}">`;
+    fee.innerHTML   = `<input inputmode="numeric" value="${toInt(fee.textContent)}">`;
+
+    const ops = tr.querySelector('.ops');
+    ops.dataset.prev = ops.innerHTML;
+    ops.innerHTML = `<button class="save">保存</button><button class="cancel secondary">取消</button>`;
+  }
+
+  function leaveEdit(tr, restore=false){
+    tr.classList.remove('inline');
+    if(restore){
+      // 取消：再読込で誤差を防ぐ
+      location.reload();
+      return;
+    }
+  }
+
+  async function saveRow(tr){
+    const id = tr.dataset.id;
+    const name = tr.querySelector('[data-k="name"] input').value.trim();
+    const platform = tr.querySelector('[data-k="platform"] select').value.trim();
+    const price= toInt(tr.querySelector('[data-k="price"] input').value);
+    const cost = toInt(tr.querySelector('[data-k="cost"] input').value);
+    const ship = toInt(tr.querySelector('[data-k="ship"] input').value);
+    const fee  = toInt(tr.querySelector('[data-k="fee"] input').value);
+
+    const res = await fetch('/api/history/update',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id, name, platform, price, cost, ship, fee })
+    }).then(r=>r.json()).catch(_=>({ok:false}));
+
+    if(!res.ok){ alert('保存に失敗しました'); return; }
+
+    // 反映
+    tr.querySelector('[data-k="name"]').textContent = res.item.name;
+    tr.querySelector('[data-k="platform"]').textContent = res.item.platform;
+    tr.querySelector('[data-k="price"]').textContent = jpy(res.item.price);
+    tr.querySelector('[data-k="cost"]').textContent  = jpy(res.item.cost);
+    tr.querySelector('[data-k="ship"]').textContent  = jpy(res.item.ship);
+    tr.querySelector('[data-k="fee"]').textContent   = jpy(res.item.fee);
+
+    const pr = tr.querySelector('[data-k="profit"]');
+    pr.textContent = jpy(res.item.profit);
+    pr.classList.toggle('pos', res.item.profit>=0);
+    pr.classList.toggle('neg', res.item.profit<0);
+
+    tr.querySelector('[data-k="margin"]').textContent = (res.item.margin.toFixed(2)) + '%';
+
+    // 操作ボタン戻す
+    const ops = tr.querySelector('.ops');
+    ops.innerHTML = `<button class="edit">編集</button><button class="del secondary">削除</button>`;
+    leaveEdit(tr);
+  }
+
+  async function deleteRow(tr){
+    if(!confirm('このレコードを削除しますか？')) return;
+    const id = tr.dataset.id;
+    const res = await fetch('/api/history/delete',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id })
+    }).then(r=>r.json()).catch(_=>({ok:false}));
+    if(!res.ok){ alert('削除に失敗しました'); return; }
+    tr.remove();
+  }
+
+  // クリック委任
+  $('#hist').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const tr = e.target.closest('tr');
+    if(btn.classList.contains('edit')) enterEdit(tr);
+    if(btn.classList.contains('cancel')) leaveEdit(tr, true);
+    if(btn.classList.contains('save')) saveRow(tr);
+    if(btn.classList.contains('del')) deleteRow(tr);
+  });
+})();
+</script>
 
 {% endblock %}
