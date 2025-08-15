@@ -1,56 +1,94 @@
 {% extends "base/layout.html" %}
 {% block title %}設定 | リサーチナビ{% endblock %}
 {% block content %}
+
 <h1>設定</h1>
 
-<form method="post" action="{{ url_for('setting') }}" class="card">
-  <h2>通知メール</h2>
+<div class="card">
+  <form method="post">
+    <div class="grid">
+      <label class="col chk">
+        <input type="checkbox" name="mail_enabled" {% if s.mail_enabled %}checked{% endif %}>
+        <span>メール通知を有効にする</span>
+      </label>
 
-  <label class="row">
-    <input type="checkbox" name="mail_enabled" {% if s.mail_enabled %}checked{% endif %}>
-    メール通知を有効化
-  </label>
+      <label class="col">
+        <span>メールプロバイダ（gmail/icloud/outlook/yahoo またはSMTPホスト）</span>
+        <input name="mail_provider" value="{{ s.mail_provider }}">
+      </label>
 
-  <label class="row">
-    <span>プロバイダ</span>
-    <select name="mail_provider">
-      <option value="gmail" {% if s.mail_provider=='gmail' %}selected{% endif %}>Gmail</option>
-      <option value="icloud" {% if s.mail_provider=='icloud' %}selected{% endif %}>iCloud</option>
-      <option value="outlook" {% if s.mail_provider=='outlook' %}selected{% endif %}>Outlook</option>
-      <option value="yahoo" {% if s.mail_provider=='yahoo' %}selected{% endif %}>Yahoo!メール</option>
-    </select>
-  </label>
+      <label class="col">
+        <span>送信元（FROM）</span>
+        <input name="mail_from" value="{{ s.mail_from }}" placeholder="example@gmail.com">
+      </label>
 
-  <label class="row">
-    <span>送信元（MAIL_FROM）</span>
-    <input type="email" name="mail_from" value="{{ s.mail_from }}" placeholder="example@gmail.com" required>
-  </label>
+      <label class="col">
+        <span>送信先（カンマ区切り）</span>
+        <input name="mail_to" value="{{ s.mail_to }}" placeholder="a@example.com,b@example.com">
+      </label>
 
-  <label class="row">
-    <span>送信先（カンマ区切り可）</span>
-    <input type="text" name="mail_to" value="{{ s.mail_to }}" placeholder="taro@example.com,hanako@example.com" required>
-  </label>
+      <label class="col">
+        <span>アプリパスワード / メールパスワード</span>
+        <input name="mail_pass" value="" placeholder="（空なら変更しません）">
+      </label>
 
-  <label class="row">
-    <span>アプリパスワード</span>
-    <input type="password" name="mail_pass" placeholder="変更しない場合は空欄のまま">
-  </label>
+      <label class="col">
+        <span>利益の通知閾値（円）</span>
+        <input name="profit_threshold" type="number" min="0" step="1" value="{{ s.profit_threshold }}">
+      </label>
+    </div>
 
-  <label class="row">
-    <span>利益閾値（円）</span>
-    <input type="number" name="profit_threshold" min="0" step="1" value="{{ s.profit_threshold }}">
-  </label>
+    <div class="actions">
+      <button type="submit">保存</button>
+      <form method="post" action="{{ url_for('setting_test_mail') }}" style="display:inline">
+        <button type="submit" class="secondary">テストメール送信</button>
+      </form>
+    </div>
+  </form>
+</div>
 
-  <div class="actions">
-    <button type="submit">保存</button>
-    <button form="testmail" type="submit" class="secondary">テスト送信</button>
+<div class="card">
+  <h2>レポート送信（手動）</h2>
+  <p class="muted">直近のデータから集計し、メールで送信します。プレビューで内容を確認してから送信できます。</p>
+  <div class="report-grid">
+    <div class="box">
+      <h3>週次（直近7日）</h3>
+      <div class="btns">
+        <a class="btn" href="{{ url_for('report_weekly_preview') }}" target="_blank">プレビュー</a>
+        <form method="post" action="{{ url_for('report_weekly_send') }}">
+          <button type="submit" class="primary">メール送信</button>
+        </form>
+      </div>
+    </div>
+    <div class="box">
+      <h3>月次（直近30日）</h3>
+      <div class="btns">
+        <a class="btn" href="{{ url_for('report_monthly_preview') }}" target="_blank">プレビュー</a>
+        <form method="post" action="{{ url_for('report_monthly_send') }}">
+          <button type="submit" class="primary">メール送信</button>
+        </form>
+      </div>
+    </div>
   </div>
-</form>
+</div>
 
-<form id="testmail" method="post" action="{{ url_for('setting_test_mail') }}"></form>
+<style>
+.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:16px;margin:10px 0}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.col{display:flex;flex-direction:column;gap:6px}
+.col span{font-size:12px;color:#6b7280}
+.col.chk{flex-direction:row;gap:8px;align-items:center}
+input{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#111;color:#fff;cursor:pointer}
+button.secondary{background:#fff;color:#111}
+.muted{color:#6b7280}
+.report-grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.box{border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;padding:12px}
+.btns{display:flex;gap:8px;align-items:center}
+a.btn{display:inline-block;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;color:#111;text-decoration:none}
+.primary{background:#111;color:#fff;border-color:#111}
+@media (max-width:800px){.grid,.report-grid{grid-template-columns:1fr}}
+</style>
 
-<p class="help">
-※ Gmailは「2段階認証」＋「アプリ パスワード（16桁）」が必要です。<br>
-※ パスワード欄を空で保存すると現在のパスワードを維持します。
-</p>
 {% endblock %}
