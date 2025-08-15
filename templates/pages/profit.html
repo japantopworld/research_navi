@@ -1,43 +1,62 @@
 {% extends "base/layout.html" %}
 {% block title %}利益計算 | リサーチナビ{% endblock %}
 {% block content %}
-
 <h1>利益計算</h1>
 
-<form method="post" class="form">
+<form method="post" class="card">
   <div class="grid">
-    <label>商品名
-      <input type="text" name="name" placeholder="例：Nintendo Switch" required>
+    <label class="col">
+      <span>商品名</span>
+      <input name="name" type="text" value="{{ request.args.get('name','') }}" placeholder="例：Nintendo Switch 有機EL">
     </label>
-    <label>プラットフォーム
-      <input type="text" name="platform" placeholder="Amazon / 楽天 / ヤフショ など" required>
+
+    <label class="col">
+      <span>プラットフォーム</span>
+      <select name="platform">
+        <option value="Amazon">Amazon</option>
+        <option value="楽天">楽天</option>
+        <option value="ヤフショ">ヤフショ</option>
+        <option value="メルカリ">メルカリ</option>
+        <option value="その他">その他</option>
+      </select>
+    </label>
+
+    <label class="col">
+      <span>販売価格（円）</span>
+      <input name="price" type="number" inputmode="numeric" min="0" step="1" required>
+    </label>
+
+    <label class="col">
+      <span>仕入価格（円）</span>
+      <input name="cost" type="number" inputmode="numeric" min="0" step="1" required>
+    </label>
+
+    <label class="col">
+      <span>送料（円）</span>
+      <input name="ship" type="number" inputmode="numeric" min="0" step="1" value="0">
+    </label>
+
+    <label class="col">
+      <span>手数料（円）</span>
+      <input name="fee" type="number" inputmode="numeric" min="0" step="1" value="0">
     </label>
   </div>
 
-  <div class="grid">
-    <label>販売価格（円）
-      <input type="number" name="price" inputmode="numeric" required>
-    </label>
-    <label>仕入（円）
-      <input type="number" name="cost" inputmode="numeric" required>
-    </label>
-    <label>送料（円）
-      <input type="number" name="ship" inputmode="numeric" value="0">
-    </label>
-    <label>手数料（円）
-      <input type="number" name="fee" inputmode="numeric" value="0">
-    </label>
+  <div class="actions">
+    <button type="submit">保存（履歴へ）</button>
+    <a class="secondary" href="{{ url_for('history') }}">履歴を見る</a>
   </div>
-
-  <button type="submit">保存する</button>
 </form>
 
 <style>
-.form .grid{display:grid;gap:12px;margin:12px 0}
-@media (min-width:720px){.form .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.form input{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px}
-button{padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer}
-button:hover{border-color:#cbd5e1;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:16px;margin:10px 0}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.col{display:flex;flex-direction:column;gap:6px}
+.col span{font-size:12px;color:#6b7280}
+input,select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#111;color:#fff;cursor:pointer}
+a.secondary{padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;color:#111;text-decoration:none}
+@media (max-width:720px){.grid{grid-template-columns:1fr}}
 </style>
-
 {% endblock %}
