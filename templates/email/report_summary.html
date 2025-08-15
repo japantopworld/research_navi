@@ -1,1 +1,80 @@
+<!doctype html>
+<meta charset="utf-8">
+<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Meiryo,sans-serif;max-width:720px;margin:auto">
+  <h2 style="margin:0 0 8px">{{ title }}</h2>
+  <p style="color:#6b7280;margin:0 0 12px">
+    対象期間：{{ start|fmt }} 〜 {{ end|fmt }} / 生成：{{ generated|fmt }}
+  </p>
+
+  <table style="border-collapse:collapse;width:100%;margin:6px 0 12px">
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:8px;background:#f8fafc">売上合計</td>
+      <td style="border:1px solid #e5e7eb;padding:8px">{{ stats.sum_price|yen }}</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;background:#f8fafc">利益合計</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;font-weight:700">{{ stats.sum_profit|yen }}</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:8px;background:#f8fafc">平均利益率</td>
+      <td style="border:1px solid #e5e7eb;padding:8px">{{ stats.avg_margin }}%</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;background:#f8fafc">件数</td>
+      <td style="border:1px solid #e5e7eb;padding:8px">{{ stats.count_rows }}</td>
+    </tr>
+  </table>
+
+  <h3 style="margin:14px 0 6px">プラットフォーム別（利益合計 上位）</h3>
+  <table style="border-collapse:collapse;width:100%">
+    <thead>
+      <tr>
+        <th style="text-align:left;border:1px solid #e5e7eb;padding:6px;background:#f1f5f9">PF</th>
+        <th style="text-align:right;border:1px solid #e5e7eb;padding:6px;background:#f1f5f9">件数</th>
+        <th style="text-align:right;border:1px solid #e5e7eb;padding:6px;background:#f1f5f9">利益合計</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in stats.by_pf %}
+      <tr>
+        <td style="border:1px solid #e5e7eb;padding:6px">{{ r.platform }}</td>
+        <td style="border:1px solid #e5e7eb;padding:6px;text-align:right">{{ r.cnt }}</td>
+        <td style="border:1px solid #e5e7eb;padding:6px;text-align:right">{{ r.sum_profit|yen }}</td>
+      </tr>
+      {% endfor %}
+      {% if not stats.by_pf or stats.by_pf|length==0 %}
+      <tr><td colspan="3" style="border:1px solid #e5e7eb;padding:6px;color:#6b7280">該当なし</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <h3 style="margin:14px 0 6px">トップ商品（利益合計 上位10）</h3>
+  <table style="border-collapse:collapse;width:100%">
+    <thead>
+      <tr>
+        <th style="text-align:right;border:1px solid #e5e7eb;padding:6px;background:#f1f5f9">#</th>
+        <th style="text-align:left;border:1px solid #e5e7eb;padding:6px;background:#f1f5f9">商品名</th>
+        <th style="text-align:left;border:1px solid #e5e7eb;padding:6px;background:#f1f5f9">PF</th>
+        <th style="text-align:right;border:1px solid #e5e7eb;padding:6px;background:#f1f5f9">件数</th>
+        <th style="text-align:right;border:1px solid #e5e7eb;padding:6px;background:#f1f5f9">利益合計</th>
+        <th style="text-align:left;border:1px solid #e5e7eb;padding:6px;background:#f1f5f9">期間</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in stats.top %}
+      <tr>
+        <td style="border:1px solid #e5e7eb;padding:6px;text-align:right">{{ loop.index }}</td>
+        <td style="border:1px solid #e5e7eb;padding:6px">{{ r.name }}</td>
+        <td style="border:1px solid #e5e7eb;padding:6px">{{ r.platform }}</td>
+        <td style="border:1px solid #e5e7eb;padding:6px;text-align:right">{{ r.cnt }}</td>
+        <td style="border:1px solid #e5e7eb;padding:6px;text-align:right">{{ r.sum_profit|yen }}</td>
+        <td style="border:1px solid #e5e7eb;padding:6px">
+          {{ (r.first_at or '')|fmt }} 〜 {{ (r.last_at or '')|fmt }}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not stats.top or stats.top|length==0 %}
+      <tr><td colspan="6" style="border:1px solid #e5e7eb;padding:6px;color:#6b7280">該当なし</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <p style="color:#6b7280;margin-top:16px">本メールはリサーチナビが自動生成しました。</p>
+</div>
 
