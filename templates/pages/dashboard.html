@@ -1,145 +1,166 @@
 {% extends "base/layout.html" %}
-{% block title %}月次ダッシュボード | リサーチナビ{% endblock %}
+{% block title %}ダッシュボード | リサーチナビ{% endblock %}
 {% block content %}
 
-<h1>月次ダッシュボード</h1>
+<h1>ダッシュボード</h1>
 
-<div class="card">
-  <div class="filters">
+<div class="filters card">
+  <form id="f" onsubmit="evReload(event)">
     <label>
       <span>対象月数</span>
-      <select id="months">
-        <option value="6">直近 6ヶ月</option>
-        <option value="12" selected>直近 12ヶ月</option>
-        <option value="18">直近 18ヶ月</option>
-        <option value="24">直近 24ヶ月</option>
+      <select name="months" id="months">
+        <option value="3">3ヶ月</option>
+        <option value="6">6ヶ月</option>
+        <option value="12" selected>12ヶ月</option>
+        <option value="24">24ヶ月</option>
+        <option value="36">36ヶ月</option>
       </select>
     </label>
+
     <label>
       <span>プラットフォーム</span>
-      <select id="platform">
-        <option value="">すべて</option>
-        <option value="all">すべて</option>
-        {% for p in platforms %}
-          <option value="{{ p }}">{{ p }}</option>
+      <select name="platform" id="platform">
+        <option value="">ALL</option>
+        {% for pf in platforms %}
+          <option value="{{ pf }}">{{ pf }}</option>
         {% endfor %}
       </select>
     </label>
+
     <label class="grow">
-      <span>キーワード（商品名）</span>
-      <input id="keyword" type="text" placeholder="例：Switch">
+      <span>キーワード（商品名に含む）</span>
+      <input type="text" name="keyword" id="keyword" placeholder="例：Switch / LEGO / iPad">
     </label>
-    <button id="reload">更新</button>
+
+    <button type="submit">再読込</button>
+  </form>
+</div>
+
+<div class="kpis card" id="kpis">
+  <div>
+    <div class="k-label">合計売上</div>
+    <div class="k-val" id="k_sales">¥0</div>
+  </div>
+  <div>
+    <div class="k-label">合計利益</div>
+    <div class="k-val" id="k_profit">¥0</div>
+  </div>
+  <div>
+    <div class="k-label">件数</div>
+    <div class="k-val" id="k_count">0</div>
+  </div>
+  <div>
+    <div class="k-label">平均利益率</div>
+    <div class="k-val" id="k_margin">0%</div>
   </div>
 </div>
 
-<div class="grid-2">
+<div class="grid">
   <div class="card">
-    <h3>売上・利益 推移（毎月）</h3>
-    <canvas id="lineChart" height="120"></canvas>
+    <h3>月次推移（売上）</h3>
+    <canvas id="chartSales" height="120"></canvas>
   </div>
   <div class="card">
-    <h3>件数 推移（毎月）</h3>
-    <canvas id="barChart" height="120"></canvas>
+    <h3>月次推移（利益）</h3>
+    <canvas id="chartProfit" height="120"></canvas>
   </div>
-</div>
-
-<div class="grid-2">
   <div class="card">
-    <h3>PF別 利益内訳（合計）</h3>
-    <canvas id="pfChart" height="120"></canvas>
-  </div>
-  <div class="card kpi">
-    <div class="kpi-item">
-      <div class="kpi-label">合計売上</div>
-      <div id="kpi_sales" class="kpi-val">¥0</div>
-    </div>
-    <div class="kpi-item">
-      <div class="kpi-label">合計利益</div>
-      <div id="kpi_profit" class="kpi-val pos">¥0</div>
-    </div>
-    <div class="kpi-item">
-      <div class="kpi-label">件数</div>
-      <div id="kpi_count" class="kpi-val">0</div>
-    </div>
-    <div class="kpi-item">
-      <div class="kpi-label">平均利益率</div>
-      <div id="kpi_margin" class="kpi-val">0%</div>
-    </div>
+    <h3>PF別 利益合計（上位12）</h3>
+    <canvas id="chartPf" height="140"></canvas>
   </div>
 </div>
 
 <style>
 .card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0}
-.grid-2{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
-.filters{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.filters form{display:grid;gap:10px;grid-template-columns:160px 220px 1fr auto}
 .filters label{display:flex;flex-direction:column;gap:6px}
 .filters label>span{font-size:12px;color:#6b7280}
 .filters input,.filters select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
-.filters .grow{flex:1}
-#reload{padding:8px 12px;border:1px solid #111;border-radius:10px;background:#111;color:#fff;cursor:pointer}
-.kpi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.kpi-item{border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#f8fafc}
-.kpi-label{font-size:12px;color:#6b7280}
-.kpi-val{font-size:22px;font-weight:700}
-.pos{color:#0a7f20}
-@media (max-width:1000px){.grid-2{grid-template-columns:1fr}}
+.filters button{padding:8px 12px;border-radius:10px;border:1px solid #111;background:#111;color:#fff;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.k-label{font-size:12px;color:#6b7280}
+.k-val{font-size:22px;font-weight:700}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+@media (max-width:900px){
+  .filters form{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 
 <!-- Chart.js（CDN） -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <script>
-(() => {
-  const $ = q => document.querySelector(q);
-  const jpy = n => '¥' + (Math.round(n||0)).toLocaleString();
+let cSales, cProfit, cPf;
 
-  let line, bar, doughnut;
+function fmtYen(n){ return '¥' + (Number(n)||0).toLocaleString('ja-JP'); }
+function fmtPct(n){ return (Number(n)||0).toFixed(2) + '%'; }
 
-  async function load(){
-    const months = $('#months').value;
-    const platform = $('#platform').value;
-    const keyword = $('#keyword').value.trim();
-    const q = new URLSearchParams({ months, platform, keyword });
-    const res = await fetch('/api/stats/monthly?' + q.toString());
-    const data = await res.json();
-
-    // KPI
-    $('#kpi_sales').textContent  = jpy(data.totals.sales || 0);
-    $('#kpi_profit').textContent = jpy(data.totals.profit || 0);
-    $('#kpi_count').textContent  = (data.totals.count || 0).toLocaleString();
-    $('#kpi_margin').textContent = (data.totals.avg_margin || 0).toFixed(2) + '%';
-
-    // 売上・利益（折れ線）
-    const lineData = {
-      labels: data.labels,
-      datasets: [
-        { label: '売上',  data: data.sales,  tension: .3, borderWidth: 2, pointRadius: 2 },
-        { label: '利益',  data: data.profit, tension: .3, borderWidth: 2, pointRadius: 2 }
-      ]
-    };
-    const lineOpt = { responsive: true, maintainAspectRatio: false, scales:{ y:{ ticks:{ callback:v=>'¥'+Number(v).toLocaleString() } } } };
-
-    // 件数（棒）
-    const barData = { labels: data.labels, datasets: [{ label: '件数', data: data.count, borderWidth: 1 }] };
-    const barOpt  = { responsive: true, maintainAspectRatio: false };
-
-    // PF別（ドーナツ）
-    const pfLabels = data.platforms.map(x=>x.platform);
-    const pfVals   = data.platforms.map(x=>x.profit);
-    const pfData = { labels: pfLabels, datasets: [{ data: pfVals }] };
-    const pfOpt  = { responsive: true, maintainAspectRatio: false, plugins:{ legend:{ position:'bottom' } } };
-
-    // 破棄→再描画
-    line && line.destroy(); bar && bar.destroy(); doughnut && doughnut.destroy();
-    line     = new Chart($('#lineChart').getContext('2d'), { type:'line', data: lineData, options: lineOpt });
-    bar      = new Chart($('#barChart').getContext('2d'),  { type:'bar',  data: barData,  options: barOpt  });
-    doughnut = new Chart($('#pfChart').getContext('2d'),   { type:'doughnut', data: pfData, options: pfOpt });
-  }
-
-  $('#reload').addEventListener('click', load);
-  // 初期ロード
+function evReload(e){
+  e && e.preventDefault();
   load();
-})();
+}
+
+async function load(){
+  const months = document.getElementById('months').value;
+  const pf = document.getElementById('platform').value;
+  const kw = document.getElementById('keyword').value.trim();
+
+  const qs = new URLSearchParams({ months, platform: pf, keyword: kw }).toString();
+  const res = await fetch(`/api/stats/monthly?${qs}`);
+  const j = await res.json();
+
+  // KPIs
+  document.getElementById('k_sales').textContent  = fmtYen(j.totals.sales);
+  document.getElementById('k_profit').textContent = fmtYen(j.totals.profit);
+  document.getElementById('k_count').textContent  = (j.totals.count||0).toLocaleString('ja-JP');
+  document.getElementById('k_margin').textContent = fmtPct(j.totals.avg_margin);
+
+  // 売上ライン
+  const dsSales = { labels: j.labels, datasets: [{ label: '売上', data: j.sales }] };
+  cSales?.destroy();
+  cSales = new Chart(document.getElementById('chartSales'), {
+    type: 'line',
+    data: dsSales,
+    options: {
+      responsive: true,
+      plugins:{ legend:{ display:true } },
+      scales:{ y:{ ticks:{ callback:v=>fmtYen(v) } } }
+    }
+  });
+
+  // 利益ライン
+  const dsProfit = { labels: j.labels, datasets: [{ label: '利益', data: j.profit }] };
+  cProfit?.destroy();
+  cProfit = new Chart(document.getElementById('chartProfit'), {
+    type: 'line',
+    data: dsProfit,
+    options: {
+      responsive: true,
+      plugins:{ legend:{ display:true } },
+      scales:{ y:{ ticks:{ callback:v=>fmtYen(v) } } }
+    }
+  });
+
+  // PF別バー
+  const pfLabels = j.platforms.map(x=>x.platform);
+  const pfVals   = j.platforms.map(x=>x.profit);
+  cPf?.destroy();
+  cPf = new Chart(document.getElementById('chartPf'), {
+    type: 'bar',
+    data: { labels: pfLabels, datasets: [{ label:'利益合計', data: pfVals }] },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins:{ legend:{ display:false } },
+      scales:{ x:{ ticks:{ callback:v=>fmtYen(v) } } }
+    }
+  });
+}
+
+// 初回ロード
+document.addEventListener('DOMContentLoaded', load);
 </script>
 
 {% endblock %}
