@@ -2,93 +2,88 @@
 {% block title %}設定 | リサーチナビ{% endblock %}
 {% block content %}
 
-<h1>設定</h1>
+<h1>⚙️ 設定</h1>
 
 <div class="card">
-  <form method="post">
+  <form method="post" action="{{ url_for('setting') }}">
     <div class="grid">
-      <label class="col chk">
-        <input type="checkbox" name="mail_enabled" {% if s.mail_enabled %}checked{% endif %}>
-        <span>メール通知を有効にする</span>
+      <label>
+        <span>メール通知を有効化</span>
+        <label class="switch">
+          <input type="checkbox" name="mail_enabled" {% if s.mail_enabled %}checked{% endif %}>
+          <i></i><em>{{ 'ON' if s.mail_enabled else 'OFF' }}</em>
+        </label>
+        <small class="muted">利益が閾値を超えたとき、メールで通知します。</small>
       </label>
 
-      <label class="col">
-        <span>メールプロバイダ（gmail/icloud/outlook/yahoo またはSMTPホスト）</span>
-        <input name="mail_provider" value="{{ s.mail_provider }}">
+      <label>
+        <span>メールプロバイダ（またはSMTPホスト）</span>
+        <input name="mail_provider" value="{{ s.mail_provider or 'gmail' }}" placeholder="gmail / icloud / outlook / yahoo / smtp.example.com">
+        <small class="muted">既定: gmail / icloud / outlook / yahoo。独自SMTPはホスト名を直接入力。</small>
       </label>
 
-      <label class="col">
-        <span>送信元（FROM）</span>
-        <input name="mail_from" value="{{ s.mail_from }}" placeholder="example@gmail.com">
+      <label>
+        <span>送信元アドレス（ログインID）</span>
+        <input name="mail_from" value="{{ s.mail_from }}" placeholder="example@gmail.com" required>
       </label>
 
-      <label class="col">
-        <span>送信先（カンマ区切り）</span>
-        <input name="mail_to" value="{{ s.mail_to }}" placeholder="a@example.com,b@example.com">
+      <label class="grow">
+        <span>送信先アドレス（カンマ区切り）</span>
+        <input name="mail_to" value="{{ s.mail_to }}" placeholder="taro@example.com, hanako@example.com">
       </label>
 
-      <label class="col">
-        <span>アプリパスワード / メールパスワード</span>
-        <input name="mail_pass" value="" placeholder="（空なら変更しません）">
+      <label>
+        <span>アプリパスワード / SMTPパスワード</span>
+        <input name="mail_pass" type="password" value="" placeholder="※未入力なら変更しません">
+        <small class="muted">空欄なら既存のパスワードを保持します。</small>
       </label>
 
-      <label class="col">
-        <span>利益の通知閾値（円）</span>
-        <input name="profit_threshold" type="number" min="0" step="1" value="{{ s.profit_threshold }}">
+      <label>
+        <span>利益の閾値（円）</span>
+        <input name="profit_threshold" type="number" inputmode="numeric" value="{{ s.profit_threshold or 5000 }}" min="0" step="100">
+        <small class="muted">この金額以上の利益で通知します。</small>
       </label>
     </div>
 
     <div class="actions">
-      <button type="submit">保存</button>
-      <form method="post" action="{{ url_for('setting_test_mail') }}" style="display:inline">
-        <button type="submit" class="secondary">テストメール送信</button>
+      <button type="submit">💾 保存する</button>
+      <form method="post" action="{{ url_for('setting_test_mail') }}" style="display:inline;">
+        <button type="submit" class="ghost">✉️ テスト送信</button>
       </form>
+      <a href="{{ url_for('notifications') }}" class="btn">📣 通知一覧へ</a>
     </div>
   </form>
 </div>
 
 <div class="card">
-  <h2>レポート送信（手動）</h2>
-  <p class="muted">直近のデータから集計し、メールで送信します。プレビューで内容を確認してから送信できます。</p>
-  <div class="report-grid">
-    <div class="box">
-      <h3>週次（直近7日）</h3>
-      <div class="btns">
-        <a class="btn" href="{{ url_for('report_weekly_preview') }}" target="_blank">プレビュー</a>
-        <form method="post" action="{{ url_for('report_weekly_send') }}">
-          <button type="submit" class="primary">メール送信</button>
-        </form>
-      </div>
-    </div>
-    <div class="box">
-      <h3>月次（直近30日）</h3>
-      <div class="btns">
-        <a class="btn" href="{{ url_for('report_monthly_preview') }}" target="_blank">プレビュー</a>
-        <form method="post" action="{{ url_for('report_monthly_send') }}">
-          <button type="submit" class="primary">メール送信</button>
-        </form>
-      </div>
-    </div>
-  </div>
+  <h3>ヘルプ</h3>
+  <ul class="muted">
+    <li>Gmailは <b>2段階認証＋アプリパスワード</b> が必要です。</li>
+    <li>iCloudは「<b>App用パスワード</b>」が必要です。</li>
+    <li>独自SMTPを使う場合は「プロバイダ」に <code>smtp.example.com</code> を入力してください（ポートやSSL/TLSは自動判定）。</li>
+  </ul>
 </div>
 
 <style>
-.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:16px;margin:10px 0}
-.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
-.col{display:flex;flex-direction:column;gap:6px}
-.col span{font-size:12px;color:#6b7280}
-.col.chk{flex-direction:row;gap:8px;align-items:center}
-input{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
-.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-button{padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#111;color:#fff;cursor:pointer}
-button.secondary{background:#fff;color:#111}
+.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.grow{grid-column:span 2}
+label{display:flex;flex-direction:column;gap:6px}
+label>span{font-size:12px;color:#6b7280}
+input{padding:10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.actions button{padding:10px 14px;border-radius:10px;border:1px solid #111;background:#111;color:#fff;cursor:pointer}
+.actions .ghost{background:#fff;color:#111;border-color:#e5e7eb}
+.actions .btn{padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;text-decoration:none;color:#111;background:#fff}
 .muted{color:#6b7280}
-.report-grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
-.box{border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;padding:12px}
-.btns{display:flex;gap:8px;align-items:center}
-a.btn{display:inline-block;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;color:#111;text-decoration:none}
-.primary{background:#111;color:#fff;border-color:#111}
-@media (max-width:800px){.grid,.report-grid{grid-template-columns:1fr}}
+.switch{position:relative;display:inline-flex;align-items:center;gap:8px}
+.switch input{display:none}
+.switch i{width:46px;height:26px;border-radius:20px;position:relative;background:#e5e7eb;display:inline-block;transition:.2s}
+.switch i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:.2s}
+.switch input:checked + i{background:#111}
+.switch input:checked + i::after{transform:translateX(20px)}
+.switch em{font-style:normal;color:#6b7280}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.grow{grid-column:span 1}}
 </style>
 
 {% endblock %}
