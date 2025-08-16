@@ -320,7 +320,6 @@ def profit():
         db.session.add(row)
         db.session.commit()
 
-        # 利益アラートを通知に追加（メール送信は設定ページのテストで確認可能）
         s = AppSettings.get()
         th = int(s.profit_threshold or 0)
         if p >= th:
@@ -444,6 +443,119 @@ def report():
         return redirect(url_for("report"))
 
     return send_file(BytesIO(pdf), as_attachment=True, download_name=fname, mimetype="application/pdf")
+
+# --- CSV Import: /import ------------------------------------------------------
+@app.route("/import", methods=["GET", "POST"])
+def import_csv():
+    if request.method == "GET":
+        return render_template("pages/import.html")
+
+    f = request.files.get("file")
+    mode = (request.form.get("mode") or "append").lower()
+    dedupe = (request.form.get("dedupe") or "skip").lower()
+
+    if not f:
+        flash("CSVファイルを選択してください。")
+        return redirect(url_for("import_csv"))
+
+    # 読み込み（UTF-8-SIG → Shift_JIS → UTF-8 の順で試行）
+    raw = f.read()
+    text = None
+    for enc in ("utf-8-sig", "cp932", "utf-8"):
+        try:
+            text = raw.decode(enc)
+            break
+        except Exception:
+            continue
+    if text is None:
+        flash("文字コードを判別できません（UTF-8 または Shift_JIS をご使用ください）。")
+        return redirect(url_for("import_csv"))
+
+    # CSV DictReader
+    reader = csv.DictReader(StringIO(text))
+    if not reader.fieldnames:
+        flash("ヘッダー行が見つかりません。")
+        return redirect(url_for("import_csv"))
+
+    header = [h.strip() for h in reader.fieldnames]
+
+    # カラム名のマッピング（日本語/英語・表記揺れに対応）
+    def pick(row, keys):
+        for k in keys:
+            if k in row and row[k] not in (None, ""):
+                return row[k]
+        return ""
+
+    M = {
+        "created_at": ["日時","created_at","date","datetime","time"],
+        "name":       ["商品名","name","item","title"],
+        "platform":   ["PF","platform","pf"],
+        "price":      ["販売","価格","price","sell","selling_price"],
+        "cost":       ["仕入","cost","buy","purchase_price"],
+        "ship":       ["送料","ship","shipping","postage"],
+        "fee":        ["手数料","fee","commission"],
+        "profit":     ["利益","profit"],
+        "margin":     ["利益率","margin","roi","rate"]
+    }
+
+    inserted = 0
+    skipped  = 0
+
+    if mode == "truncate":
+        ProfitHistory.query.delete()
+        db.session.commit()
+
+    # 重複判定キー：name, platform, created_at(±1日に丸め), price, cost, ship, fee
+    for row in reader:
+        name = (pick(row, M["name"]) or "商品名未設定").strip()
+        platform = (pick(row, M["platform"]) or "Unknown").strip()
+        price = _to_int(pick(row, M["price"]))
+        cost  = _to_int(pick(row, M["cost"]))
+        ship  = _to_int(pick(row, M["ship"]))
+        fee   = _to_int(pick(row, M["fee"]))
+        created_s = pick(row, M["created_at"]).strip()
+        created_dt = _parse_date(created_s) or datetime.utcnow()
+
+        # 利益/率は無ければ計算
+        profit_s = pick(row, M["profit"])
+        margin_s = pick(row, M["margin"])
+        if str(profit_s).strip() == "" or str(margin_s).strip() == "":
+            p, m = calc_profit(price, cost, ship, fee)
+        else:
+            try:
+                p = _to_int(profit_s)
+                m = float(str(margin_s).replace("%","").strip() or 0.0)
+            except:
+                p, m = calc_profit(price, cost, ship, fee)
+
+        if dedupe == "skip":
+            # 近似判定（同日内 & 数値一致）
+            start = created_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+            end   = start + timedelta(days=1)
+            exists = (ProfitHistory.query
+                      .filter(ProfitHistory.name==name)
+                      .filter(ProfitHistory.platform==platform)
+                      .filter(ProfitHistory.created_at>=start)
+                      .filter(ProfitHistory.created_at<end)
+                      .filter(ProfitHistory.price==price)
+                      .filter(ProfitHistory.cost==cost)
+                      .filter(ProfitHistory.ship==ship)
+                      .filter(ProfitHistory.fee==fee)
+                      .first())
+            if exists:
+                skipped += 1
+                continue
+
+        rec = ProfitHistory(
+            name=name, platform=platform, price=price, cost=cost,
+            ship=ship, fee=fee, profit=p, margin=m, created_at=created_dt
+        )
+        db.session.add(rec)
+        inserted += 1
+
+    db.session.commit()
+    flash(f"取り込み完了：{inserted} 件（重複スキップ {skipped} 件）")
+    return redirect(url_for("history"))
 
 # =============================================================================
 # APIs (dashboard / ranking details / notifications / history inline)
