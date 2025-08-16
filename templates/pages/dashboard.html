@@ -1,53 +1,145 @@
-{% extends "base/base.html" %}
-
-{% block title %}ダッシュボード | リサーチナビ{% endblock %}
-
+{% extends "base/layout.html" %}
+{% block title %}月次ダッシュボード | リサーチナビ{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">📊 ダッシュボード</h2>
 
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">本日の検索件数</h5>
-                    <p class="card-text display-5">{{ stats.today_searches }}</p>
-                </div>
-            </div>
-        </div>
+<h1>月次ダッシュボード</h1>
 
-        <div class="col-md-4 mb-3">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">利益商品数</h5>
-                    <p class="card-text display-5">{{ stats.profitable_items }}</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h5 class="card-title">保存済み履歴</h5>
-                    <p class="card-text display-5">{{ stats.saved_histories }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mt-5">
-        <h4>📈 最近の動向</h4>
-        {% if recent_logs %}
-            <ul class="list-group">
-                {% for log in recent_logs %}
-                    <li class="list-group-item">
-                        <strong>{{ log.timestamp }}</strong> - {{ log.message }}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-muted">まだログはありません。</p>
-        {% endif %}
-    </div>
+<div class="card">
+  <div class="filters">
+    <label>
+      <span>対象月数</span>
+      <select id="months">
+        <option value="6">直近 6ヶ月</option>
+        <option value="12" selected>直近 12ヶ月</option>
+        <option value="18">直近 18ヶ月</option>
+        <option value="24">直近 24ヶ月</option>
+      </select>
+    </label>
+    <label>
+      <span>プラットフォーム</span>
+      <select id="platform">
+        <option value="">すべて</option>
+        <option value="all">すべて</option>
+        {% for p in platforms %}
+          <option value="{{ p }}">{{ p }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="grow">
+      <span>キーワード（商品名）</span>
+      <input id="keyword" type="text" placeholder="例：Switch">
+    </label>
+    <button id="reload">更新</button>
+  </div>
 </div>
+
+<div class="grid-2">
+  <div class="card">
+    <h3>売上・利益 推移（毎月）</h3>
+    <canvas id="lineChart" height="120"></canvas>
+  </div>
+  <div class="card">
+    <h3>件数 推移（毎月）</h3>
+    <canvas id="barChart" height="120"></canvas>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h3>PF別 利益内訳（合計）</h3>
+    <canvas id="pfChart" height="120"></canvas>
+  </div>
+  <div class="card kpi">
+    <div class="kpi-item">
+      <div class="kpi-label">合計売上</div>
+      <div id="kpi_sales" class="kpi-val">¥0</div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-label">合計利益</div>
+      <div id="kpi_profit" class="kpi-val pos">¥0</div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-label">件数</div>
+      <div id="kpi_count" class="kpi-val">0</div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-label">平均利益率</div>
+      <div id="kpi_margin" class="kpi-val">0%</div>
+    </div>
+  </div>
+</div>
+
+<style>
+.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0}
+.grid-2{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.filters{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.filters label{display:flex;flex-direction:column;gap:6px}
+.filters label>span{font-size:12px;color:#6b7280}
+.filters input,.filters select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.filters .grow{flex:1}
+#reload{padding:8px 12px;border:1px solid #111;border-radius:10px;background:#111;color:#fff;cursor:pointer}
+.kpi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kpi-item{border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#f8fafc}
+.kpi-label{font-size:12px;color:#6b7280}
+.kpi-val{font-size:22px;font-weight:700}
+.pos{color:#0a7f20}
+@media (max-width:1000px){.grid-2{grid-template-columns:1fr}}
+</style>
+
+<!-- Chart.js（CDN） -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(() => {
+  const $ = q => document.querySelector(q);
+  const jpy = n => '¥' + (Math.round(n||0)).toLocaleString();
+
+  let line, bar, doughnut;
+
+  async function load(){
+    const months = $('#months').value;
+    const platform = $('#platform').value;
+    const keyword = $('#keyword').value.trim();
+    const q = new URLSearchParams({ months, platform, keyword });
+    const res = await fetch('/api/stats/monthly?' + q.toString());
+    const data = await res.json();
+
+    // KPI
+    $('#kpi_sales').textContent  = jpy(data.totals.sales || 0);
+    $('#kpi_profit').textContent = jpy(data.totals.profit || 0);
+    $('#kpi_count').textContent  = (data.totals.count || 0).toLocaleString();
+    $('#kpi_margin').textContent = (data.totals.avg_margin || 0).toFixed(2) + '%';
+
+    // 売上・利益（折れ線）
+    const lineData = {
+      labels: data.labels,
+      datasets: [
+        { label: '売上',  data: data.sales,  tension: .3, borderWidth: 2, pointRadius: 2 },
+        { label: '利益',  data: data.profit, tension: .3, borderWidth: 2, pointRadius: 2 }
+      ]
+    };
+    const lineOpt = { responsive: true, maintainAspectRatio: false, scales:{ y:{ ticks:{ callback:v=>'¥'+Number(v).toLocaleString() } } } };
+
+    // 件数（棒）
+    const barData = { labels: data.labels, datasets: [{ label: '件数', data: data.count, borderWidth: 1 }] };
+    const barOpt  = { responsive: true, maintainAspectRatio: false };
+
+    // PF別（ドーナツ）
+    const pfLabels = data.platforms.map(x=>x.platform);
+    const pfVals   = data.platforms.map(x=>x.profit);
+    const pfData = { labels: pfLabels, datasets: [{ data: pfVals }] };
+    const pfOpt  = { responsive: true, maintainAspectRatio: false, plugins:{ legend:{ position:'bottom' } } };
+
+    // 破棄→再描画
+    line && line.destroy(); bar && bar.destroy(); doughnut && doughnut.destroy();
+    line     = new Chart($('#lineChart').getContext('2d'), { type:'line', data: lineData, options: lineOpt });
+    bar      = new Chart($('#barChart').getContext('2d'),  { type:'bar',  data: barData,  options: barOpt  });
+    doughnut = new Chart($('#pfChart').getContext('2d'),   { type:'doughnut', data: pfData, options: pfOpt });
+  }
+
+  $('#reload').addEventListener('click', load);
+  // 初期ロード
+  load();
+})();
+</script>
+
 {% endblock %}
