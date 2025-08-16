@@ -4,6 +4,8 @@ from io import StringIO, BytesIO
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
@@ -11,6 +13,12 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, func
+
+# --- PDF (ReportLab) ---
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
 # =============================================================================
 # Flask / DB
@@ -126,7 +134,7 @@ def _parse_date(s):
         except Exception: continue
     return None
 
-# ---- Mail (簡易)
+# ---- Mail helpers
 def _smtp_profile(provider):
     table = {
         "gmail":   ("smtp.gmail.com", 465, True,  False),
@@ -138,15 +146,29 @@ def _smtp_profile(provider):
     if "." in provider:   return (provider, 587, False, True)
     return table["gmail"]
 
-def send_mail_by_settings(subject, html, text_alt=""):
+def send_mail_with_attachment(subject, html, attachment=None, filename="report.pdf"):
+    """
+    attachment: bytes or None
+    """
     s = AppSettings.get()
     if not s.mail_enabled or not (s.mail_from and s.mail_pass and s.mail_to):
         return False, "mail_disabled_or_incomplete"
+
     host, port, use_ssl, use_tls = _smtp_profile((s.mail_provider or "gmail").lower())
-    msg = MIMEMultipart("alternative")
+    msg = MIMEMultipart("mixed")
     msg["Subject"]=subject; msg["From"]=s.mail_from; msg["To"]=s.mail_to
-    if text_alt: msg.attach(MIMEText(text_alt, "plain", "utf-8"))
-    msg.attach(MIMEText(html, "html", "utf-8"))
+
+    alt = MIMEMultipart("alternative")
+    alt.attach(MIMEText(html, "html", "utf-8"))
+    msg.attach(alt)
+
+    if attachment:
+        part = MIMEBase("application", "pdf")
+        part.set_payload(attachment)
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", f'attachment; filename="{filename}"')
+        msg.attach(part)
+
     try:
         if use_ssl:
             context = ssl.create_default_context()
@@ -169,7 +191,27 @@ with app.app_context():
     db.create_all(); AppSettings.get()
 
 # =============================================================================
-# Routes
+# Common queries
+# =============================================================================
+def _build_history_query(args):
+    q = ProfitHistory.query; label=[]
+    start_s=(args.get("start") or "").strip(); end_s=(args.get("end") or "").strip()
+    start_dt=_parse_date(start_s); end_dt=_parse_date(end_s)
+    if start_dt: q=q.filter(ProfitHistory.created_at>=start_dt); label.append(f"{start_dt.strftime('%Y-%m-%d')}〜")
+    if end_dt:
+        q=q.filter(ProfitHistory.created_at< end_dt + timedelta(days=1))
+        label[-1] = f"{(start_dt or end_dt).strftime('%Y-%m-%d')}〜{end_dt.strftime('%Y-%m-%d')}" if label else f"〜{end_dt.strftime('%Y-%m-%d')}"
+    pf=(args.get("platform") or "").strip()
+    if pf and pf.lower()!="all": q=q.filter(ProfitHistory.platform==pf); label.append(f"PF={pf}")
+    kw=(args.get("keyword") or "").strip()
+    if kw: q=q.filter(ProfitHistory.name.ilike(f"%{kw}%")); label.append(f"KW='{kw}'")
+    try: min_profit=int(args.get("min_profit") or 0)
+    except: min_profit=0
+    if min_profit>0: q=q.filter(ProfitHistory.profit>=min_profit); label.append(f"利益≥¥{min_profit:,}")
+    return q, (" / ".join(label) if label else "全件"), {"start":start_s,"end":end_s,"platform":pf,"keyword":kw,"min_profit":min_profit}
+
+# =============================================================================
+# Routes: pages
 # =============================================================================
 @app.route("/")
 def home(): return render_template("pages/home.html")
@@ -199,24 +241,6 @@ def profit():
         return redirect(url_for("history"))
     return render_template("pages/profit.html")
 
-# ---- History (list/export/import)
-def _build_history_query(args):
-    q = ProfitHistory.query; label=[]
-    start_s=(args.get("start") or "").strip(); end_s=(args.get("end") or "").strip()
-    start_dt=_parse_date(start_s); end_dt=_parse_date(end_s)
-    if start_dt: q=q.filter(ProfitHistory.created_at>=start_dt); label.append(f"{start_dt.strftime('%Y-%m-%d')}〜")
-    if end_dt:
-        q=q.filter(ProfitHistory.created_at< end_dt + timedelta(days=1))
-        label[-1] = f"{(start_dt or end_dt).strftime('%Y-%m-%d')}〜{end_dt.strftime('%Y-%m-%d')}" if label else f"〜{end_dt.strftime('%Y-%m-%d')}"
-    pf=(args.get("platform") or "").strip()
-    if pf and pf.lower()!="all": q=q.filter(ProfitHistory.platform==pf); label.append(f"PF={pf}")
-    kw=(args.get("keyword") or "").strip()
-    if kw: q=q.filter(ProfitHistory.name.ilike(f"%{kw}%")); label.append(f"KW='{kw}'")
-    try: min_profit=int(args.get("min_profit") or 0)
-    except: min_profit=0
-    if min_profit>0: q=q.filter(ProfitHistory.profit>=min_profit); label.append(f"利益≥¥{min_profit:,}")
-    return q, (" / ".join(label) if label else "全件"), {"start":start_s,"end":end_s,"platform":pf,"keyword":kw,"min_profit":min_profit}
-
 @app.route("/history")
 def history():
     platforms = [r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
@@ -225,69 +249,9 @@ def history():
     rows = q.order_by(ProfitHistory.created_at.desc()).limit(500).all()
     return render_template("pages/history.html", rows=rows, total=total, label=label, params=params, platforms=platforms)
 
-@app.route("/export/history.csv")
-def export_history():
-    q, _, _ = _build_history_query(request.args)
-    q = q.order_by(ProfitHistory.created_at.desc())
-    sio = StringIO(); w = csv.writer(sio)
-    w.writerow(["日時","商品名","PF","販売","仕入","送料","手数料","利益","利益率(%)"])
-    for r in q.all():
-        w.writerow([r.created_at.strftime("%Y-%m-%d %H:%M"),
-                    r.name, r.platform, r.price, r.cost, r.ship, r.fee, r.profit, r.margin])
-    data = sio.getvalue().encode("utf-8-sig")
-    fname = f"profit_history_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.csv"
-    return send_file(BytesIO(data), as_attachment=True, download_name=fname, mimetype="text/csv; charset=utf-8")
-
-@app.post("/import/history")
-def import_history():
-    f = request.files.get("file")
-    if not f or f.filename=="": flash("CSVファイルを選択してください。"); return redirect(url_for("history"))
-    raw=f.read(); text=None
-    for enc in ("utf-8-sig","utf-8","cp932"):
-        try: text=raw.decode(enc); break
-        except Exception: pass
-    if text is None: flash("文字コードの判定に失敗しました（UTF-8/CP932 推奨）。"); return redirect(url_for("history"))
-    def norm(h):
-        h=(h or "").strip().lower()
-        rep={"日時":"dt","date":"dt","created_at":"dt","time":"dt",
-             "商品名":"name","name":"name","title":"name",
-             "pf":"platform","プラットフォーム":"platform","platform":"platform",
-             "販売":"price","売価":"price","価格":"price","price":"price",
-             "仕入":"cost","原価":"cost","cost":"cost",
-             "送料":"ship","配送料":"ship","ship":"ship",
-             "手数料":"fee","販売手数料":"fee","fee":"fee",
-             "利益":"profit","profit":"profit",
-             "利益率":"margin","利益率(%)":"margin","margin":"margin"}
-        return rep.get(h,h)
-    rows=list(csv.reader(StringIO(text)))
-    if not rows: flash("CSVが空です。"); return redirect(url_for("history"))
-    header=[norm(h) for h in rows[0]]; data_rows=rows[1:]; col={h:i for i,h in enumerate(header)}
-    created_i=col.get("dt"); name_i=col.get("name"); pf_i=col.get("platform")
-    price_i=col.get("price"); cost_i=col.get("cost"); ship_i=col.get("ship"); fee_i=col.get("fee")
-    profit_i=col.get("profit"); margin_i=col.get("margin")
-    imported=0
-    for r in data_rows[:10000]:
-        if not any(str(c).strip() for c in r): continue
-        dt=_parse_date(r[created_i]) if created_i is not None and created_i<len(r) else None
-        name=(r[name_i].strip() if (name_i is not None and name_i<len(r) and r[name_i]) else "不明商品")
-        pf=(r[pf_i].strip() if (pf_i is not None and pf_i<len(r) and r[pf_i]) else "Unknown")
-        price=_to_int(r[price_i]) if price_i is not None and price_i<len(r) else 0
-        cost=_to_int(r[cost_i]) if cost_i is not None and cost_i<len(r) else 0
-        ship=_to_int(r[ship_i]) if ship_i is not None and ship_i<len(r) else 0
-        fee=_to_int(r[fee_i]) if fee_i is not None and fee_i<len(r) and str(r[fee_i]).strip()!="" else estimate_fee(pf, price)
-        profit=_to_int(r[profit_i]) if profit_i is not None and profit_i<len(r) and str(r[profit_i]).strip()!="" else calc_profit(price,cost,ship,fee)[0]
-        if margin_i is not None and margin_i<len(r) and str(r[margin_i]).strip()!="":
-            try: margin=float(str(r[margin_i]).replace("%","").strip())
-            except Exception: margin=0.0
-        else:
-            margin=round((profit/price*100.0),2) if price>0 else 0.0
-        row=ProfitHistory(name=name, platform=pf, price=price, cost=cost, ship=ship, fee=fee, profit=profit, margin=margin, created_at=(dt or datetime.utcnow()))
-        db.session.add(row); imported+=1
-    db.session.commit()
-    flash(f"CSVを取り込みました：{imported}件"); return redirect(url_for("history"))
-
-# ---- Ranking & details
-def _build_ranking_query(args):
+@app.route("/ranking")
+def ranking():
+    platforms=[r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
     q = db.session.query(
         ProfitHistory.name.label("name"),
         ProfitHistory.platform.label("platform"),
@@ -298,76 +262,30 @@ def _build_ranking_query(args):
         func.min(ProfitHistory.created_at).label("first_at"),
         func.max(ProfitHistory.created_at).label("last_at"),
     )
-    label=[]
-    start_s=(args.get("start") or "").strip(); end_s=(args.get("end") or "").strip()
+    start_s=(request.args.get("start") or "").strip(); end_s=(request.args.get("end") or "").strip()
     start_dt=_parse_date(start_s); end_dt=_parse_date(end_s)
-    if start_dt: q=q.filter(ProfitHistory.created_at>=start_dt); label.append(f"{start_dt.strftime('%Y-%m-%d')}〜")
-    if end_dt:
-        q=q.filter(ProfitHistory.created_at< end_dt + timedelta(days=1))
-        if not start_dt: label.append(f"〜{end_dt.strftime('%Y-%m-%d')}")
-        else: label[-1]=f"{start_dt.strftime('%Y-%m-%d')}〜{end_dt.strftime('%Y-%m-%d')}"
-    pf=(args.get("platform") or "").strip()
-    if pf and pf.lower()!="all": q=q.filter(ProfitHistory.platform==pf); label.append(f"PF={pf}")
-    kw=(args.get("keyword") or "").strip()
-    if kw: q=q.filter(ProfitHistory.name.ilike(f"%{kw}%")); label.append(f"KW='{kw}'")
-    try: min_sum_profit=int(args.get("min_total_profit") or 0)
-    except: min_sum_profit=0
+    if start_dt: q=q.filter(ProfitHistory.created_at>=start_dt)
+    if end_dt:   q=q.filter(ProfitHistory.created_at< end_dt + timedelta(days=1))
+    pf=(request.args.get("platform") or "").strip()
+    if pf and pf.lower()!="all": q=q.filter(ProfitHistory.platform==pf)
+    kw=(request.args.get("keyword") or "").strip()
+    if kw: q=q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
     q=(q.group_by(ProfitHistory.name, ProfitHistory.platform)
          .order_by(func.sum(ProfitHistory.profit).desc()))
-    if min_sum_profit>0: label.append(f"合計利益≥¥{min_sum_profit:,}")
-    params={"start":start_s,"end":end_s,"platform":pf,"keyword":kw,"min_total_profit":min_sum_profit}
-    return q, (" / ".join(label) if label else "全期間・全PF"), params
-
-@app.route("/ranking")
-def ranking():
-    platforms=[r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
-    q, label, params = _build_ranking_query(request.args)
-    rows_all=q.all(); min_tp=params.get("min_total_profit") or 0
-    if min_tp: rows_all=[r for r in rows_all if (r.sum_profit or 0)>=min_tp]
+    rows_all=q.all()
     rows_sorted=sorted(rows_all, key=lambda r:(r.sum_profit or 0), reverse=True)
     top3=rows_sorted[:3]; rest=rows_sorted[3:50]; total=len(rows_sorted)
+    label=[]
+    if start_dt or end_dt:
+        a = start_dt.strftime("%Y-%m-%d") if start_dt else ""
+        b = end_dt.strftime("%Y-%m-%d") if end_dt else ""
+        label.append(f"{a}〜{b}".strip("〜"))
+    if pf and pf.lower()!="all": label.append(f"PF={pf}")
+    if kw: label.append(f"KW='{kw}'")
+    label = " / ".join([x for x in label if x]) or "全期間・全PF"
+    params={"start":start_s,"end":end_s,"platform":pf,"keyword":kw,"min_total_profit":request.args.get("min_total_profit") or ""}
     return render_template("pages/ranking.html", top3=top3, rows=rest, total=total, label=label, platforms=platforms, params=params)
 
-@app.route("/export/ranking.csv")
-def export_ranking():
-    q, _, params=_build_ranking_query(request.args); rows=q.all()
-    min_tp=params.get("min_total_profit") or 0
-    if min_tp: rows=[r for r in rows if (r.sum_profit or 0)>=min_tp]
-    sio=StringIO(); w=csv.writer(sio)
-    w.writerow(["商品名","PF","件数","売上合計","利益合計","平均利益率(%)","初回","最終"])
-    for r in sorted(rows, key=lambda x:(x.sum_profit or 0), reverse=True):
-        w.writerow([r.name, r.platform, r.cnt, int(r.sum_price or 0), int(r.sum_profit or 0),
-                    round(float(r.avg_margin or 0.0),2),
-                    (r.first_at or datetime.utcnow()).strftime("%Y-%m-%d"),
-                    (r.last_at  or datetime.utcnow()).strftime("%Y-%m-%d")])
-    data=sio.getvalue().encode("utf-8-sig"); fname=f"ranking_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.csv"
-    return send_file(BytesIO(data), as_attachment=True, download_name=fname, mimetype="text/csv; charset=utf-8")
-
-@app.get("/api/ranking/details")
-def api_ranking_details():
-    name = request.args.get("name","").strip()
-    platform = request.args.get("platform","").strip()
-    try: limit = min(int(request.args.get("limit", 50)), 200)
-    except: limit = 50
-    if not name or not platform: return jsonify(items=[])
-    q=(ProfitHistory.query
-        .filter(ProfitHistory.name==name)
-        .filter(ProfitHistory.platform==platform)
-        .order_by(ProfitHistory.created_at.desc())
-        .limit(limit))
-    items=[{
-        "id": r.id,
-        "created_at": r.created_at.strftime("%Y-%m-%d %H:%M"),
-        "price": int(r.price or 0),
-        "cost": int(r.cost or 0),
-        "ship": int(r.ship or 0),
-        "fee": int(r.fee or 0),
-        "profit": int(r.profit or 0),
-        "margin": float(r.margin or 0.0),
-    } for r in q.all()]
-    return jsonify(items=items)
-
-# ---- Notifications
 @app.route("/notifications")
 def notifications():
     now = datetime.utcnow()
@@ -377,58 +295,6 @@ def notifications():
           .limit(200).all())
     return render_template("pages/notifications.html", rows=rows)
 
-@app.post("/api/notifications/mark_read")
-def api_notif_mark_read():
-    data=request.get_json(silent=True) or {}; ids=data.get("ids") or []
-    if not isinstance(ids,list): ids=[ids]
-    q=Notification.query.filter(Notification.id.in_(ids)); updated=0
-    for n in q:
-        if n.unread: n.unread=False; updated+=1
-    db.session.commit(); return jsonify(ok=True, updated=updated)
-
-@app.post("/api/notifications/snooze")
-def api_notif_snooze():
-    data=request.get_json(silent=True) or {}; nid=int(data.get("id") or 0); minutes=int(data.get("minutes") or 60)
-    n=Notification.query.get(nid)
-    if not n: return jsonify(ok=False, error="not_found"),404
-    n.snooze_until=datetime.utcnow()+timedelta(minutes=minutes); db.session.commit()
-    return jsonify(ok=True, snooze_until=n.snooze_until.isoformat())
-
-# ---- Inline Edit / Delete
-@app.post("/api/history/update")
-def api_history_update():
-    data = request.get_json(silent=True) or {}
-    try: rid = int(data.get("id"))
-    except: return jsonify(ok=False, error="bad_id"), 400
-    row = ProfitHistory.query.get(rid)
-    if not row: return jsonify(ok=False, error="not_found"), 404
-
-    row.name = (data.get("name") or row.name).strip()
-    row.platform = (data.get("platform") or row.platform).strip()
-    row.price = _to_int(data.get("price"))
-    row.cost  = _to_int(data.get("cost"))
-    row.ship  = _to_int(data.get("ship"))
-    row.fee   = _to_int(data.get("fee"))
-    row.profit, row.margin = calc_profit(row.price, row.cost, row.ship, row.fee)
-    db.session.commit()
-
-    return jsonify(ok=True, item={
-        "id": row.id, "name": row.name, "platform": row.platform,
-        "price": row.price, "cost": row.cost, "ship": row.ship, "fee": row.fee,
-        "profit": row.profit, "margin": row.margin
-    })
-
-@app.post("/api/history/delete")
-def api_history_delete():
-    data = request.get_json(silent=True) or {}
-    try: rid = int(data.get("id"))
-    except: return jsonify(ok=False, error="bad_id"), 400
-    row = ProfitHistory.query.get(rid)
-    if not row: return jsonify(ok=False, error="not_found"), 404
-    db.session.delete(row); db.session.commit()
-    return jsonify(ok=True)
-
-# ---- OCR / Suppliers / Setting
 @app.route("/ocr", methods=["GET","POST"])
 def ocr(): return render_template("pages/ocr.html")
 
@@ -457,22 +323,20 @@ def setting_test_mail():
     subj="【リサーチナビ】テスト送信"
     html=(f"<h2>テスト送信</h2><p>送信元: {s.mail_from}<br>送信先: {s.mail_to}<br>"
           f"閾値: ¥{s.profit_threshold:,}<br>時刻: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}</p>")
-    ok,info=send_mail_by_settings(subj, html, "[テスト送信] ResearchNavi")
+    ok,info=send_mail_with_attachment(subj, html, None, "test.txt")
     flash("テストメールを送信しました。" if ok else f"テスト送信に失敗：{info}")
     return redirect(url_for("setting"))
 
-# ---- Dashboard
 @app.route("/dashboard")
 def dashboard():
     platforms = [r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
     return render_template("pages/dashboard.html", platforms=platforms)
 
+# =============================================================================
+# APIs used by dashboard / ranking / history inline
+# =============================================================================
 @app.get("/api/stats/monthly")
 def api_stats_monthly():
-    """
-    直近 Nヶ月の 月次集計（売上/利益/件数）と、期間内 PF別利益合計を返す。
-    パラメータ: months(=12), platform(=all/空), keyword(商品名)
-    """
     try:
         months = max(1, min(int(request.args.get("months", 12)), 36))
     except Exception:
@@ -480,7 +344,6 @@ def api_stats_monthly():
     pf = (request.args.get("platform") or "").strip()
     kw = (request.args.get("keyword") or "").strip()
 
-    # ラベル（月）を生成（過去Nヶ月）
     now = datetime.utcnow()
     labels = []
     y, m = now.year, now.month
@@ -491,15 +354,11 @@ def api_stats_monthly():
     start_ym = labels[0]
     start_dt = datetime(int(start_ym[:4]), int(start_ym[5:7]), 1)
 
-    # 期間内を取得（Python側で安全に集計：DB方言差回避）
     q = ProfitHistory.query.filter(ProfitHistory.created_at >= start_dt)
-    if pf and pf.lower() != "all":
-        q = q.filter(ProfitHistory.platform == pf)
-    if kw:
-        q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
+    if pf and pf.lower() != "all": q = q.filter(ProfitHistory.platform == pf)
+    if kw: q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
     rows = q.all()
 
-    # 集計
     month_sales = {k:0 for k in labels}
     month_profit= {k:0 for k in labels}
     month_count = {k:0 for k in labels}
@@ -520,7 +379,6 @@ def api_stats_monthly():
     tot_sales  = sum(sales)
     tot_profit = sum(profit)
     tot_count  = sum(count)
-    # 平均利益率：各レコードの margin 平均（価格0は0%として扱い）
     if rows:
         avg_margin = round(sum(float(r.margin or 0.0) for r in rows) / len(rows), 2)
     else:
@@ -540,7 +398,254 @@ def api_stats_monthly():
         totals={"sales": tot_sales, "profit": tot_profit, "count": tot_count, "avg_margin": avg_margin}
     )
 
-# ---- Health / DB check / Errors
+@app.get("/api/ranking/details")
+def api_ranking_details():
+    name = request.args.get("name","").strip()
+    platform = request.args.get("platform","").strip()
+    try: limit = min(int(request.args.get("limit", 50)), 200)
+    except: limit = 50
+    if not name or not platform: return jsonify(items=[])
+    q=(ProfitHistory.query
+        .filter(ProfitHistory.name==name)
+        .filter(ProfitHistory.platform==platform)
+        .order_by(ProfitHistory.created_at.desc())
+        .limit(limit))
+    items=[{
+        "id": r.id,
+        "created_at": r.created_at.strftime("%Y-%m-%d %H:%M"),
+        "price": int(r.price or 0),
+        "cost": int(r.cost or 0),
+        "ship": int(r.ship or 0),
+        "fee": int(r.fee or 0),
+        "profit": int(r.profit or 0),
+        "margin": float(r.margin or 0.0),
+    } for r in q.all()]
+    return jsonify(items=items)
+
+@app.post("/api/notifications/mark_read")
+def api_notif_mark_read():
+    data=request.get_json(silent=True) or {}; ids=data.get("ids") or []
+    if not isinstance(ids,list): ids=[ids]
+    q=Notification.query.filter(Notification.id.in_(ids)); updated=0
+    for n in q:
+        if n.unread: n.unread=False; updated+=1
+    db.session.commit(); return jsonify(ok=True, updated=updated)
+
+@app.post("/api/notifications/snooze")
+def api_notif_snooze():
+    data=request.get_json(silent=True) or {}; nid=int(data.get("id") or 0); minutes=int(data.get("minutes") or 60)
+    n=Notification.query.get(nid)
+    if not n: return jsonify(ok=False, error="not_found"),404
+    n.snooze_until=datetime.utcnow()+timedelta(minutes=minutes); db.session.commit()
+    return jsonify(ok=True, snooze_until=n.snooze_until.isoformat())
+
+@app.post("/api/history/update")
+def api_history_update():
+    data = request.get_json(silent=True) or {}
+    try: rid = int(data.get("id"))
+    except: return jsonify(ok=False, error="bad_id"), 400
+    row = ProfitHistory.query.get(rid)
+    if not row: return jsonify(ok=False, error="not_found"), 404
+    row.name = (data.get("name") or row.name).strip()
+    row.platform = (data.get("platform") or row.platform).strip()
+    row.price = _to_int(data.get("price"))
+    row.cost  = _to_int(data.get("cost"))
+    row.ship  = _to_int(data.get("ship"))
+    row.fee   = _to_int(data.get("fee"))
+    row.profit, row.margin = calc_profit(row.price, row.cost, row.ship, row.fee)
+    db.session.commit()
+    return jsonify(ok=True, item={
+        "id": row.id, "name": row.name, "platform": row.platform,
+        "price": row.price, "cost": row.cost, "ship": row.ship, "fee": row.fee,
+        "profit": row.profit, "margin": row.margin
+    })
+
+@app.post("/api/history/delete")
+def api_history_delete():
+    data = request.get_json(silent=True) or {}
+    try: rid = int(data.get("id"))
+    except: return jsonify(ok=False, error="bad_id"), 400
+    row = ProfitHistory.query.get(rid)
+    if not row: return jsonify(ok=False, error="not_found"), 404
+    db.session.delete(row); db.session.commit()
+    return jsonify(ok=True)
+
+# =============================================================================
+# Report (PDF)
+# =============================================================================
+def _monthly_series(months, platform, keyword):
+    try:
+        months = max(1, min(int(months or 12), 36))
+    except Exception:
+        months = 12
+    pf = (platform or "").strip()
+    kw = (keyword or "").strip()
+
+    now = datetime.utcnow()
+    labels = []
+    y, m = now.year, now.month
+    for i in range(months-1, -1, -1):
+        yy = y if m - i > 0 else y - ((i - m) // 12 + 1)
+        mm = (m - i - 1) % 12 + 1
+        labels.append(f"{yy}-{mm:02d}")
+    start_dt = datetime(int(labels[0][:4]), int(labels[0][5:7]), 1)
+
+    q = ProfitHistory.query.filter(ProfitHistory.created_at >= start_dt)
+    if pf and pf.lower()!="all": q = q.filter(ProfitHistory.platform==pf)
+    if kw: q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
+    rows = q.all()
+
+    month_sales = {k:0 for k in labels}
+    month_profit= {k:0 for k in labels}
+    month_count = {k:0 for k in labels}
+    pf_profit   = {}
+    for r in rows:
+        k = f"{r.created_at.year}-{r.created_at.month:02d}"
+        if k in month_sales:
+            month_sales[k]  += int(r.price or 0)
+            month_profit[k] += int(r.profit or 0)
+            month_count[k]  += 1
+        pf_profit[r.platform] = pf_profit.get(r.platform, 0) + int(r.profit or 0)
+
+    # Top products
+    agg = {}
+    for r in rows:
+        key = (r.name, r.platform)
+        x = agg.get(key, {"cnt":0,"sum_price":0,"sum_profit":0,"avg_margin":0.0})
+        x["cnt"] += 1
+        x["sum_price"] += int(r.price or 0)
+        x["sum_profit"] += int(r.profit or 0)
+        x["avg_margin"] += float(r.margin or 0.0)
+        agg[key]=x
+    top = []
+    for (n,pf1),v in agg.items():
+        avg_m = v["avg_margin"]/v["cnt"] if v["cnt"] else 0.0
+        top.append({"name":n,"platform":pf1,"cnt":v["cnt"],"sum_price":v["sum_price"],"sum_profit":v["sum_profit"],"avg_margin":round(avg_m,2)})
+    top = sorted(top, key=lambda x:x["sum_profit"], reverse=True)[:10]
+
+    series = {
+        "labels": labels,
+        "sales": [month_sales[k] for k in labels],
+        "profit":[month_profit[k] for k in labels],
+        "count": [month_count[k] for k in labels],
+        "pf_profit": sorted([{"platform":k,"profit":v} for k,v in pf_profit.items()], key=lambda x:x["profit"], reverse=True),
+        "top": top,
+        "totals": {
+            "sales": sum(month_sales.values()),
+            "profit": sum(month_profit.values()),
+            "count": sum(month_count.values()),
+            "avg_margin": round(sum(float(r.margin or 0.0) for r in rows)/len(rows),2) if rows else 0.0
+        }
+    }
+    return series
+
+def _build_pdf(months, platform, keyword):
+    data = _monthly_series(months, platform, keyword)
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name="H1", fontSize=18, leading=22, spaceAfter=12))
+    styles.add(ParagraphStyle(name="H2", fontSize=14, leading=18, spaceAfter=8))
+    styles.add(ParagraphStyle(name="KPI", fontSize=12, leading=16))
+
+    elems = []
+    title = "リサーチナビ 月次レポート"
+    cond  = f"対象月数: {months} / PF: {platform or 'ALL'} / KW: {keyword or '-'}"
+    now_s = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
+    elems += [Paragraph(title, styles["H1"]), Paragraph(cond, styles["KPI"]), Paragraph(f"作成: {now_s}", styles["KPI"]), Spacer(1,8)]
+
+    t = data["totals"]
+    kpi_tbl = Table([
+        ["合計売上", f"¥{t['sales']:,}", "合計利益", f"¥{t['profit']:,}", "件数", f"{t['count']:,}", "平均利益率", f"{t['avg_margin']:.2f}%"]
+    ], colWidths=[60,90,60,90,40,70,70,70])
+    kpi_tbl.setStyle(TableStyle([
+        ("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),
+        ("BACKGROUND",(0,0),(-1,-1),colors.whitesmoke),
+        ("FONTNAME",(0,0),(-1,-1),"Helvetica-Bold")
+    ]))
+    elems += [kpi_tbl, Spacer(1,10)]
+
+    elems += [Paragraph("月次推移（売上 / 利益 / 件数）", styles["H2"])]
+    tbl_data = [["月","売上","利益","件数"]]
+    for i,lab in enumerate(data["labels"]):
+        tbl_data.append([lab, f"¥{data['sales'][i]:,}", f"¥{data['profit'][i]:,}", f"{data['count'][i]:,}"])
+    m_tbl = Table(tbl_data, colWidths=[70,90,90,60])
+    m_tbl.setStyle(TableStyle([
+        ("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#eef2ff")),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold")
+    ]))
+    elems += [m_tbl, Spacer(1,10)]
+
+    elems += [Paragraph("PF別 利益内訳（合計）", styles["H2"])]
+    pf_tbl = Table([["PF","利益合計"]] + [[x["platform"], f"¥{x['profit']:,}"] for x in data["pf_profit"][:12]],
+                   colWidths=[150,120])
+    pf_tbl.setStyle(TableStyle([
+        ("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#ecfeff")),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold")
+    ]))
+    elems += [pf_tbl, Spacer(1,10)]
+
+    elems += [Paragraph("トップ商品（利益順 上位10）", styles["H2"])]
+    top_tbl = Table([["商品名","PF","件数","売上合計","利益合計","平均利益率"]] + [
+        [x["name"], x["platform"], f"{x['cnt']:,}", f"¥{x['sum_price']:,}", f"¥{x['sum_profit']:,}", f"{x['avg_margin']:.2f}%"]
+        for x in data["top"]
+    ], colWidths=[180,70,50,80,80,70])
+    top_tbl.setStyle(TableStyle([
+        ("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#f1f5f9")),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold")
+    ]))
+    elems += [top_tbl]
+
+    doc.build(elems)
+    pdf = buf.getvalue(); buf.close()
+    return pdf
+
+@app.route("/report", methods=["GET","POST"])
+def report():
+    platforms = [r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
+    if request.method == "GET":
+        return render_template("pages/report.html", platforms=platforms)
+
+    months = request.form.get("months") or "12"
+    platform = request.form.get("platform") or ""
+    keyword = request.form.get("keyword") or ""
+    action = request.form.get("action") or "download"
+
+    pdf = _build_pdf(months, platform, keyword)
+    fname = f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.pdf"
+
+    if action == "send":
+        ok, info = send_mail_with_attachment(
+            subject="【リサーチナビ】月次レポート",
+            html=f"<p>月次レポートを送付します。</p><p>対象月数: {months} / PF: {platform or 'ALL'} / KW: {keyword or '-'}</p>",
+            attachment=pdf, filename=fname
+        )
+        flash("メール送信しました。" if ok else f"送信失敗: {info}")
+        return redirect(url_for("report"))
+
+    # download
+    return send_file(BytesIO(pdf), as_attachment=True, download_name=fname, mimetype="application/pdf")
+
+# =============================================================================
+# Health / misc
+# =============================================================================
+@app.route("/export/history.csv")
+def export_history():
+    q, _, _ = _build_history_query(request.args)
+    q = q.order_by(ProfitHistory.created_at.desc())
+    sio = StringIO(); w = csv.writer(sio)
+    w.writerow(["日時","商品名","PF","販売","仕入","送料","手数料","利益","利益率(%)"])
+    for r in q.all():
+        w.writerow([r.created_at.strftime("%Y-%m-%d %H:%M"),
+                    r.name, r.platform, r.price, r.cost, r.ship, r.fee, r.profit, r.margin])
+    data = sio.getvalue().encode("utf-8-sig")
+    fname = f"profit_history_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.csv"
+    return send_file(BytesIO(data), as_attachment=True, download_name=fname, mimetype="text/csv; charset=utf-8")
+
 @app.route("/healthz")
 def healthz(): return "ok", 200
 
