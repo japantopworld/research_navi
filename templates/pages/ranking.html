@@ -56,7 +56,14 @@
       <span>平均利益率 {{ (r.avg_margin or 0)|round(2) }}%</span>
     </div>
     <div class="period">{{ (r.first_at or '')|fmt }} 〜 {{ (r.last_at or '')|fmt }}</div>
-    <button class="detail" data-name="{{ r.name }}" data-platform="{{ r.platform }}">詳細</button>
+    <div class="btns">
+      <button class="detail" data-name="{{ r.name }}" data-platform="{{ r.platform }}">詳細</button>
+      <!-- ★ ワンクリックで履歴絞り込み -->
+      <a class="btn to-history"
+         href="{{ url_for('history',
+                start=params.start, end=params.end,
+                platform=r.platform, keyword=r.name) }}">履歴で見る</a>
+    </div>
   </div>
   {% endfor %}
 </div>
@@ -74,7 +81,7 @@
         <th class="num">利益合計</th>
         <th class="num">平均利益率</th>
         <th>期間</th>
-        <th>詳細</th>
+        <th>操作</th>
       </tr>
     </thead>
     <tbody>
@@ -88,7 +95,14 @@
         <td class="num">{{ (r.sum_profit or 0)|yen }}</td>
         <td class="num">{{ (r.avg_margin or 0)|round(2) }}%</td>
         <td>{{ (r.first_at or '')|fmt }} 〜 {{ (r.last_at or '')|fmt }}</td>
-        <td><button class="detail" data-name="{{ r.name }}" data-platform="{{ r.platform }}">詳細</button></td>
+        <td class="ops">
+          <button class="detail" data-name="{{ r.name }}" data-platform="{{ r.platform }}">詳細</button>
+          <!-- ★ 履歴へ -->
+          <a class="btn to-history"
+             href="{{ url_for('history',
+                    start=params.start, end=params.end,
+                    platform=r.platform, keyword=r.name) }}">履歴で見る</a>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -103,7 +117,11 @@
         <div id="m_name" class="m-name"></div>
         <div id="m_pf" class="m-pf"></div>
       </div>
-      <button id="m_close" class="close" aria-label="閉じる">×</button>
+      <div class="head-actions">
+        <!-- ★ モーダルからも履歴へ -->
+        <a id="m_history" class="btn small" href="#" target="_blank">履歴で開く</a>
+        <button id="m_close" class="close" aria-label="閉じる">×</button>
+      </div>
     </div>
 
     <div class="summary">
@@ -153,8 +171,10 @@
 .card .sum{margin-top:6px}
 .card .meta{display:flex;gap:10px;color:#6b7280;font-size:12px}
 .card .period{color:#6b7280;font-size:12px;margin-top:4px}
-.card .detail{margin-top:8px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer}
+.card .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.card .detail{padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer}
 .card .detail:hover{border-color:#cbd5e1}
+.card .to-history{padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#f8fafc;text-decoration:none;color:#111}
 
 .table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
 .table{width:100%;border-collapse:collapse;background:#fff}
@@ -162,6 +182,9 @@
 .table thead th{position:sticky;top:0;background:#f8fafc;font-weight:700}
 .table .num{text-align:right}
 .table td.name{max-width:420px;overflow:hidden;text-overflow:ellipsis}
+.ops .btn,.ops .detail{padding:6px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;text-decoration:none;color:#111;cursor:pointer}
+.ops .detail{background:#fff}
+.ops .btn{background:#f8fafc}
 
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-start;justify-content:center;padding:20px;z-index:1000}
 .modal.show{display:flex}
@@ -169,7 +192,9 @@
 .head{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid #e5e7eb;background:#f8fafc}
 .m-name{font-size:16px;font-weight:700}
 .m-pf{font-size:12px;color:#6b7280}
-.close{margin-left:auto;border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:6px 10px;cursor:pointer}
+.head-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.close{border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:6px 10px;cursor:pointer}
+.btn.small{padding:6px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;text-decoration:none;color:#111}
 .summary{display:flex;gap:8px;flex-wrap:wrap;padding:10px}
 .pill{border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;background:#fff}
 .table-wrap.small{margin:10px;border:1px solid #e5e7eb;border-radius:10px}
@@ -178,7 +203,7 @@
 
 <script>
 (() => {
-  const $ = (q)=>document.querySelector(q);
+  const $  = (q)=>document.querySelector(q);
   const $$ = (q)=>Array.from(document.querySelectorAll(q));
   const jpy = (n)=>'¥'+(Math.round(n||0)).toLocaleString();
   const pct = (x)=> (isFinite(x)? Number(x).toFixed(2) : '0.00') + '%';
@@ -193,6 +218,12 @@
     $('#m_avg_margin').textContent = '0%';
     $('#modal').classList.add('show');
 
+    // 履歴で開くリンク（現在の start/end も維持）
+    const start = new URLSearchParams(location.search).get('start') || '';
+    const end   = new URLSearchParams(location.search).get('end')   || '';
+    const histUrl = `/history?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&platform=${encodeURIComponent(pf)}&keyword=${encodeURIComponent(name)}`;
+    $('#m_history').setAttribute('href', histUrl);
+
     const url = `/api/ranking/details?name=${encodeURIComponent(name)}&platform=${encodeURIComponent(pf)}&limit=50`;
     fetch(url).then(r=>r.json()).then(data=>{
       const rows = data.items || [];
@@ -200,8 +231,7 @@
         $('#m_rows').innerHTML = `<tr><td colspan="7" style="text-align:center;color:#6b7280">該当データがありません</td></tr>`;
         return;
       }
-      let html = '';
-      let sumPrice = 0, sumProfit = 0;
+      let html='', sumPrice=0, sumProfit=0;
       rows.forEach(r=>{
         sumPrice += r.price||0;
         sumProfit += r.profit||0;
@@ -220,7 +250,6 @@
       $('#m_cnt').textContent = rows.length;
       $('#m_sum_price').textContent = jpy(sumPrice);
       $('#m_sum_profit').textContent = jpy(sumProfit);
-      // 平均利益率はレコード平均を再計算（価格0は0%として平均）
       const avg = rows.reduce((a,b)=>a+(parseFloat(b.margin)||0),0) / rows.length;
       $('#m_avg_margin').textContent = pct(avg);
     }).catch(_=>{
@@ -229,10 +258,8 @@
   }
 
   $$('.detail').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{
-      const name = btn.dataset.name;
-      const pf   = btn.dataset.platform;
-      openModal(name, pf);
+    btn.addEventListener('click', ()=>{
+      openModal(btn.dataset.name, btn.dataset.platform);
     });
   });
   $('#m_close').addEventListener('click', ()=> $('#modal').classList.remove('show'));
