@@ -4,9 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{% block title %}リサーチナビ{% endblock %}</title>
+
+  <!-- PWA -->
+  <meta name="theme-color" content="#111111">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <link rel="icon" href="{{ url_for('static', filename='img/icon-192.png') }}" sizes="192x192">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icon-192.png') }}">
+
+  <!-- CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+      background:#111;color:#fff;padding:8px 12px;border-radius:10px;
+      box-shadow:0 6px 24px rgba(0,0,0,.18);font-size:14px;display:none;z-index:9999}
+    .toast.show{display:block}
+    .topbar{border-bottom:1px solid #e5e7eb;background:#fff}
+    .topbar .container{max-width:1000px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .brand{font-weight:700;text-decoration:none;color:#111}
+    .nav{display:flex;gap:10px;flex-wrap:wrap}
+    .nav a{color:#111;text-decoration:none;padding:6px 8px;border-radius:8px}
+    .nav a:hover{background:#f3f4f6}
+    .container{max-width:1000px;margin:0 auto;padding:16px}
+    .flash>div{background:#ecfeff;border:1px solid #a5f3fc;padding:10px;border-radius:10px;margin:12px 0}
+    .footer{border-top:1px solid #e5e7eb;margin-top:40px;color:#6b7280;font-size:12px}
+  </style>
 </head>
 <body>
+
 <header class="topbar">
   <div class="container">
     <a href="{{ url_for('home') }}" class="brand">🚀 リサーチナビ</a>
@@ -26,12 +50,41 @@
 <main class="container">
   {% with msgs = get_flashed_messages() %}
     {% if msgs %}
-      <div class="flash">{% for m in msgs %}<div>{{ m }}</div>{% endfor %}</div>
+      <div class="flash">
+        {% for m in msgs %}<div>{{ m }}</div>{% endfor %}
+      </div>
     {% endif %}
   {% endwith %}
   {% block content %}{% endblock %}
 </main>
 
-<footer class="footer"><div class="container">© リサーチナビ</div></footer>
+<footer class="footer">
+  <div class="container">© リサーチナビ</div>
+</footer>
+
+<!-- PWA: Service Worker 登録 & 更新通知 -->
+<div id="toast" class="toast">新しいバージョンがあります。再読み込みで更新されます。</div>
+<script>
+  (function(){
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('{{ url_for("static", filename="sw.js") }}')
+          .then(function(reg){
+            reg.addEventListener('updatefound', function(){
+              const nw = reg.installing;
+              nw && nw.addEventListener('statechange', function(){
+                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                  const t=document.getElementById('toast'); t.classList.add('show');
+                  setTimeout(()=>location.reload(), 2500);
+                }
+              });
+            });
+          })
+          .catch(function(e){ console.log('SW register failed:', e); });
+      });
+    }
+  })();
+</script>
+
 </body>
 </html>
