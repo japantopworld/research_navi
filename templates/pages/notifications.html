@@ -2,209 +2,116 @@
 {% block title %}通知一覧 | リサーチナビ{% endblock %}
 {% block content %}
 
-<h1>通知一覧</h1>
+<h1>📣 通知一覧</h1>
 
-{% if rows and rows|length %}
-  <div class="toolbar">
-    <div class="left">
-      <button id="selectAll" class="light">全選択/解除</button>
-      <button id="markRead" class="primary">選択を既読</button>
-      <div class="snooze">
-        <select id="snoozeMinutes">
-          <option value="30">30分</option>
-          <option value="60" selected>60分</option>
-          <option value="180">3時間</option>
-          <option value="720">12時間</option>
-          <option value="1440">翌日まで（24h）</option>
-        </select>
-        <button id="snoozeSel" class="light">選択をスヌーズ</button>
-      </div>
-    </div>
-    <div class="right">
-      <a class="light" href="{{ url_for('notifications') }}">更新</a>
-    </div>
-  </div>
+<div class="actions">
+  <button onclick="markAllRead()" class="ghost">すべて既読にする</button>
+  <a href="{{ url_for('setting') }}" class="btn">⚙️ 設定を開く</a>
+</div>
 
-  <div id="list" class="list">
+{% if rows|length == 0 %}
+  <p class="muted">通知はまだありません。</p>
+{% else %}
+  <div class="list">
     {% for n in rows %}
-    <article class="item {% if n.unread %}unread{% endif %}" data-id="{{ n.id }}">
-      <label class="check"><input type="checkbox" class="chk"></label>
+      <article class="item {% if n.unread %}unread{% endif %}">
+        <header>
+          <span class="badge {{ n.kind }}">{{ n.kind|upper }}</span>
+          <h3>{{ n.title }}</h3>
+          <time>{{ n.created_at|fmt }}</time>
+        </header>
+        {% if n.body %}
+          <p class="body">{{ n.body }}</p>
+        {% endif %}
 
-      <div class="head">
-        <span class="badge kind-{{ n.kind|lower }}">{{ n.kind|upper }}</span>
-        {% if n.unread %}<span class="badge unread-badge">未読</span>{% endif %}
-        {% if n.snooze_until %}<span class="badge snoozed">SNOOZE：{{ n.snooze_until|fmt }}</span>{% endif %}
-        <time class="time">{{ n.created_at|fmt }}</time>
-      </div>
+        {% set meta = n.meta %}
+        {% if meta and meta|length > 0 %}
+          <table class="meta">
+            <tbody>
+              {% for k,v in meta.items() %}
+              <tr><th>{{ k }}</th><td>{{ v }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endif %}
 
-      <h3 class="title">{{ n.title }}</h3>
-      {% if n.body %}
-        <p class="body">{{ n.body }}</p>
-      {% endif %}
-
-      {% set m = n.meta %}
-      {% if m and m.keys()|list|length %}
-        <div class="meta">
-          {% for k,v in m.items() %}
-            <div class="kv"><span class="k">{{ k }}</span><span class="v">{{ v }}</span></div>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      <div class="actions">
-        <button class="a mark-one">既読</button>
-        <div class="snooze-one">
-          <select class="mins">
-            <option value="30">30分</option>
-            <option value="60" selected>60分</option>
-            <option value="180">3時間</option>
-            <option value="720">12時間</option>
-            <option value="1440">翌日</option>
-          </select>
-          <button class="a snooze-btn">Snooze</button>
-        </div>
-      </div>
-    </article>
+        <footer>
+          <button onclick="markRead({{ n.id }}, this)">既読にする</button>
+          <button class="ghost" onclick="snooze({{ n.id }}, 60, this)">1時間後に再通知</button>
+        </footer>
+      </article>
     {% endfor %}
   </div>
-{% else %}
-  <p>通知はありません。</p>
 {% endif %}
 
 <style>
-.toolbar{display:flex;justify-content:space-between;align-items:center;margin:8px 0 12px;gap:10px;flex-wrap:wrap}
-.left,.right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-button, .light, .primary{
-  padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;color:#111;text-decoration:none;cursor:pointer
-}
-.primary{background:#111;color:#fff;border-color:#111}
-.light:hover{border-color:#cbd5e1}
-.snooze{display:flex;gap:6px;align-items:center}
-
-.list{display:grid;gap:10px}
-.item{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;position:relative}
-.item.unread{box-shadow:0 0 0 2px #e5e7eb inset}
-.check{position:absolute;left:10px;top:12px}
-.head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-left:26px}
-.badge{font-size:11px;border:1px solid #e5e7eb;border-radius:999px;padding:2px 8px;background:#f8fafc}
-.unread-badge{background:#111;color:#fff;border-color:#111}
-.kind-profit{background:#ecfeff;border-color:#a5f3fc}
-.kind-pricedrop{background:#fef9c3;border-color:#fde68a}
-.kind-stock{background:#dcfce7;border-color:#bbf7d0}
-.kind-info{background:#f1f5f9;border-color:#e2e8f0}
-.snoozed{background:#f5f3ff;border-color:#ddd6fe}
-
-.time{margin-left:auto;color:#6b7280;font-size:12px}
-.title{font-size:16px;margin:6px 0 4px;padding-left:26px}
-.body{color:#334155;margin:0 0 8px;padding-left:26px}
-.meta{display:flex;flex-wrap:wrap;gap:8px;padding-left:26px}
-.kv{display:flex;gap:6px;border:1px solid #e5e7eb;border-radius:999px;padding:2px 8px;background:#fff}
-.k{color:#6b7280;font-size:12px}
-.v{font-weight:600}
-
-.actions{display:flex;gap:8px;align-items:center;margin-top:8px;padding-left:26px}
-.a{padding:6px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer}
-.a:hover{border-color:#cbd5e1}
-.snooze-one{display:flex;gap:6px;align-items:center}
+.actions{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}
+.actions .btn,.actions .ghost{padding:8px 12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#111;text-decoration:none}
+.actions button{padding:8px 12px;border-radius:10px;border:1px solid #111;background:#111;color:#fff;cursor:pointer}
+.actions .ghost{background:#fff;color:#111;border-color:#e5e7eb}
+.list{display:flex;flex-direction:column;gap:12px}
+.item{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px}
+.item.unread{box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.item header{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
+.item h3{margin:0;font-size:16px}
+.item time{color:#6b7280;font-size:12px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;color:#fff}
+.badge.info{background:#64748b}
+.badge.warn{background:#d97706}
+.badge.profit{background:#16a34a}
+.item .body{margin:.5rem 0}
+.meta{width:100%;border-collapse:collapse;margin:.25rem 0 .5rem}
+.meta th,.meta td{border:1px solid #e5e7eb;padding:6px 8px;font-size:14px}
+.meta th{background:#f8fafc;color:#374151;text-align:left;width:120px}
+.item footer{display:flex;gap:8px;flex-wrap:wrap}
+.item footer .ghost{background:#fff;color:#111;border:1px solid #e5e7eb}
 </style>
 
 <script>
-(() => {
-  const $ = (q)=>document.querySelector(q);
-  const $$ = (q)=>Array.from(document.querySelectorAll(q));
-
-  function getSelectedIds(){
-    return $$(".item .chk:checked").map(chk => chk.closest(".item").dataset.id*1);
-  }
-  function toast(msg){
-    // 簡易トースト
-    let t = document.createElement('div');
-    t.textContent = msg;
-    t.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);background:#111;color:#fff;padding:8px 12px;border-radius:8px;z-index:9999';
-    document.body.appendChild(t);
-    setTimeout(()=>t.remove(), 1400);
-  }
-
-  // ---- 一括操作 ----
-  $("#selectAll")?.addEventListener("click", ()=>{
-    const boxes = $$(".item .chk");
-    const someUnchecked = boxes.some(b=>!b.checked);
-    boxes.forEach(b=>b.checked = someUnchecked);
-  });
-
-  $("#markRead")?.addEventListener("click", async ()=>{
-    const ids = getSelectedIds();
-    if(ids.length===0) return toast("選択がありません");
-    await markRead(ids);
-  });
-
-  $("#snoozeSel")?.addEventListener("click", async ()=>{
-    const ids = getSelectedIds();
-    if(ids.length===0) return toast("選択がありません");
-    const mins = parseInt($("#snoozeMinutes").value || "60", 10);
-    for(const id of ids){ await snoozeOne(id, mins); }
-    toast("スヌーズしました");
-    setTimeout(()=>location.reload(), 300);
-  });
-
-  // ---- 各アイテム操作 ----
-  $$(".item .mark-one").forEach(btn=>{
-    btn.addEventListener("click", async (e)=>{
-      const id = e.target.closest(".item").dataset.id*1;
-      await markRead([id]);
+async function markRead(id, btn){
+  try{
+    const r = await fetch('/api/notifications/mark_read', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ids:[id] })
     });
-  });
+    const j = await r.json();
+    if(j.ok){
+      const art = btn.closest('.item');
+      art && art.classList.remove('unread');
+    }
+  }catch(e){ console.log(e); }
+}
 
-  $$(".item .snooze-btn").forEach(btn=>{
-    btn.addEventListener("click", async (e)=>{
-      const item = e.target.closest(".item");
-      const id = item.dataset.id*1;
-      const mins = parseInt(item.querySelector(".mins").value || "60", 10);
-      await snoozeOne(id, mins);
+async function markAllRead(){
+  const ids = Array.from(document.querySelectorAll('.item.unread'))
+    .map(x => Number(x.querySelector('button').getAttribute('onclick').match(/\d+/)[0]))
+    .filter(Boolean);
+  if(ids.length === 0) return;
+  try{
+    const r = await fetch('/api/notifications/mark_read', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ids })
     });
-  });
-
-  // ---- API ----
-  async function markRead(ids){
-    try{
-      const res = await fetch("/api/notifications/mark_read", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ ids })
-      });
-      if(!res.ok) throw new Error(await res.text());
-      toast("既読にしました");
-      // DOM反映
-      ids.forEach(id=>{
-        const el = document.querySelector(`.item[data-id='${id}']`);
-        if(el){ el.classList.remove("unread"); el.querySelector(".unread-badge")?.remove(); el.querySelector(".chk").checked = false; }
-      });
-    }catch(err){
-      console.error(err); toast("失敗しました");
+    const j = await r.json();
+    if(j.ok){
+      document.querySelectorAll('.item.unread').forEach(x=>x.classList.remove('unread'));
     }
-  }
+  }catch(e){ console.log(e); }
+}
 
-  async function snoozeOne(id, minutes){
-    try{
-      const res = await fetch("/api/notifications/snooze", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ id, minutes })
-      });
-      if(!res.ok) throw new Error(await res.text());
-      toast(`#${id} をスヌーズ`);
-      // 見た目だけ更新（再読込で正確な時刻が反映）
-      const el = document.querySelector(`.item[data-id='${id}']`);
-      if(el){
-        let b = el.querySelector(".snoozed");
-        if(!b){ b = document.createElement("span"); b.className="badge snoozed"; el.querySelector(".head").insertBefore(b, el.querySelector(".time")); }
-        b.textContent = "SNOOZE 実行";
-      }
-    }catch(err){
-      console.error(err); toast("失敗しました");
+async function snooze(id, minutes, btn){
+  try{
+    const r = await fetch('/api/notifications/snooze', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id, minutes })
+    });
+    const j = await r.json();
+    if(j.ok){
+      const art = btn.closest('.item');
+      art && (art.style.opacity = .5);
     }
-  }
-})();
+  }catch(e){ console.log(e); }
+}
 </script>
 
 {% endblock %}
