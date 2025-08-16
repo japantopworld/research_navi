@@ -1,0 +1,68 @@
+{% extends "base/layout.html" %}
+{% block title %}データ取込（CSV→DB） | リサーチナビ{% endblock %}
+{% block content %}
+
+<h1>データ取込（CSV → DB）</h1>
+
+<div class="card">
+  <p class="muted">手元の CSV（歴史/利益履歴など）をまとめて DB へ取り込みます。<br>
+  文字コードは <code>UTF-8</code>（推奨）または <code>Shift_JIS</code> に対応。</p>
+
+  <form method="post" enctype="multipart/form-data">
+    <div class="grid">
+      <label class="grow">
+        <span>CSVファイル</span>
+        <input type="file" name="file" accept=".csv" required>
+      </label>
+      <label>
+        <span>既存データの扱い</span>
+        <select name="mode">
+          <option value="append" selected>追記（既存は残す）</option>
+          <option value="truncate">全削除して取り込み（初回向け）</option>
+        </select>
+      </label>
+      <label>
+        <span>重複レコード</span>
+        <select name="dedupe">
+          <option value="skip" selected>同一キーはスキップ</option>
+          <option value="allow">重複も登録する</option>
+        </select>
+      </label>
+    </div>
+    <div class="actions">
+      <button type="submit">取り込み開始</button>
+      <a class="btn" href="{{ url_for('history') }}">履歴を見る</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>対応カラム（見出し行の例）</h3>
+  <p class="muted">以下の**どれか**の表記に対応（日本語/英語混在OK）。不足分は自動計算します。</p>
+  <pre style="overflow:auto;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:10px">
+日時, 商品名, PF, 販売, 仕入, 送料, 手数料, 利益, 利益率
+created_at, name, platform, price, cost, ship, fee, profit, margin
+  </pre>
+  <ul class="muted">
+    <li><b>日時/created_at</b> … 例: 2025-08-16 13:45 / 2025-08-16（省略時は現在時刻）</li>
+    <li><b>PF/platform</b> … 例: Amazon, 楽天, Yahoo, メルカリ など</li>
+    <li><b>販売/price・仕入/cost・送料/ship・手数料/fee</b> … 数値（カンマ/円記号可）</li>
+    <li><b>利益/profit・利益率/margin</b> … 無ければ自動計算</li>
+  </ul>
+</div>
+
+<style>
+.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr))}
+label{display:flex;flex-direction:column;gap:6px}
+label>span{font-size:12px;color:#6b7280}
+input,select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.grow{grid-column:span 3}
+.actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.actions .btn,.actions button{padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer}
+.actions button{background:#111;color:#fff;border-color:#111}
+.muted{color:#6b7280}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.grow{grid-column:span 1}}
+</style>
+
+{% endblock %}
