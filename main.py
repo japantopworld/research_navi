@@ -14,18 +14,13 @@ from flask import (
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, func
 
-# --- PDF (ReportLab) ---
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-
 # =============================================================================
 # Flask / DB
 # =============================================================================
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "research-navi-dev")
 
+# Render/Postgres 対応（postgresql:// → postgresql+psycopg://）
 raw_db_url = os.getenv("DATABASE_URL", "sqlite:///data/app.db")
 if raw_db_url.startswith("postgresql://"):
     raw_db_url = raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
@@ -58,7 +53,7 @@ class Notification(db.Model):
     title = db.Column(db.String(255), nullable=False)
     body = db.Column(db.Text, default="")
     meta_json = db.Column(db.Text, default="{}")
-    unread = db.Column(db.Boolean, default=True, nullable=False)
+    unread = db.Column(db.Boolean, nullable=False, default=True)
     snooze_until = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -84,13 +79,21 @@ class AppSettings(db.Model):
     def get():
         s = AppSettings.query.get(1)
         if not s:
-            s = AppSettings(id=1, mail_enabled=False, mail_provider="gmail",
-                            mail_from="", mail_to="", mail_pass="", profit_threshold=5000)
-            db.session.add(s); db.session.commit()
+            s = AppSettings(
+                id=1,
+                mail_enabled=False,
+                mail_provider="gmail",
+                mail_from="",
+                mail_to="",
+                mail_pass="",
+                profit_threshold=5000,
+            )
+            db.session.add(s)
+            db.session.commit()
         return s
 
 # =============================================================================
-# Utils
+# Utils / Filters
 # =============================================================================
 def _to_int(x):
     try:
@@ -119,22 +122,30 @@ def estimate_fee(platform, price):
 
 @app.template_filter("yen")
 def yen(v):
-    try: return f"¥{int(v):,}"
-    except Exception: return v
+    try:
+        return f"¥{int(v):,}"
+    except Exception:
+        return v
 
 @app.template_filter("fmt")
 def fmt(dt):
-    try: return dt.strftime("%Y-%m-%d %H:%M")
-    except Exception: return dt
+    try:
+        return dt.strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return dt
 
 def _parse_date(s):
     if not s: return None
     for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d", "%Y/%m/%d %H:%M", "%Y/%m/%d"):
-        try: return datetime.strptime(s.strip(), fmt)
-        except Exception: continue
+        try:
+            return datetime.strptime(s.strip(), fmt)
+        except Exception:
+            continue
     return None
 
-# ---- Mail helpers
+# =============================================================================
+# Mail helpers
+# =============================================================================
 def _smtp_profile(provider):
     table = {
         "gmail":   ("smtp.gmail.com", 465, True,  False),
@@ -142,21 +153,24 @@ def _smtp_profile(provider):
         "outlook": ("smtp.office365.com", 587, False, True),
         "yahoo":   ("smtp.mail.yahoo.co.jp", 465, True, False),
     }
-    if provider in table: return table[provider]
-    if "." in provider:   return (provider, 587, False, True)
+    if provider in table:
+        return table[provider]
+    if "." in provider:
+        return (provider, 587, False, True)
     return table["gmail"]
 
 def send_mail_with_attachment(subject, html, attachment=None, filename="report.pdf"):
-    """
-    attachment: bytes or None
-    """
+    """設定テーブルのSMTP情報でメール送信（任意でPDF添付）"""
     s = AppSettings.get()
     if not s.mail_enabled or not (s.mail_from and s.mail_pass and s.mail_to):
         return False, "mail_disabled_or_incomplete"
 
     host, port, use_ssl, use_tls = _smtp_profile((s.mail_provider or "gmail").lower())
+
     msg = MIMEMultipart("mixed")
-    msg["Subject"]=subject; msg["From"]=s.mail_from; msg["To"]=s.mail_to
+    msg["Subject"] = subject
+    msg["From"] = s.mail_from
+    msg["To"] = s.mail_to
 
     alt = MIMEMultipart("alternative")
     alt.attach(MIMEText(html, "html", "utf-8"))
@@ -182,42 +196,110 @@ def send_mail_with_attachment(subject, html, attachment=None, filename="report.p
                 smtp.sendmail(s.mail_from, [x.strip() for x in s.mail_to.split(",") if x.strip()], msg.as_string())
         return True, "sent"
     except Exception as e:
-        print("[MAIL ERROR]", e); return False, str(e)
+        print("[MAIL ERROR]", e)
+        return False, str(e)
 
 # =============================================================================
 # Init
 # =============================================================================
 with app.app_context():
-    db.create_all(); AppSettings.get()
+    db.create_all()
+    AppSettings.get()
 
 # =============================================================================
-# Common queries
+# Common query builders
 # =============================================================================
 def _build_history_query(args):
-    q = ProfitHistory.query; label=[]
-    start_s=(args.get("start") or "").strip(); end_s=(args.get("end") or "").strip()
-    start_dt=_parse_date(start_s); end_dt=_parse_date(end_s)
-    if start_dt: q=q.filter(ProfitHistory.created_at>=start_dt); label.append(f"{start_dt.strftime('%Y-%m-%d')}〜")
+    q = ProfitHistory.query
+    label = []
+    start_s = (args.get("start") or "").strip()
+    end_s   = (args.get("end") or "").strip()
+    start_dt = _parse_date(start_s)
+    end_dt   = _parse_date(end_s)
+    if start_dt:
+        q = q.filter(ProfitHistory.created_at >= start_dt)
+        label.append(f"{start_dt.strftime('%Y-%m-%d')}〜")
     if end_dt:
-        q=q.filter(ProfitHistory.created_at< end_dt + timedelta(days=1))
-        label[-1] = f"{(start_dt or end_dt).strftime('%Y-%m-%d')}〜{end_dt.strftime('%Y-%m-%d')}" if label else f"〜{end_dt.strftime('%Y-%m-%d')}"
-    pf=(args.get("platform") or "").strip()
-    if pf and pf.lower()!="all": q=q.filter(ProfitHistory.platform==pf); label.append(f"PF={pf}")
-    kw=(args.get("keyword") or "").strip()
-    if kw: q=q.filter(ProfitHistory.name.ilike(f"%{kw}%")); label.append(f"KW='{kw}'")
-    try: min_profit=int(args.get("min_profit") or 0)
-    except: min_profit=0
-    if min_profit>0: q=q.filter(ProfitHistory.profit>=min_profit); label.append(f"利益≥¥{min_profit:,}")
-    return q, (" / ".join(label) if label else "全件"), {"start":start_s,"end":end_s,"platform":pf,"keyword":kw,"min_profit":min_profit}
+        q = q.filter(ProfitHistory.created_at < end_dt + timedelta(days=1))
+        if label:
+            label[-1] = f"{(start_dt or end_dt).strftime('%Y-%m-%d')}〜{end_dt.strftime('%Y-%m-%d')}"
+        else:
+            label.append(f"〜{end_dt.strftime('%Y-%m-%d')}")
+    pf = (args.get("platform") or "").strip()
+    if pf and pf.lower() != "all":
+        q = q.filter(ProfitHistory.platform == pf)
+        label.append(f"PF={pf}")
+    kw = (args.get("keyword") or "").strip()
+    if kw:
+        q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
+        label.append(f"KW='{kw}'")
+    try:
+        min_profit = int(args.get("min_profit") or 0)
+    except:
+        min_profit = 0
+    if min_profit > 0:
+        q = q.filter(ProfitHistory.profit >= min_profit)
+        label.append(f"利益≥¥{min_profit:,}")
+    return q, (" / ".join(label) if label else "全件"), {
+        "start": start_s, "end": end_s, "platform": pf, "keyword": kw, "min_profit": min_profit
+    }
+
+def _build_ranking_query(args):
+    q = db.session.query(
+        ProfitHistory.name.label("name"),
+        ProfitHistory.platform.label("platform"),
+        func.count(ProfitHistory.id).label("cnt"),
+        func.sum(ProfitHistory.price).label("sum_price"),
+        func.sum(ProfitHistory.profit).label("sum_profit"),
+        func.avg(ProfitHistory.margin).label("avg_margin"),
+        func.min(ProfitHistory.created_at).label("first_at"),
+        func.max(ProfitHistory.created_at).label("last_at"),
+    )
+    label = []
+    start_s = (args.get("start") or "").strip()
+    end_s   = (args.get("end") or "").strip()
+    start_dt = _parse_date(start_s)
+    end_dt   = _parse_date(end_s)
+    if start_dt:
+        q = q.filter(ProfitHistory.created_at >= start_dt)
+        label.append(f"{start_dt.strftime('%Y-%m-%d')}〜")
+    if end_dt:
+        q = q.filter(ProfitHistory.created_at < end_dt + timedelta(days=1))
+        if not start_dt:
+            label.append(f"〜{end_dt.strftime('%Y-%m-%d')}")
+        else:
+            label[-1] = f"{start_dt.strftime('%Y-%m-%d')}〜{end_dt.strftime('%Y-%m-%d')}"
+    pf = (args.get("platform") or "").strip()
+    if pf and pf.lower() != "all":
+        q = q.filter(ProfitHistory.platform == pf)
+        label.append(f"PF={pf}")
+    kw = (args.get("keyword") or "").strip()
+    if kw:
+        q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
+        label.append(f"KW='{kw}'")
+    try:
+        min_sum_profit = int(args.get("min_total_profit") or 0)
+    except:
+        min_sum_profit = 0
+
+    q = (q.group_by(ProfitHistory.name, ProfitHistory.platform)
+          .order_by(func.sum(ProfitHistory.profit).desc()))
+    params = {
+        "start": start_s, "end": end_s, "platform": pf,
+        "keyword": kw, "min_total_profit": min_sum_profit
+    }
+    return q, (" / ".join(label) if label else "全期間・全PF"), params
 
 # =============================================================================
 # Routes: pages
 # =============================================================================
 @app.route("/")
-def home(): return render_template("pages/home.html")
+def home():
+    return render_template("pages/home.html")
 
 @app.route("/search")
-def search(): return render_template("pages/search.html")
+def search():
+    return render_template("pages/search.html")
 
 @app.route("/profit", methods=["GET", "POST"])
 def profit():
@@ -228,17 +310,36 @@ def profit():
         cost  = _to_int(request.form.get("cost"))
         ship  = _to_int(request.form.get("ship"))
         fee_mode = (request.form.get("fee_mode") or "auto").lower()
-        fee = estimate_fee(platform, price) if fee_mode=="auto" else _to_int(request.form.get("fee"))
+        fee = estimate_fee(platform, price) if fee_mode == "auto" else _to_int(request.form.get("fee"))
         p, m = calc_profit(price, cost, ship, fee)
-        row = ProfitHistory(name=name, platform=platform, price=price, cost=cost, ship=ship, fee=fee, profit=p, margin=m)
-        db.session.add(row); db.session.commit()
-        s = AppSettings.get(); th = int(s.profit_threshold or 0)
+
+        row = ProfitHistory(
+            name=name, platform=platform, price=price, cost=cost, ship=ship, fee=fee,
+            profit=p, margin=m
+        )
+        db.session.add(row)
+        db.session.commit()
+
+        # 利益アラートを通知に追加（メール送信は設定ページのテストで確認可能）
+        s = AppSettings.get()
+        th = int(s.profit_threshold or 0)
         if p >= th:
-            meta = {"販売": f"¥{price:,}","仕入": f"¥{cost:,}","送料": f"¥{ship:,}","手数料": f"¥{fee:,}","PF": platform,"履歴ID": row.id}
-            n = Notification(kind="profit", title=f"利益アラート：{name}（利益 ¥{p:,} / {m}%）", body=f"条件：利益≥¥{th:,}", meta_json=json.dumps(meta, ensure_ascii=False))
-            db.session.add(n); db.session.commit()
+            meta = {
+                "販売": f"¥{price:,}", "仕入": f"¥{cost:,}", "送料": f"¥{ship:,}",
+                "手数料": f"¥{fee:,}", "PF": platform, "履歴ID": row.id
+            }
+            n = Notification(
+                kind="profit",
+                title=f"利益アラート：{name}（利益 ¥{p:,} / {m}%）",
+                body=f"条件：利益≥¥{th:,}",
+                meta_json=json.dumps(meta, ensure_ascii=False)
+            )
+            db.session.add(n)
+            db.session.commit()
+
         flash(f"保存しました：{name} / 利益 {p:,} 円（{m}%）")
         return redirect(url_for("history"))
+
     return render_template("pages/profit.html")
 
 @app.route("/history")
@@ -251,62 +352,43 @@ def history():
 
 @app.route("/ranking")
 def ranking():
-    platforms=[r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
-    q = db.session.query(
-        ProfitHistory.name.label("name"),
-        ProfitHistory.platform.label("platform"),
-        func.count(ProfitHistory.id).label("cnt"),
-        func.sum(ProfitHistory.price).label("sum_price"),
-        func.sum(ProfitHistory.profit).label("sum_profit"),
-        func.avg(ProfitHistory.margin).label("avg_margin"),
-        func.min(ProfitHistory.created_at).label("first_at"),
-        func.max(ProfitHistory.created_at).label("last_at"),
-    )
-    start_s=(request.args.get("start") or "").strip(); end_s=(request.args.get("end") or "").strip()
-    start_dt=_parse_date(start_s); end_dt=_parse_date(end_s)
-    if start_dt: q=q.filter(ProfitHistory.created_at>=start_dt)
-    if end_dt:   q=q.filter(ProfitHistory.created_at< end_dt + timedelta(days=1))
-    pf=(request.args.get("platform") or "").strip()
-    if pf and pf.lower()!="all": q=q.filter(ProfitHistory.platform==pf)
-    kw=(request.args.get("keyword") or "").strip()
-    if kw: q=q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
-    q=(q.group_by(ProfitHistory.name, ProfitHistory.platform)
-         .order_by(func.sum(ProfitHistory.profit).desc()))
-    rows_all=q.all()
-    rows_sorted=sorted(rows_all, key=lambda r:(r.sum_profit or 0), reverse=True)
-    top3=rows_sorted[:3]; rest=rows_sorted[3:50]; total=len(rows_sorted)
-    label=[]
-    if start_dt or end_dt:
-        a = start_dt.strftime("%Y-%m-%d") if start_dt else ""
-        b = end_dt.strftime("%Y-%m-%d") if end_dt else ""
-        label.append(f"{a}〜{b}".strip("〜"))
-    if pf and pf.lower()!="all": label.append(f"PF={pf}")
-    if kw: label.append(f"KW='{kw}'")
-    label = " / ".join([x for x in label if x]) or "全期間・全PF"
-    params={"start":start_s,"end":end_s,"platform":pf,"keyword":kw,"min_total_profit":request.args.get("min_total_profit") or ""}
-    return render_template("pages/ranking.html", top3=top3, rows=rest, total=total, label=label, platforms=platforms, params=params)
+    platforms = [r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
+    q, label, params = _build_ranking_query(request.args)
+    rows_all = q.all()
+    min_tp = params.get("min_total_profit") or 0
+    if min_tp:
+        rows_all = [r for r in rows_all if (r.sum_profit or 0) >= min_tp]
+    rows_sorted = sorted(rows_all, key=lambda r: (r.sum_profit or 0), reverse=True)
+    top3 = rows_sorted[:3]
+    rest = rows_sorted[3:50]
+    total = len(rows_sorted)
+    return render_template("pages/ranking.html",
+                           top3=top3, rows=rest, total=total,
+                           label=label, platforms=platforms, params=params)
 
 @app.route("/notifications")
 def notifications():
     now = datetime.utcnow()
-    rows=(Notification.query
-          .filter((Notification.snooze_until.is_(None)) | (Notification.snooze_until<=now))
-          .order_by(Notification.unread.desc(), Notification.created_at.desc())
-          .limit(200).all())
+    rows = (Notification.query
+            .filter((Notification.snooze_until.is_(None)) | (Notification.snooze_until <= now))
+            .order_by(Notification.unread.desc(), Notification.created_at.desc())
+            .limit(200).all())
     return render_template("pages/notifications.html", rows=rows)
 
-@app.route("/ocr", methods=["GET","POST"])
-def ocr(): return render_template("pages/ocr.html")
+@app.route("/ocr", methods=["GET", "POST"])
+def ocr():
+    return render_template("pages/ocr.html")
 
 @app.route("/suppliers")
-def suppliers(): return render_template("pages/suppliers.html")
+def suppliers():
+    return render_template("pages/suppliers.html")
 
-@app.route("/setting", methods=["GET","POST"])
+@app.route("/setting", methods=["GET", "POST"])
 def setting():
-    s=AppSettings.get()
-    if request.method=="POST":
-        new_pass=(request.form.get("mail_pass") or "").strip() or s.mail_pass
-        s.mail_enabled = request.form.get("mail_enabled") in ("on","1","true")
+    s = AppSettings.get()
+    if request.method == "POST":
+        new_pass = (request.form.get("mail_pass") or "").strip() or s.mail_pass
+        s.mail_enabled = request.form.get("mail_enabled") in ("on", "1", "true")
         s.mail_provider = (request.form.get("mail_provider") or "gmail").strip().lower()
         s.mail_from = (request.form.get("mail_from") or "").strip()
         s.mail_to   = (request.form.get("mail_to") or "").strip()
@@ -314,16 +396,17 @@ def setting():
         s.profit_threshold = _to_int(request.form.get("profit_threshold"))
         s.updated_at = datetime.utcnow()
         db.session.commit()
-        flash("設定を保存しました。"); return redirect(url_for("setting"))
+        flash("設定を保存しました。")
+        return redirect(url_for("setting"))
     return render_template("pages/setting.html", s=s)
 
 @app.post("/setting/test-mail")
 def setting_test_mail():
-    s=AppSettings.get()
-    subj="【リサーチナビ】テスト送信"
-    html=(f"<h2>テスト送信</h2><p>送信元: {s.mail_from}<br>送信先: {s.mail_to}<br>"
-          f"閾値: ¥{s.profit_threshold:,}<br>時刻: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}</p>")
-    ok,info=send_mail_with_attachment(subj, html, None, "test.txt")
+    s = AppSettings.get()
+    subj = "【リサーチナビ】テスト送信"
+    html = (f"<h2>テスト送信</h2><p>送信元: {s.mail_from}<br>送信先: {s.mail_to}<br>"
+            f"閾値: ¥{s.profit_threshold:,}<br>時刻: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}</p>")
+    ok, info = send_mail_with_attachment(subj, html, None, "test.txt")
     flash("テストメールを送信しました。" if ok else f"テスト送信に失敗：{info}")
     return redirect(url_for("setting"))
 
@@ -332,8 +415,38 @@ def dashboard():
     platforms = [r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
     return render_template("pages/dashboard.html", platforms=platforms)
 
+@app.route("/report", methods=["GET", "POST"])
+def report():
+    platforms = [r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
+    if request.method == "GET":
+        return render_template("pages/report.html", platforms=platforms)
+
+    months = request.form.get("months") or "12"
+    platform = request.form.get("platform") or ""
+    keyword = request.form.get("keyword") or ""
+    action = request.form.get("action") or "download"
+
+    try:
+        pdf = _build_pdf(months, platform, keyword)  # ← 遅延importを内部で実施
+    except RuntimeError as e:
+        flash(str(e))  # reportlab 未導入時の案内
+        return redirect(url_for("report"))
+
+    fname = f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.pdf"
+
+    if action == "send":
+        ok, info = send_mail_with_attachment(
+            subject="【リサーチナビ】月次レポート",
+            html=f"<p>月次レポートを送付します。</p><p>対象月数: {months} / PF: {platform or 'ALL'} / KW: {keyword or '-'}</p>",
+            attachment=pdf, filename=fname
+        )
+        flash("メール送信しました。" if ok else f"送信失敗: {info}")
+        return redirect(url_for("report"))
+
+    return send_file(BytesIO(pdf), as_attachment=True, download_name=fname, mimetype="application/pdf")
+
 # =============================================================================
-# APIs used by dashboard / ranking / history inline
+# APIs (dashboard / ranking details / notifications / history inline)
 # =============================================================================
 @app.get("/api/stats/monthly")
 def api_stats_monthly():
@@ -347,38 +460,39 @@ def api_stats_monthly():
     now = datetime.utcnow()
     labels = []
     y, m = now.year, now.month
-    for i in range(months-1, -1, -1):
+    for i in range(months - 1, -1, -1):
         yy = y if m - i > 0 else y - ((i - m) // 12 + 1)
         mm = (m - i - 1) % 12 + 1
         labels.append(f"{yy}-{mm:02d}")
-    start_ym = labels[0]
-    start_dt = datetime(int(start_ym[:4]), int(start_ym[5:7]), 1)
+    start_dt = datetime(int(labels[0][:4]), int(labels[0][5:7]), 1)
 
     q = ProfitHistory.query.filter(ProfitHistory.created_at >= start_dt)
-    if pf and pf.lower() != "all": q = q.filter(ProfitHistory.platform == pf)
-    if kw: q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
+    if pf and pf.lower() != "all":
+        q = q.filter(ProfitHistory.platform == pf)
+    if kw:
+        q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
     rows = q.all()
 
-    month_sales = {k:0 for k in labels}
-    month_profit= {k:0 for k in labels}
-    month_count = {k:0 for k in labels}
-    pf_profit   = {}
+    month_sales = {k: 0 for k in labels}
+    month_profit = {k: 0 for k in labels}
+    month_count = {k: 0 for k in labels}
+    pf_profit = {}
 
     for r in rows:
         k = f"{r.created_at.year}-{r.created_at.month:02d}"
         if k in month_sales:
-            month_sales[k]  += int(r.price or 0)
+            month_sales[k] += int(r.price or 0)
             month_profit[k] += int(r.profit or 0)
-            month_count[k]  += 1
+            month_count[k] += 1
         pf_profit[r.platform] = pf_profit.get(r.platform, 0) + int(r.profit or 0)
 
-    sales  = [month_sales[k] for k in labels]
+    sales = [month_sales[k] for k in labels]
     profit = [month_profit[k] for k in labels]
-    count  = [month_count[k] for k in labels]
+    count = [month_count[k] for k in labels]
 
-    tot_sales  = sum(sales)
+    tot_sales = sum(sales)
     tot_profit = sum(profit)
-    tot_count  = sum(count)
+    tot_count = sum(count)
     if rows:
         avg_margin = round(sum(float(r.margin or 0.0) for r in rows) / len(rows), 2)
     else:
@@ -400,17 +514,20 @@ def api_stats_monthly():
 
 @app.get("/api/ranking/details")
 def api_ranking_details():
-    name = request.args.get("name","").strip()
-    platform = request.args.get("platform","").strip()
-    try: limit = min(int(request.args.get("limit", 50)), 200)
-    except: limit = 50
-    if not name or not platform: return jsonify(items=[])
-    q=(ProfitHistory.query
-        .filter(ProfitHistory.name==name)
-        .filter(ProfitHistory.platform==platform)
-        .order_by(ProfitHistory.created_at.desc())
-        .limit(limit))
-    items=[{
+    name = request.args.get("name", "").strip()
+    platform = request.args.get("platform", "").strip()
+    try:
+        limit = min(int(request.args.get("limit", 50)), 200)
+    except:
+        limit = 50
+    if not name or not platform:
+        return jsonify(items=[])
+    q = (ProfitHistory.query
+         .filter(ProfitHistory.name == name)
+         .filter(ProfitHistory.platform == platform)
+         .order_by(ProfitHistory.created_at.desc())
+         .limit(limit))
+    items = [{
         "id": r.id,
         "created_at": r.created_at.strftime("%Y-%m-%d %H:%M"),
         "price": int(r.price or 0),
@@ -424,28 +541,44 @@ def api_ranking_details():
 
 @app.post("/api/notifications/mark_read")
 def api_notif_mark_read():
-    data=request.get_json(silent=True) or {}; ids=data.get("ids") or []
-    if not isinstance(ids,list): ids=[ids]
-    q=Notification.query.filter(Notification.id.in_(ids)); updated=0
+    data = request.get_json(silent=True) or {}
+    ids = data.get("ids") or []
+    if not isinstance(ids, list):
+        ids = [ids]
+    q = Notification.query.filter(Notification.id.in_(ids))
+    updated = 0
     for n in q:
-        if n.unread: n.unread=False; updated+=1
-    db.session.commit(); return jsonify(ok=True, updated=updated)
+        if n.unread:
+            n.unread = False
+            updated += 1
+    db.session.commit()
+    return jsonify(ok=True, updated=updated)
 
 @app.post("/api/notifications/snooze")
 def api_notif_snooze():
-    data=request.get_json(silent=True) or {}; nid=int(data.get("id") or 0); minutes=int(data.get("minutes") or 60)
-    n=Notification.query.get(nid)
-    if not n: return jsonify(ok=False, error="not_found"),404
-    n.snooze_until=datetime.utcnow()+timedelta(minutes=minutes); db.session.commit()
+    data = request.get_json(silent=True) or {}
+    try:
+        nid = int(data.get("id") or 0)
+    except:
+        return jsonify(ok=False, error="bad_id"), 400
+    minutes = int(data.get("minutes") or 60)
+    n = Notification.query.get(nid)
+    if not n:
+        return jsonify(ok=False, error="not_found"), 404
+    n.snooze_until = datetime.utcnow() + timedelta(minutes=minutes)
+    db.session.commit()
     return jsonify(ok=True, snooze_until=n.snooze_until.isoformat())
 
 @app.post("/api/history/update")
 def api_history_update():
     data = request.get_json(silent=True) or {}
-    try: rid = int(data.get("id"))
-    except: return jsonify(ok=False, error="bad_id"), 400
+    try:
+        rid = int(data.get("id"))
+    except:
+        return jsonify(ok=False, error="bad_id"), 400
     row = ProfitHistory.query.get(rid)
-    if not row: return jsonify(ok=False, error="not_found"), 404
+    if not row:
+        return jsonify(ok=False, error="not_found"), 404
     row.name = (data.get("name") or row.name).strip()
     row.platform = (data.get("platform") or row.platform).strip()
     row.price = _to_int(data.get("price"))
@@ -463,15 +596,79 @@ def api_history_update():
 @app.post("/api/history/delete")
 def api_history_delete():
     data = request.get_json(silent=True) or {}
-    try: rid = int(data.get("id"))
-    except: return jsonify(ok=False, error="bad_id"), 400
+    try:
+        rid = int(data.get("id"))
+    except:
+        return jsonify(ok=False, error="bad_id"), 400
     row = ProfitHistory.query.get(rid)
-    if not row: return jsonify(ok=False, error="not_found"), 404
-    db.session.delete(row); db.session.commit()
+    if not row:
+        return jsonify(ok=False, error="not_found"), 404
+    db.session.delete(row)
+    db.session.commit()
     return jsonify(ok=True)
 
 # =============================================================================
-# Report (PDF)
+# Export / Health
+# =============================================================================
+@app.route("/export/history.csv")
+def export_history():
+    q, _, _ = _build_history_query(request.args)
+    q = q.order_by(ProfitHistory.created_at.desc())
+    sio = StringIO()
+    w = csv.writer(sio)
+    w.writerow(["日時", "商品名", "PF", "販売", "仕入", "送料", "手数料", "利益", "利益率(%)"])
+    for r in q.all():
+        w.writerow([r.created_at.strftime("%Y-%m-%d %H:%M"),
+                    r.name, r.platform, r.price, r.cost, r.ship, r.fee, r.profit, r.margin])
+    data = sio.getvalue().encode("utf-8-sig")
+    fname = f"profit_history_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.csv"
+    return send_file(BytesIO(data), as_attachment=True, download_name=fname,
+                     mimetype="text/csv; charset=utf-8")
+
+@app.route("/export/ranking.csv")
+def export_ranking():
+    q, _, params = _build_ranking_query(request.args)
+    rows = q.all()
+    min_tp = params.get("min_total_profit") or 0
+    if min_tp:
+        rows = [r for r in rows if (r.sum_profit or 0) >= min_tp]
+    sio = StringIO()
+    w = csv.writer(sio)
+    w.writerow(["商品名", "PF", "件数", "売上合計", "利益合計", "平均利益率(%)", "初回", "最終"])
+    for r in sorted(rows, key=lambda x: (x.sum_profit or 0), reverse=True):
+        w.writerow([
+            r.name, r.platform, r.cnt, int(r.sum_price or 0), int(r.sum_profit or 0),
+            round(float(r.avg_margin or 0.0), 2),
+            (r.first_at or datetime.utcnow()).strftime("%Y-%m-%d"),
+            (r.last_at  or datetime.utcnow()).strftime("%Y-%m-%d")
+        ])
+    data = sio.getvalue().encode("utf-8-sig")
+    fname = f"ranking_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.csv"
+    return send_file(BytesIO(data), as_attachment=True, download_name=fname,
+                     mimetype="text/csv; charset=utf-8")
+
+@app.route("/healthz")
+def healthz():
+    return "ok", 200
+
+@app.route("/dbcheck")
+def dbcheck():
+    try:
+        v = db.session.execute(text("SELECT 1")).scalar_one()
+        return f"DB OK ({v})"
+    except Exception as e:
+        return f"DB ERROR: {e}", 500
+
+@app.errorhandler(404)
+def _404(e):
+    return render_template("errors/404.html"), 404
+
+@app.errorhandler(500)
+def _500(e):
+    return render_template("errors/500.html"), 500
+
+# =============================================================================
+# PDF builder (遅延インポート)
 # =============================================================================
 def _monthly_series(months, platform, keyword):
     try:
@@ -484,63 +681,80 @@ def _monthly_series(months, platform, keyword):
     now = datetime.utcnow()
     labels = []
     y, m = now.year, now.month
-    for i in range(months-1, -1, -1):
+    for i in range(months - 1, -1, -1):
         yy = y if m - i > 0 else y - ((i - m) // 12 + 1)
         mm = (m - i - 1) % 12 + 1
         labels.append(f"{yy}-{mm:02d}")
     start_dt = datetime(int(labels[0][:4]), int(labels[0][5:7]), 1)
 
     q = ProfitHistory.query.filter(ProfitHistory.created_at >= start_dt)
-    if pf and pf.lower()!="all": q = q.filter(ProfitHistory.platform==pf)
-    if kw: q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
+    if pf and pf.lower() != "all":
+        q = q.filter(ProfitHistory.platform == pf)
+    if kw:
+        q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
     rows = q.all()
 
-    month_sales = {k:0 for k in labels}
-    month_profit= {k:0 for k in labels}
-    month_count = {k:0 for k in labels}
-    pf_profit   = {}
+    month_sales = {k: 0 for k in labels}
+    month_profit = {k: 0 for k in labels}
+    month_count = {k: 0 for k in labels}
+    pf_profit = {}
+
     for r in rows:
         k = f"{r.created_at.year}-{r.created_at.month:02d}"
         if k in month_sales:
-            month_sales[k]  += int(r.price or 0)
+            month_sales[k] += int(r.price or 0)
             month_profit[k] += int(r.profit or 0)
-            month_count[k]  += 1
+            month_count[k] += 1
         pf_profit[r.platform] = pf_profit.get(r.platform, 0) + int(r.profit or 0)
 
-    # Top products
+    # Top 商品（利益合計上位10）
     agg = {}
     for r in rows:
         key = (r.name, r.platform)
-        x = agg.get(key, {"cnt":0,"sum_price":0,"sum_profit":0,"avg_margin":0.0})
+        x = agg.get(key, {"cnt": 0, "sum_price": 0, "sum_profit": 0, "avg_margin": 0.0})
         x["cnt"] += 1
         x["sum_price"] += int(r.price or 0)
         x["sum_profit"] += int(r.profit or 0)
         x["avg_margin"] += float(r.margin or 0.0)
-        agg[key]=x
+        agg[key] = x
     top = []
-    for (n,pf1),v in agg.items():
-        avg_m = v["avg_margin"]/v["cnt"] if v["cnt"] else 0.0
-        top.append({"name":n,"platform":pf1,"cnt":v["cnt"],"sum_price":v["sum_price"],"sum_profit":v["sum_profit"],"avg_margin":round(avg_m,2)})
-    top = sorted(top, key=lambda x:x["sum_profit"], reverse=True)[:10]
+    for (n, pf1), v in agg.items():
+        avg_m = v["avg_margin"] / v["cnt"] if v["cnt"] else 0.0
+        top.append({
+            "name": n, "platform": pf1, "cnt": v["cnt"],
+            "sum_price": v["sum_price"], "sum_profit": v["sum_profit"],
+            "avg_margin": round(avg_m, 2)
+        })
+    top = sorted(top, key=lambda x: x["sum_profit"], reverse=True)[:10]
 
-    series = {
+    return {
         "labels": labels,
         "sales": [month_sales[k] for k in labels],
-        "profit":[month_profit[k] for k in labels],
+        "profit": [month_profit[k] for k in labels],
         "count": [month_count[k] for k in labels],
-        "pf_profit": sorted([{"platform":k,"profit":v} for k,v in pf_profit.items()], key=lambda x:x["profit"], reverse=True),
+        "pf_profit": sorted([{"platform": k, "profit": v} for k, v in pf_profit.items()],
+                            key=lambda x: x["profit"], reverse=True),
         "top": top,
         "totals": {
             "sales": sum(month_sales.values()),
             "profit": sum(month_profit.values()),
             "count": sum(month_count.values()),
-            "avg_margin": round(sum(float(r.margin or 0.0) for r in rows)/len(rows),2) if rows else 0.0
+            "avg_margin": round(sum(float(r.margin or 0.0) for r in rows)/len(rows), 2) if rows else 0.0
         }
     }
-    return series
 
 def _build_pdf(months, platform, keyword):
+    # ← 起動時に reportlab を import しない（ここでだけ読み込む）
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    except ImportError:
+        raise RuntimeError("reportlab が未インストールです。requirements.txt に 'reportlab>=4.0' を追加して再デプロイしてください。")
+
     data = _monthly_series(months, platform, keyword)
+
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
     styles = getSampleStyleSheet()
@@ -553,115 +767,61 @@ def _build_pdf(months, platform, keyword):
     cond  = f"対象月数: {months} / PF: {platform or 'ALL'} / KW: {keyword or '-'}"
     now_s = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
-    elems += [Paragraph(title, styles["H1"]), Paragraph(cond, styles["KPI"]), Paragraph(f"作成: {now_s}", styles["KPI"]), Spacer(1,8)]
+    elems += [Paragraph(title, styles["H1"]), Paragraph(cond, styles["KPI"]), Paragraph(f"作成: {now_s}", styles["KPI"]), Spacer(1, 8)]
 
     t = data["totals"]
     kpi_tbl = Table([
         ["合計売上", f"¥{t['sales']:,}", "合計利益", f"¥{t['profit']:,}", "件数", f"{t['count']:,}", "平均利益率", f"{t['avg_margin']:.2f}%"]
-    ], colWidths=[60,90,60,90,40,70,70,70])
+    ], colWidths=[60, 90, 60, 90, 40, 70, 70, 70])
     kpi_tbl.setStyle(TableStyle([
-        ("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),
-        ("BACKGROUND",(0,0),(-1,-1),colors.whitesmoke),
-        ("FONTNAME",(0,0),(-1,-1),"Helvetica-Bold")
+        ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey),
+        ("BACKGROUND", (0,0), (-1,-1), colors.whitesmoke),
+        ("FONTNAME", (0,0), (-1,-1), "Helvetica-Bold")
     ]))
-    elems += [kpi_tbl, Spacer(1,10)]
+    elems += [kpi_tbl, Spacer(1, 10)]
 
     elems += [Paragraph("月次推移（売上 / 利益 / 件数）", styles["H2"])]
-    tbl_data = [["月","売上","利益","件数"]]
-    for i,lab in enumerate(data["labels"]):
+    tbl_data = [["月", "売上", "利益", "件数"]]
+    for i, lab in enumerate(data["labels"]):
         tbl_data.append([lab, f"¥{data['sales'][i]:,}", f"¥{data['profit'][i]:,}", f"{data['count'][i]:,}"])
-    m_tbl = Table(tbl_data, colWidths=[70,90,90,60])
+    m_tbl = Table(tbl_data, colWidths=[70, 90, 90, 60])
     m_tbl.setStyle(TableStyle([
-        ("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),
-        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#eef2ff")),
-        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold")
+        ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey),
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#eef2ff")),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold")
     ]))
-    elems += [m_tbl, Spacer(1,10)]
+    elems += [m_tbl, Spacer(1, 10)]
 
     elems += [Paragraph("PF別 利益内訳（合計）", styles["H2"])]
-    pf_tbl = Table([["PF","利益合計"]] + [[x["platform"], f"¥{x['profit']:,}"] for x in data["pf_profit"][:12]],
-                   colWidths=[150,120])
+    pf_tbl = Table([["PF", "利益合計"]] + [[x["platform"], f"¥{x['profit']:,}"] for x in data["pf_profit"][:12]],
+                   colWidths=[150, 120])
     pf_tbl.setStyle(TableStyle([
-        ("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),
-        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#ecfeff")),
-        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold")
+        ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey),
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#ecfeff")),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold")
     ]))
-    elems += [pf_tbl, Spacer(1,10)]
+    elems += [pf_tbl, Spacer(1, 10)]
 
     elems += [Paragraph("トップ商品（利益順 上位10）", styles["H2"])]
-    top_tbl = Table([["商品名","PF","件数","売上合計","利益合計","平均利益率"]] + [
+    top_tbl = Table([["商品名", "PF", "件数", "売上合計", "利益合計", "平均利益率"]] + [
         [x["name"], x["platform"], f"{x['cnt']:,}", f"¥{x['sum_price']:,}", f"¥{x['sum_profit']:,}", f"{x['avg_margin']:.2f}%"]
         for x in data["top"]
-    ], colWidths=[180,70,50,80,80,70])
+    ], colWidths=[180, 70, 50, 80, 80, 70])
     top_tbl.setStyle(TableStyle([
-        ("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),
-        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#f1f5f9")),
-        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold")
+        ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey),
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#f1f5f9")),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold")
     ]))
     elems += [top_tbl]
 
     doc.build(elems)
-    pdf = buf.getvalue(); buf.close()
+    pdf = buf.getvalue()
+    buf.close()
     return pdf
 
-@app.route("/report", methods=["GET","POST"])
-def report():
-    platforms = [r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
-    if request.method == "GET":
-        return render_template("pages/report.html", platforms=platforms)
-
-    months = request.form.get("months") or "12"
-    platform = request.form.get("platform") or ""
-    keyword = request.form.get("keyword") or ""
-    action = request.form.get("action") or "download"
-
-    pdf = _build_pdf(months, platform, keyword)
-    fname = f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.pdf"
-
-    if action == "send":
-        ok, info = send_mail_with_attachment(
-            subject="【リサーチナビ】月次レポート",
-            html=f"<p>月次レポートを送付します。</p><p>対象月数: {months} / PF: {platform or 'ALL'} / KW: {keyword or '-'}</p>",
-            attachment=pdf, filename=fname
-        )
-        flash("メール送信しました。" if ok else f"送信失敗: {info}")
-        return redirect(url_for("report"))
-
-    # download
-    return send_file(BytesIO(pdf), as_attachment=True, download_name=fname, mimetype="application/pdf")
-
 # =============================================================================
-# Health / misc
+# Main
 # =============================================================================
-@app.route("/export/history.csv")
-def export_history():
-    q, _, _ = _build_history_query(request.args)
-    q = q.order_by(ProfitHistory.created_at.desc())
-    sio = StringIO(); w = csv.writer(sio)
-    w.writerow(["日時","商品名","PF","販売","仕入","送料","手数料","利益","利益率(%)"])
-    for r in q.all():
-        w.writerow([r.created_at.strftime("%Y-%m-%d %H:%M"),
-                    r.name, r.platform, r.price, r.cost, r.ship, r.fee, r.profit, r.margin])
-    data = sio.getvalue().encode("utf-8-sig")
-    fname = f"profit_history_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.csv"
-    return send_file(BytesIO(data), as_attachment=True, download_name=fname, mimetype="text/csv; charset=utf-8")
-
-@app.route("/healthz")
-def healthz(): return "ok", 200
-
-@app.route("/dbcheck")
-def dbcheck():
-    try:
-        v=db.session.execute(text("SELECT 1")).scalar_one()
-        return f"DB OK ({v})"
-    except Exception as e:
-        return f"DB ERROR: {e}", 500
-
-@app.errorhandler(404)
-def _404(e): return render_template("errors/404.html"), 404
-
-@app.errorhandler(500)
-def _500(e): return render_template("errors/500.html"), 500
-
 if __name__ == "__main__":
+    # ローカル開発用
     app.run(host="0.0.0.0", port=5000, debug=True)
