@@ -169,7 +169,7 @@ with app.app_context():
     db.create_all(); AppSettings.get()
 
 # =============================================================================
-# Routes (主要)
+# Routes
 # =============================================================================
 @app.route("/")
 def home(): return render_template("pages/home.html")
@@ -199,7 +199,7 @@ def profit():
         return redirect(url_for("history"))
     return render_template("pages/profit.html")
 
-# ---- History: query builder
+# ---- History (list/export/import)
 def _build_history_query(args):
     q = ProfitHistory.query; label=[]
     start_s=(args.get("start") or "").strip(); end_s=(args.get("end") or "").strip()
@@ -394,7 +394,7 @@ def api_notif_snooze():
     n.snooze_until=datetime.utcnow()+timedelta(minutes=minutes); db.session.commit()
     return jsonify(ok=True, snooze_until=n.snooze_until.isoformat())
 
-# ---- Inline Edit / Delete (今回追加)
+# ---- Inline Edit / Delete
 @app.post("/api/history/update")
 def api_history_update():
     data = request.get_json(silent=True) or {}
@@ -428,7 +428,7 @@ def api_history_delete():
     db.session.delete(row); db.session.commit()
     return jsonify(ok=True)
 
-# ---- Others
+# ---- OCR / Suppliers / Setting
 @app.route("/ocr", methods=["GET","POST"])
 def ocr(): return render_template("pages/ocr.html")
 
@@ -461,6 +461,86 @@ def setting_test_mail():
     flash("テストメールを送信しました。" if ok else f"テスト送信に失敗：{info}")
     return redirect(url_for("setting"))
 
+# ---- Dashboard
+@app.route("/dashboard")
+def dashboard():
+    platforms = [r[0] for r in db.session.query(ProfitHistory.platform).distinct().all()]
+    return render_template("pages/dashboard.html", platforms=platforms)
+
+@app.get("/api/stats/monthly")
+def api_stats_monthly():
+    """
+    直近 Nヶ月の 月次集計（売上/利益/件数）と、期間内 PF別利益合計を返す。
+    パラメータ: months(=12), platform(=all/空), keyword(商品名)
+    """
+    try:
+        months = max(1, min(int(request.args.get("months", 12)), 36))
+    except Exception:
+        months = 12
+    pf = (request.args.get("platform") or "").strip()
+    kw = (request.args.get("keyword") or "").strip()
+
+    # ラベル（月）を生成（過去Nヶ月）
+    now = datetime.utcnow()
+    labels = []
+    y, m = now.year, now.month
+    for i in range(months-1, -1, -1):
+        yy = y if m - i > 0 else y - ((i - m) // 12 + 1)
+        mm = (m - i - 1) % 12 + 1
+        labels.append(f"{yy}-{mm:02d}")
+    start_ym = labels[0]
+    start_dt = datetime(int(start_ym[:4]), int(start_ym[5:7]), 1)
+
+    # 期間内を取得（Python側で安全に集計：DB方言差回避）
+    q = ProfitHistory.query.filter(ProfitHistory.created_at >= start_dt)
+    if pf and pf.lower() != "all":
+        q = q.filter(ProfitHistory.platform == pf)
+    if kw:
+        q = q.filter(ProfitHistory.name.ilike(f"%{kw}%"))
+    rows = q.all()
+
+    # 集計
+    month_sales = {k:0 for k in labels}
+    month_profit= {k:0 for k in labels}
+    month_count = {k:0 for k in labels}
+    pf_profit   = {}
+
+    for r in rows:
+        k = f"{r.created_at.year}-{r.created_at.month:02d}"
+        if k in month_sales:
+            month_sales[k]  += int(r.price or 0)
+            month_profit[k] += int(r.profit or 0)
+            month_count[k]  += 1
+        pf_profit[r.platform] = pf_profit.get(r.platform, 0) + int(r.profit or 0)
+
+    sales  = [month_sales[k] for k in labels]
+    profit = [month_profit[k] for k in labels]
+    count  = [month_count[k] for k in labels]
+
+    tot_sales  = sum(sales)
+    tot_profit = sum(profit)
+    tot_count  = sum(count)
+    # 平均利益率：各レコードの margin 平均（価格0は0%として扱い）
+    if rows:
+        avg_margin = round(sum(float(r.margin or 0.0) for r in rows) / len(rows), 2)
+    else:
+        avg_margin = 0.0
+
+    platforms = sorted(
+        [{"platform": k, "profit": v} for k, v in pf_profit.items()],
+        key=lambda x: x["profit"], reverse=True
+    )[:12]
+
+    return jsonify(
+        labels=labels,
+        sales=sales,
+        profit=profit,
+        count=count,
+        platforms=platforms,
+        totals={"sales": tot_sales, "profit": tot_profit, "count": tot_count, "avg_margin": avg_margin}
+    )
+
+# ---- Health / DB check / Errors
 @app.route("/healthz")
 def healthz(): return "ok", 200
 
