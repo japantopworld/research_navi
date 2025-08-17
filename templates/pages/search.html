@@ -1,26 +1,10 @@
 {% extends "base/layout.html" %}
-{% block title %}検索[DEBUG] | リサーチナビ{% endblock %}
+{% block title %}検索 | リサーチナビ{% endblock %}
 {% block content %}
 
-<!-- ▼▼ これが見えたら新テンプレは配信できています ▼▼ -->
-<div class="debug-banner">SEARCH DEBUG v2025-08-17-3</div>
-
 <h1>商品検索（バーコード / ASIN 対応）</h1>
-<p>まずは「診断」ボタンで、<b>配信・JS・カメラ権限</b>が正しく動いているか確認します。</p>
+<p>カメラでバーコード（JAN/EAN/UPC）を読み取るか、ASIN・キーワードを入力して検索します。</p>
 
-<!-- 診断UI -->
-<div class="card">
-  <h3>診断</h3>
-  <div class="diag-actions">
-    <button id="btn-check-js">① JS動作確認</button>
-    <button id="btn-check-cdn">② CDN読込確認（html5-qrcode）</button>
-    <button id="btn-check-camera">③ カメラ権限チェック</button>
-    <button id="btn-cache-bust">④ 強制再読込（キャッシュ無視）</button>
-  </div>
-  <pre id="diag-log" class="diag-log">ここに結果が出ます</pre>
-</div>
-
-<!-- 入力UI -->
 <form method="get" action="{{ url_for('search') }}">
   <div class="field">
     <label for="keyword">キーワード / ASIN / バーコード</label>
@@ -33,6 +17,7 @@
     <button type="button" id="btn-start-scan">📷 バーコードをスキャン</button>
     <button type="button" id="btn-stop-scan" style="display:none">■ 停止</button>
 
+    <!-- 失敗時の保険：写真/画像から解析 -->
     <label style="display:inline-block;">
       <input type="file" id="capture" accept="image/*" capture="environment" hidden>
       <span class="btn-like">📸 撮影して読み取り</span>
@@ -56,174 +41,172 @@
 </form>
 
 <style>
-  .debug-banner{
-    background:#fff3c4;border:1px solid #facc15;color:#7c2d12;
-    padding:10px;border-radius:10px;margin:8px 0;font-weight:700;text-align:center
-  }
-  .card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0}
   .btn-like{display:inline-block;padding:.5rem .8rem;border:1px solid #e5e7eb;border-radius:.5rem;background:#fff;cursor:pointer}
-  .diag-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0}
-  .diag-log{background:#0b1020;color:#d1e7ff;padding:8px;border-radius:8px;min-height:64px;white-space:pre-wrap}
 </style>
 
-<!-- html5-qrcode（CDN）※クエリでキャッシュ無効化 -->
-<script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js?v=2025-08-17-3"></script>
+<!-- html5-qrcode を “自前 → CDN” の順に動的ロードして確実化 -->
 <script>
-  // ====== 診断ロガー ======
-  const DL = document.getElementById('diag-log');
-  const logDiag = (obj) => {
-    DL.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
-  };
+(function(){
+  const logEl = document.getElementById('log');
+  const log = (m)=>{ if(logEl) logEl.textContent = m || ''; };
 
-  // ① JS動作確認
-  document.getElementById('btn-check-js').addEventListener('click', () => {
-    const info = {
-      time: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      location: window.location.href,
-      templateVersion: 'SEARCH DEBUG v2025-08-17-3',
-    };
-    logDiag(info);
-    alert('JSは動いています（OK）');
-  });
-
-  // ② CDN読込確認
-  document.getElementById('btn-check-cdn').addEventListener('click', () => {
-    const ok = !!window.Html5Qrcode;
-    logDiag({ html5QrcodeLoaded: ok });
-    alert(ok ? 'html5-qrcode 読込OK' : 'html5-qrcode が読み込めていません！');
-  });
-
-  // ③ カメラ権限チェック（簡易）
-  document.getElementById('btn-check-camera').addEventListener('click', async () => {
-    try{
-      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
-      s.getTracks().forEach(t => t.stop());
-      logDiag('カメラ: 許可OK（getUserMedia成功）');
-      alert('カメラ許可OK');
-    }catch(e){
-      logDiag('カメラ: 失敗 ' + e);
-      alert('カメラが使えません。Safariの設定で許可にしてください。');
-    }
-  });
-
-  // ④ 強制キャッシュバスター
-  document.getElementById('btn-cache-bust').addEventListener('click', () => {
-    const u = new URL(window.location.href);
-    u.searchParams.set('cb', Date.now());
-    window.location.href = u.href;
-  });
-
-  // ====== 実際のスキャナ（最低限） ======
-  let html5Qr, scanning=false;
-  const formats = [
-    Html5QrcodeSupportedFormats.EAN_13,
-    Html5QrcodeSupportedFormats.EAN_8,
-    Html5QrcodeSupportedFormats.UPC_A,
-    Html5QrcodeSupportedFormats.UPC_E,
-    Html5QrcodeSupportedFormats.CODE_39,
-    Html5QrcodeSupportedFormats.CODE_128
-  ];
-  const $ = (q)=>document.querySelector(q);
-  const log = (m)=>{$('#log').textContent = m||''}
-
-  function ensureHtml5(){ if(!html5Qr) html5Qr = new Html5Qrcode('reader', { verbose:false }); }
-
-  function chooseRear(cams){
-    let id=cams[0].id;
-    for(const c of cams){
-      const l=(c.label||'').toLowerCase();
-      if(l.includes('back')||l.includes('rear')||l.includes('environment')){ id=c.id; break; }
-    }
-    return id;
+  function loadScript(src, done){
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.onload = ()=>done(null);
+    s.onerror = ()=>done(new Error('load failed: '+src));
+    document.head.appendChild(s);
   }
 
-  async function startScan(){
-    try{
-      ensureHtml5();
-      $('#reader-wrap').style.display='block';
-      $('#btn-start-scan').style.display='none';
-      $('#btn-stop-scan').style.display='inline-block';
-      log('起動中…');
+  // 1) まず自前配信（ある場合）→ 2) 失敗したらCDN
+  const selfHosted = "{{ url_for('static', filename='lib/html5-qrcode.min.js') }}";
+  const cdnHosted  = "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.10/minified/html5-qrcode.min.js";
 
-      // 事前権限（安定化）
-      try{
-        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal:'environment' } } });
-        s.getTracks().forEach(t => t.stop());
-      }catch(_){}
+  loadScript(selfHosted, (err)=>{
+    if(err){
+      loadScript(cdnHosted, (err2)=>{
+        if(err2){
+          alert("バーコード用ライブラリを読み込めませんでした。\nネットワークとコンテンツブロッカーを確認してください。");
+        }else{
+          initScanner();
+        }
+      });
+    }else{
+      initScanner();
+    }
+  });
 
-      const qrboxW = Math.min(480, window.innerWidth-24);
-      const config = {
-        fps: 20,
-        qrbox: { width: qrboxW, height: Math.round(qrboxW * 0.6) }, // 1D向け
-        formatsToSupport: formats,
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-        aspectRatio: 1.777,
-        disableFlip: true,
-        rememberLastUsedCamera: true
-      };
+  // ===== スキャナ本体 =====
+  function initScanner(){
+    if(!window.Html5Qrcode){ alert("初期化に失敗しました。"); return; }
 
-      // facingMode → 失敗時 deviceId
-      try{
-        await html5Qr.start({ facingMode: 'environment' }, config, onDecoded, onScanError);
-      }catch(e1){
-        const cams = await Html5Qrcode.getCameras();
-        if(!cams || cams.length===0) throw e1;
-        const id = chooseRear(cams);
-        await html5Qr.start({ deviceId: id }, config, onDecoded, onScanError);
+    let html5Qr = null;
+    let scanning = false;
+
+    const $ = (q)=>document.querySelector(q);
+    const readerWrap = $('#reader-wrap');
+    const btnStart = $('#btn-start-scan');
+    const btnStop  = $('#btn-stop-scan');
+    const keyword  = $('#keyword');
+
+    const formats = [
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.CODE_128
+    ];
+
+    function ensureInstance(){
+      if(!html5Qr) html5Qr = new Html5Qrcode("reader", { verbose:false });
+    }
+
+    function chooseRear(cams){
+      let id = cams[0].id;
+      for(const c of cams){
+        const l = (c.label||'').toLowerCase();
+        if(l.includes('back') || l.includes('rear') || l.includes('environment')) { id = c.id; break; }
       }
-      scanning=true;
-      log('スキャン中… 枠いっぱいに近づけてください。');
-
-    }catch(e){
-      stopScan();
-      alert('スキャナ初期化に失敗: ' + e);
+      return id;
     }
-  }
 
-  function onDecoded(text){
-    document.getElementById('keyword').value = text;
-    log('読み取り成功: ' + text);
-    stopScan();
-  }
-  function onScanError(_e){ /* 毎フレームは捨てる */ }
+    async function startScan(){
+      try{
+        ensureInstance();
 
-  async function stopScan(){
-    try{
-      if(html5Qr && scanning){ await html5Qr.stop(); await html5Qr.clear(); }
-    }finally{
-      scanning=false;
-      $('#btn-start-scan').style.display='inline-block';
-      $('#btn-stop-scan').style.display='none';
-      $('#reader-wrap').style.display='none';
-      log('');
+        // UI
+        readerWrap.style.display = 'block';
+        btnStart.style.display = 'none';
+        btnStop.style.display  = 'inline-block';
+        log('起動中… カメラ許可を「許可」にしてください。');
+
+        // 事前に権限を取りに行く（iOS安定化）
+        try{
+          const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+          s.getTracks().forEach(t=>t.stop());
+        }catch(_){}
+
+        const qrboxW = Math.min(480, window.innerWidth-24);
+        const config = {
+          fps: 20,
+          // 1Dバーコード向けに横長の枠
+          qrbox: { width: qrboxW, height: Math.round(qrboxW*0.6) },
+          formatsToSupport: formats,
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+          aspectRatio: 1.777,
+          disableFlip: true,
+          rememberLastUsedCamera: true
+        };
+
+        // facingMode → 失敗時は deviceId で再試行
+        try{
+          await html5Qr.start({ facingMode: "environment" }, config, onDecoded, onScanError);
+        }catch(e1){
+          const cams = await Html5Qrcode.getCameras();
+          if(!cams || cams.length===0) throw e1;
+          const id = chooseRear(cams);
+          await html5Qr.start({ deviceId: id }, config, onDecoded, onScanError);
+        }
+        scanning = true;
+        log('スキャン中… バーコードを枠いっぱいに近づけてください。');
+
+        // 8秒ヒットしなければヒント
+        setTimeout(()=>{ if(scanning) log('読めない場合は「📸 撮影して読み取り」をお試しください。'); }, 8000);
+
+      }catch(e){
+        stopScan();
+        alert(
+          "スキャナ初期化に失敗しました。\n" +
+          "・設定>Safari>カメラ を『許可』\n" +
+          "・プライベートブラウズ/コンテンツブロッカーをOFF\n" +
+          "・HTTPSのURLで開いているか\n\n詳細: " + e
+        );
+      }
     }
-  }
 
-  // 画像から読み取り（簡易：まずはhtml5-qrcode）
-  async function decodeWithHtml5(file){
-    try{
-      const r = await html5Qr.scanFile(file, true);
-      document.getElementById('keyword').value = r;
-      log('画像から読み取り成功: ' + r);
-    }catch(_){
-      alert('画像から読み取れませんでした。バーコードを大きく撮ってください。');
+    function onDecoded(text){
+      keyword.value = text;
+      log('読み取り成功: ' + text);
+      stopScan(); // 1回読めたら停止
     }
-  }
+    function onScanError(_e){ /* 毎フレームは捨てる */ }
 
-  // ボタン
-  document.getElementById('btn-start-scan').addEventListener('click', startScan);
-  document.getElementById('btn-stop-scan').addEventListener('click', stopScan);
-  document.getElementById('capture').addEventListener('change', async (ev)=>{
-    const f = ev.target.files?.[0]; if(!f) return;
-    if(!html5Qr) html5Qr = new Html5Qrcode('reader',{verbose:false});
-    await decodeWithHtml5(f); ev.target.value='';
-  });
-  document.getElementById('pick-image').addEventListener('change', async (ev)=>{
-    const f = ev.target.files?.[0]; if(!f) return;
-    if(!html5Qr) html5Qr = new Html5Qrcode('reader',{verbose:false});
-    await decodeWithHtml5(f); ev.target.value='';
-  });
+    async function stopScan(){
+      try{
+        if(html5Qr && scanning){
+          await html5Qr.stop();
+          await html5Qr.clear();
+        }
+      }finally{
+        scanning=false;
+        btnStart.style.display='inline-block';
+        btnStop.style.display='none';
+        readerWrap.style.display='none';
+        log('');
+      }
+    }
+
+    // 画像ファイルから解析（静止画が一番確実な端末もある）
+    async function decodeFromFile(file){
+      try{
+        ensureInstance();
+        const result = await html5Qr.scanFile(file, true);
+        keyword.value = result;
+        log('画像から読み取り成功: ' + result);
+      }catch(_){
+        alert('画像から読み取れませんでした。バーコードが大きくクッキリ写るように撮影してください。');
+      }
+    }
+
+    // ボタン結線
+    btnStart.addEventListener('click', startScan);
+    btnStop .addEventListener('click', stopScan);
+    document.getElementById('capture').addEventListener('change', async (ev)=>{ const f=ev.target.files?.[0]; if(f) await decodeFromFile(f); ev.target.value=''; });
+    document.getElementById('pick-image').addEventListener('change', async (ev)=>{ const f=ev.target.files?.[0]; if(f) await decodeFromFile(f); ev.target.value=''; });
+  }
+})();
 </script>
 
 {% endblock %}
