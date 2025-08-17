@@ -17,16 +17,26 @@
     <button type="button" id="btn-start-scan">📷 バーコードをスキャン</button>
     <button type="button" id="btn-stop-scan" style="display:none">■ 停止</button>
 
+    <!-- ③ 写真から読み取り（iOSで強い） -->
+    <label class="img-btn" style="display:inline-block;">
+      <input type="file" id="capture" accept="image/*" capture="environment" hidden>
+      <span style="display:inline-block;padding:.5rem .8rem;border:1px solid #e5e7eb;border-radius:.5rem;background:#fff;cursor:pointer;">📸 撮影して読み取り</span>
+    </label>
+
+    <!-- ギャラリー画像からもOK -->
     <label class="img-btn" style="display:inline-block;">
       <input type="file" id="pick-image" accept="image/*" hidden>
-      <span style="display:inline-block;padding:.5rem .8rem;border:1px solid #e5e7eb;border-radius:.5rem;background:#fff;cursor:pointer;">🖼 画像から読み取る</span>
+      <span style="display:inline-block;padding:.5rem .8rem;border:1px solid #e5e7eb;border-radius:.5rem;background:#fff;cursor:pointer;">🖼 画像から読み取り</span>
     </label>
 
     <button type="submit">🔎 検索</button>
   </div>
 
   <div id="reader-wrap" style="display:none;margin-top:12px">
-    <div id="reader" style="width:320px;max-width:100%;"></div>
+    <div id="reader" style="width:320px;max-width:100%;aspect-ratio:1/1;border:1px solid #e5e7eb;border-radius:.5rem;"></div>
+    <div style="font-size:.85rem;color:#6b7280;margin-top:.25rem">
+      読み取れない時は、バーコードを枠いっぱいに近づけてください。暗い場所では明るさを上げると精度が上がります。
+    </div>
   </div>
 </form>
 
@@ -48,6 +58,15 @@
     if (!html5Qr) html5Qr = new Html5Qrcode("reader", { verbose: false });
   }
 
+  function chooseRear(cams) {
+    let id = cams[0].id;
+    for (const c of cams) {
+      const l = (c.label || "").toLowerCase();
+      if (l.includes("back") || l.includes("rear") || l.includes("environment")) { id = c.id; break; }
+    }
+    return id;
+  }
+
   async function startScan() {
     try {
       ensureInstance();
@@ -57,24 +76,45 @@
       document.getElementById("btn-start-scan").style.display = "none";
       document.getElementById("btn-stop-scan").style.display = "inline-block";
 
-      // iOS対策：まずカメラ一覧から背面らしき deviceId を選ぶ
-      const cams = await Html5Qrcode.getCameras();
-      if (!cams || cams.length === 0) throw new Error("カメラが検出できません（Safariのカメラ許可を確認）");
+      // ① SafariでBarcodeDetectorが使えるなら有効化
+      const config = {
+        fps: 15,
+        qrbox: 250,
+        formatsToSupport: formats,
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+        disableFlip: true
+      };
 
-      let deviceId = cams[0].id;
-      for (const c of cams) {
-        const l = (c.label || "").toLowerCase();
-        if (l.includes("back") || l.includes("rear") || l.includes("environment")) { deviceId = c.id; break; }
+      // ② 事前に環境カメラで許可を取りに行く（Safari安定化）
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
+        s.getTracks().forEach(t => t.stop());
+      } catch (_) { /* 許可はstart時に再提示されるので無視 */ }
+
+      // まず facingMode で起動 → 失敗なら deviceId 方式へフォールバック
+      try {
+        await html5Qr.start({ facingMode: "environment" }, config, onDecoded, onScanError);
+        scanning = true;
+      } catch (e1) {
+        const cams = await Html5Qrcode.getCameras();
+        if (!cams || cams.length === 0) throw e1;
+        const id = chooseRear(cams);
+        await html5Qr.start({ deviceId: id }, config, onDecoded, onScanError);
+        scanning = true;
       }
 
-      const config = { fps: 10, qrbox: 250, formatsToSupport: formats };
-      await html5Qr.start({ deviceId }, config, onDecoded, onScanError);
-      scanning = true;
+      // 8秒経っても何も読めない時はヒントを表示
+      setTimeout(() => {
+        if (scanning) {
+          // ユーザーへ静かにヒント（alertは出さない）
+          console.log("ヒント: 明るさを上げ、枠いっぱいに近づけてください。うまくいかなければ『📸 撮影して読み取り』をお試しください。");
+        }
+      }, 8000);
 
     } catch (e) {
       stopScan();
       alert(
-        "この端末ではカメラ解析ライブラリが利用できませんでした。\n" +
+        "この端末ではリアルタイムスキャンの初期化に失敗しました。\n" +
         "・設定>Safari>カメラ を『許可』\n" +
         "・プライベートブラウズ/コンテンツブロッカーをOFF\n" +
         "・HTTPS（onrenderのURL）で開く\n\n詳細: " + e
@@ -84,7 +124,7 @@
 
   function onDecoded(text) {
     document.getElementById("keyword").value = text;
-    stopScan(); // 一件読めたら停止
+    stopScan(); // 1回読めたら停止
   }
 
   function onScanError(_err) { /* 連続エラーは握りつぶす */ }
@@ -103,22 +143,29 @@
     }
   }
 
-  // 画像から読み取り
-  document.getElementById("pick-image").addEventListener("change", async (ev) => {
-    const file = ev.target.files && ev.target.files[0];
-    if (!file) return;
+  // ③ 写真を撮って読み取り（capture=environment でリアカメラ強制）
+  async function decodeFromFile(file) {
     try {
       ensureInstance();
-      const result = await html5Qr.scanFile(file, true);
+      const result = await html5Qr.scanFile(file, true); // 画像から解析
       document.getElementById("keyword").value = result;
     } catch {
-      alert("画像から読み取れませんでした。別の写真でお試しください。");
-    } finally {
-      ev.target.value = "";
+      alert("画像から読み取れませんでした。バーコードが大きく写るように再撮影してください。");
     }
+  }
+
+  document.getElementById("capture").addEventListener("change", async (ev) => {
+    const f = ev.target.files && ev.target.files[0];
+    if (f) await decodeFromFile(f);
+    ev.target.value = "";
+  });
+  document.getElementById("pick-image").addEventListener("change", async (ev) => {
+    const f = ev.target.files && ev.target.files[0];
+    if (f) await decodeFromFile(f);
+    ev.target.value = "";
   });
 
-  // ボタン紐付け
+  // ボタン
   document.getElementById("btn-start-scan").addEventListener("click", startScan);
   document.getElementById("btn-stop-scan").addEventListener("click", stopScan);
 </script>
