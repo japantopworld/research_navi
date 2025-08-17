@@ -1,5 +1,5 @@
 # main.py
-import os, csv, json, ssl, smtplib
+import os, csv, json, ssl, smtplib, traceback
 from io import StringIO, BytesIO
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
@@ -13,6 +13,7 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, func
+from werkzeug.utils import secure_filename
 
 # =============================================================================
 # Flask / DB
@@ -29,6 +30,9 @@ app.config["SQLALCHEMY_DATABASE_URI"] = raw_db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 db = SQLAlchemy(app)
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+os.makedirs(DATA_DIR, exist_ok=True)
 
 # =============================================================================
 # Models
@@ -92,6 +96,18 @@ class AppSettings(db.Model):
             db.session.commit()
         return s
 
+# ★ OCRジョブ（軽量版：画像アップ→任意でローカルOCR）
+class OcrJob(db.Model):
+    __tablename__ = "ocr_jobs"
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=False)
+    stored_path = db.Column(db.String(500), nullable=False)   # data/ocr/YYYYMMDD/xxx.jpg
+    status = db.Column(db.String(20), nullable=False, default="uploaded")  # uploaded/processing/done/error
+    text = db.Column(db.Text, default="")
+    error_msg = db.Column(db.Text, default="")
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
 # =============================================================================
 # Utils / Filters
 # =============================================================================
@@ -143,6 +159,32 @@ def _parse_date(s):
             continue
     return None
 
+def _ensure_dir(p):
+    os.makedirs(p, exist_ok=True)
+    return p
+
+# 画像圧縮（Pillow）
+def compress_image_to_jpeg(raw_bytes, max_w=1800, quality=80):
+    try:
+        from PIL import Image, ImageOps
+    except Exception:
+        # Pillowが無い環境でも落ちないように原文返し
+        return raw_bytes, "no_pillow"
+    from io import BytesIO
+    try:
+        im = Image.open(BytesIO(raw_bytes))
+        im = ImageOps.exif_transpose(im)  # 回転補正
+        w, h = im.size
+        if w > max_w:
+            h = int(h * (max_w / w))
+            w = max_w
+            im = im.resize((w, h))
+        buf = BytesIO()
+        im.convert("RGB").save(buf, format="JPEG", quality=quality, optimize=True)
+        return buf.getvalue(), "ok"
+    except Exception:
+        return raw_bytes, "error"
+
 # =============================================================================
 # Mail helpers
 # =============================================================================
@@ -160,22 +202,18 @@ def _smtp_profile(provider):
     return table["gmail"]
 
 def send_mail_with_attachment(subject, html, attachment=None, filename="report.pdf"):
-    """設定テーブルのSMTP情報でメール送信（任意でPDF添付）"""
     s = AppSettings.get()
     if not s.mail_enabled or not (s.mail_from and s.mail_pass and s.mail_to):
         return False, "mail_disabled_or_incomplete"
-
     host, port, use_ssl, use_tls = _smtp_profile((s.mail_provider or "gmail").lower())
 
     msg = MIMEMultipart("mixed")
     msg["Subject"] = subject
     msg["From"] = s.mail_from
     msg["To"] = s.mail_to
-
     alt = MIMEMultipart("alternative")
     alt.attach(MIMEText(html, "html", "utf-8"))
     msg.attach(alt)
-
     if attachment:
         part = MIMEBase("application", "pdf")
         part.set_payload(attachment)
@@ -374,10 +412,109 @@ def notifications():
             .limit(200).all())
     return render_template("pages/notifications.html", rows=rows)
 
+# --- OCR（軽量） --------------------------------------------------------------
 @app.route("/ocr", methods=["GET", "POST"])
 def ocr():
-    return render_template("pages/ocr.html")
+    if request.method == "GET":
+        jobs = OcrJob.query.order_by(OcrJob.created_at.desc()).limit(50).all()
+        return render_template("pages/ocr.html", jobs=jobs)
 
+    # POST: 画像アップロードして圧縮保存
+    f = request.files.get("file")
+    if not f or f.filename == "":
+        flash("画像ファイルを選択してください。")
+        return redirect(url_for("ocr"))
+
+    raw = f.read()
+    comp, state = compress_image_to_jpeg(raw, max_w=1800, quality=80)
+
+    date_dir = datetime.utcnow().strftime("%Y%m%d")
+    save_dir = _ensure_dir(os.path.join(DATA_DIR, "ocr", date_dir))
+    safe_name = secure_filename(f.filename) or f"upload_{datetime.utcnow().strftime('%H%M%S')}.jpg"
+    if not safe_name.lower().endswith(".jpg") and not safe_name.lower().endswith(".jpeg"):
+        safe_name = os.path.splitext(safe_name)[0] + ".jpg"
+    save_path = os.path.join(save_dir, safe_name)
+    with open(save_path, "wb") as w:
+        w.write(comp)
+
+    job = OcrJob(filename=safe_name, stored_path=save_path, status="uploaded")
+    db.session.add(job)
+    db.session.commit()
+
+    flash("アップロードしました。必要なら『この画像でOCR』を押してください。")
+    return redirect(url_for("ocr"))
+
+@app.post("/ocr/process/<int:job_id>")
+def ocr_process(job_id):
+    job = OcrJob.query.get(job_id)
+    if not job:
+        flash("ジョブが見つかりません。")
+        return redirect(url_for("ocr"))
+
+    job.status = "processing"
+    job.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    try:
+        # ここで“ローカル環境のみ”OCR実行（RenderなどサーバーではTesseract未導入が普通）
+        # 実行条件：環境変数 OCR_LOCAL=1 かつ pytesseract + Tesseract 本体が導入済み
+        if os.getenv("OCR_LOCAL", "0") != "1":
+            raise RuntimeError("ローカルOCRは無効です（OCR_LOCAL=1 で有効化）。")
+
+        try:
+            import pytesseract
+            from PIL import Image
+        except Exception:
+            raise RuntimeError("pytesseract または Pillow が未インストールです。")
+
+        # 言語は jpn があれば jpn+eng、無ければ eng
+        lang = "eng"
+        try:
+            # pytesseract.get_languages(config='') が使えない環境もあるので best effort
+            lang = "jpn+eng"
+        except Exception:
+            pass
+
+        img = Image.open(job.stored_path)
+        text = pytesseract.image_to_string(img, lang=lang)
+        job.text = text.strip()
+        job.status = "done"
+        job.updated_at = datetime.utcnow()
+        db.session.commit()
+        flash("OCRを完了しました。")
+    except Exception as e:
+        job.status = "uploaded"
+        job.error_msg = str(e)
+        job.updated_at = datetime.utcnow()
+        db.session.commit()
+        flash(f"OCRを実行できませんでした：{e}")
+    return redirect(url_for("ocr"))
+
+@app.post("/ocr/delete/<int:job_id>")
+def ocr_delete(job_id):
+    job = OcrJob.query.get(job_id)
+    if not job:
+        flash("ジョブが見つかりません。")
+        return redirect(url_for("ocr"))
+    try:
+        if os.path.exists(job.stored_path):
+            os.remove(job.stored_path)
+    except Exception:
+        pass
+    db.session.delete(job)
+    db.session.commit()
+    flash("削除しました。")
+    return redirect(url_for("ocr"))
+
+@app.get("/ocr/download/<int:job_id>")
+def ocr_download(job_id):
+    job = OcrJob.query.get(job_id)
+    if not job or not os.path.exists(job.stored_path):
+        flash("ファイルが見つかりません。")
+        return redirect(url_for("ocr"))
+    return send_file(job.stored_path, as_attachment=True, download_name=job.filename, mimetype="image/jpeg")
+
+# -----------------------------------------------------------------------------
 @app.route("/suppliers")
 def suppliers():
     return render_template("pages/suppliers.html")
@@ -426,9 +563,9 @@ def report():
     action = request.form.get("action") or "download"
 
     try:
-        pdf = _build_pdf(months, platform, keyword)  # ← 遅延importを内部で実施
+        pdf = _build_pdf(months, platform, keyword)  # 遅延import
     except RuntimeError as e:
-        flash(str(e))  # reportlab 未導入時の案内
+        flash(str(e))
         return redirect(url_for("report"))
 
     fname = f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.pdf"
@@ -444,121 +581,8 @@ def report():
 
     return send_file(BytesIO(pdf), as_attachment=True, download_name=fname, mimetype="application/pdf")
 
-# --- CSV Import: /import ------------------------------------------------------
-@app.route("/import", methods=["GET", "POST"])
-def import_csv():
-    if request.method == "GET":
-        return render_template("pages/import.html")
-
-    f = request.files.get("file")
-    mode = (request.form.get("mode") or "append").lower()
-    dedupe = (request.form.get("dedupe") or "skip").lower()
-
-    if not f:
-        flash("CSVファイルを選択してください。")
-        return redirect(url_for("import_csv"))
-
-    # 読み込み（UTF-8-SIG → Shift_JIS → UTF-8 の順で試行）
-    raw = f.read()
-    text = None
-    for enc in ("utf-8-sig", "cp932", "utf-8"):
-        try:
-            text = raw.decode(enc)
-            break
-        except Exception:
-            continue
-    if text is None:
-        flash("文字コードを判別できません（UTF-8 または Shift_JIS をご使用ください）。")
-        return redirect(url_for("import_csv"))
-
-    # CSV DictReader
-    reader = csv.DictReader(StringIO(text))
-    if not reader.fieldnames:
-        flash("ヘッダー行が見つかりません。")
-        return redirect(url_for("import_csv"))
-
-    header = [h.strip() for h in reader.fieldnames]
-
-    # カラム名のマッピング（日本語/英語・表記揺れに対応）
-    def pick(row, keys):
-        for k in keys:
-            if k in row and row[k] not in (None, ""):
-                return row[k]
-        return ""
-
-    M = {
-        "created_at": ["日時","created_at","date","datetime","time"],
-        "name":       ["商品名","name","item","title"],
-        "platform":   ["PF","platform","pf"],
-        "price":      ["販売","価格","price","sell","selling_price"],
-        "cost":       ["仕入","cost","buy","purchase_price"],
-        "ship":       ["送料","ship","shipping","postage"],
-        "fee":        ["手数料","fee","commission"],
-        "profit":     ["利益","profit"],
-        "margin":     ["利益率","margin","roi","rate"]
-    }
-
-    inserted = 0
-    skipped  = 0
-
-    if mode == "truncate":
-        ProfitHistory.query.delete()
-        db.session.commit()
-
-    # 重複判定キー：name, platform, created_at(±1日に丸め), price, cost, ship, fee
-    for row in reader:
-        name = (pick(row, M["name"]) or "商品名未設定").strip()
-        platform = (pick(row, M["platform"]) or "Unknown").strip()
-        price = _to_int(pick(row, M["price"]))
-        cost  = _to_int(pick(row, M["cost"]))
-        ship  = _to_int(pick(row, M["ship"]))
-        fee   = _to_int(pick(row, M["fee"]))
-        created_s = pick(row, M["created_at"]).strip()
-        created_dt = _parse_date(created_s) or datetime.utcnow()
-
-        # 利益/率は無ければ計算
-        profit_s = pick(row, M["profit"])
-        margin_s = pick(row, M["margin"])
-        if str(profit_s).strip() == "" or str(margin_s).strip() == "":
-            p, m = calc_profit(price, cost, ship, fee)
-        else:
-            try:
-                p = _to_int(profit_s)
-                m = float(str(margin_s).replace("%","").strip() or 0.0)
-            except:
-                p, m = calc_profit(price, cost, ship, fee)
-
-        if dedupe == "skip":
-            # 近似判定（同日内 & 数値一致）
-            start = created_dt.replace(hour=0, minute=0, second=0, microsecond=0)
-            end   = start + timedelta(days=1)
-            exists = (ProfitHistory.query
-                      .filter(ProfitHistory.name==name)
-                      .filter(ProfitHistory.platform==platform)
-                      .filter(ProfitHistory.created_at>=start)
-                      .filter(ProfitHistory.created_at<end)
-                      .filter(ProfitHistory.price==price)
-                      .filter(ProfitHistory.cost==cost)
-                      .filter(ProfitHistory.ship==ship)
-                      .filter(ProfitHistory.fee==fee)
-                      .first())
-            if exists:
-                skipped += 1
-                continue
-
-        rec = ProfitHistory(
-            name=name, platform=platform, price=price, cost=cost,
-            ship=ship, fee=fee, profit=p, margin=m, created_at=created_dt
-        )
-        db.session.add(rec)
-        inserted += 1
-
-    db.session.commit()
-    flash(f"取り込み完了：{inserted} 件（重複スキップ {skipped} 件）")
-    return redirect(url_for("history"))
-
 # =============================================================================
-# APIs (dashboard / ranking details / notifications / history inline)
+# APIs
 # =============================================================================
 @app.get("/api/stats/monthly")
 def api_stats_monthly():
@@ -623,33 +647,6 @@ def api_stats_monthly():
         platforms=platforms,
         totals={"sales": tot_sales, "profit": tot_profit, "count": tot_count, "avg_margin": avg_margin}
     )
-
-@app.get("/api/ranking/details")
-def api_ranking_details():
-    name = request.args.get("name", "").strip()
-    platform = request.args.get("platform", "").strip()
-    try:
-        limit = min(int(request.args.get("limit", 50)), 200)
-    except:
-        limit = 50
-    if not name or not platform:
-        return jsonify(items=[])
-    q = (ProfitHistory.query
-         .filter(ProfitHistory.name == name)
-         .filter(ProfitHistory.platform == platform)
-         .order_by(ProfitHistory.created_at.desc())
-         .limit(limit))
-    items = [{
-        "id": r.id,
-        "created_at": r.created_at.strftime("%Y-%m-%d %H:%M"),
-        "price": int(r.price or 0),
-        "cost": int(r.cost or 0),
-        "ship": int(r.ship or 0),
-        "fee": int(r.fee or 0),
-        "profit": int(r.profit or 0),
-        "margin": float(r.margin or 0.0),
-    } for r in q.all()]
-    return jsonify(items=items)
 
 @app.post("/api/notifications/mark_read")
 def api_notif_mark_read():
@@ -777,10 +774,12 @@ def _404(e):
 
 @app.errorhandler(500)
 def _500(e):
+    # デバッグしやすくログに出す（RenderのRuntime Logsに表示されます）
+    print("[500]", traceback.format_exc())
     return render_template("errors/500.html"), 500
 
 # =============================================================================
-# PDF builder (遅延インポート)
+# PDF builder（遅延インポート）
 # =============================================================================
 def _monthly_series(months, platform, keyword):
     try:
@@ -819,7 +818,7 @@ def _monthly_series(months, platform, keyword):
             month_count[k] += 1
         pf_profit[r.platform] = pf_profit.get(r.platform, 0) + int(r.profit or 0)
 
-    # Top 商品（利益合計上位10）
+    # Top商品
     agg = {}
     for r in rows:
         key = (r.name, r.platform)
@@ -856,7 +855,6 @@ def _monthly_series(months, platform, keyword):
     }
 
 def _build_pdf(months, platform, keyword):
-    # ← 起動時に reportlab を import しない（ここでだけ読み込む）
     try:
         from reportlab.lib.pagesizes import A4
         from reportlab.lib import colors
@@ -866,7 +864,6 @@ def _build_pdf(months, platform, keyword):
         raise RuntimeError("reportlab が未インストールです。requirements.txt に 'reportlab>=4.0' を追加して再デプロイしてください。")
 
     data = _monthly_series(months, platform, keyword)
-
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
     styles = getSampleStyleSheet()
@@ -878,52 +875,32 @@ def _build_pdf(months, platform, keyword):
     title = "リサーチナビ 月次レポート"
     cond  = f"対象月数: {months} / PF: {platform or 'ALL'} / KW: {keyword or '-'}"
     now_s = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-
     elems += [Paragraph(title, styles["H1"]), Paragraph(cond, styles["KPI"]), Paragraph(f"作成: {now_s}", styles["KPI"]), Spacer(1, 8)]
 
     t = data["totals"]
-    kpi_tbl = Table([
-        ["合計売上", f"¥{t['sales']:,}", "合計利益", f"¥{t['profit']:,}", "件数", f"{t['count']:,}", "平均利益率", f"{t['avg_margin']:.2f}%"]
-    ], colWidths=[60, 90, 60, 90, 40, 70, 70, 70])
-    kpi_tbl.setStyle(TableStyle([
-        ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey),
-        ("BACKGROUND", (0,0), (-1,-1), colors.whitesmoke),
-        ("FONTNAME", (0,0), (-1,-1), "Helvetica-Bold")
-    ]))
-    elems += [kpi_tbl, Spacer(1, 10)]
+    kpi_tbl = Table([["合計売上", f"¥{t['sales']:,}", "合計利益", f"¥{t['profit']:,}", "件数", f"{t['count']:,}", "平均利益率", f"{t['avg_margin']:.2f}%"]],
+                    colWidths=[60, 90, 60, 90, 40, 70, 70, 70])
+    kpi_tbl.setStyle(TableStyle([("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),("BACKGROUND",(0,0),(-1,-1),colors.whitesmoke),("FONTNAME",(0,0),(-1,-1),"Helvetica-Bold")]))
+    elems += [kpi_tbl, Spacer(1,10)]
 
     elems += [Paragraph("月次推移（売上 / 利益 / 件数）", styles["H2"])]
     tbl_data = [["月", "売上", "利益", "件数"]]
     for i, lab in enumerate(data["labels"]):
         tbl_data.append([lab, f"¥{data['sales'][i]:,}", f"¥{data['profit'][i]:,}", f"{data['count'][i]:,}"])
     m_tbl = Table(tbl_data, colWidths=[70, 90, 90, 60])
-    m_tbl.setStyle(TableStyle([
-        ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey),
-        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#eef2ff")),
-        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold")
-    ]))
-    elems += [m_tbl, Spacer(1, 10)]
+    m_tbl.setStyle(TableStyle([("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),("BACKGROUND",(0,0),(-1,0),colors.HexColor("#eef2ff")),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold")]))
+    elems += [m_tbl, Spacer(1,10)]
 
     elems += [Paragraph("PF別 利益内訳（合計）", styles["H2"])]
-    pf_tbl = Table([["PF", "利益合計"]] + [[x["platform"], f"¥{x['profit']:,}"] for x in data["pf_profit"][:12]],
-                   colWidths=[150, 120])
-    pf_tbl.setStyle(TableStyle([
-        ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey),
-        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#ecfeff")),
-        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold")
-    ]))
-    elems += [pf_tbl, Spacer(1, 10)]
+    pf_tbl = Table([["PF","利益合計"]] + [[x["platform"], f"¥{x['profit']:,}"] for x in data["pf_profit"][:12]], colWidths=[150,120])
+    pf_tbl.setStyle(TableStyle([("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),("BACKGROUND",(0,0),(-1,0),colors.HexColor("#ecfeff")),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold")]))
+    elems += [pf_tbl, Spacer(1,10)]
 
     elems += [Paragraph("トップ商品（利益順 上位10）", styles["H2"])]
-    top_tbl = Table([["商品名", "PF", "件数", "売上合計", "利益合計", "平均利益率"]] + [
-        [x["name"], x["platform"], f"{x['cnt']:,}", f"¥{x['sum_price']:,}", f"¥{x['sum_profit']:,}", f"{x['avg_margin']:.2f}%"]
-        for x in data["top"]
-    ], colWidths=[180, 70, 50, 80, 80, 70])
-    top_tbl.setStyle(TableStyle([
-        ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey),
-        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#f1f5f9")),
-        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold")
-    ]))
+    top_tbl = Table([["商品名","PF","件数","売上合計","利益合計","平均利益率"]] + [
+        [x["name"], x["platform"], f"{x['cnt']:,}", f"¥{x['sum_price']:,}", f"¥{x['sum_profit']:,}", f"{x['avg_margin']:.2f}%"] for x in data["top"]
+    ], colWidths=[180,70,50,80,80,70])
+    top_tbl.setStyle(TableStyle([("GRID",(0,0),(-1,-1),0.5,colors.lightgrey),("BACKGROUND",(0,0),(-1,0),colors.HexColor("#f1f5f9")),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold")]))
     elems += [top_tbl]
 
     doc.build(elems)
@@ -935,5 +912,4 @@ def _build_pdf(months, platform, keyword):
 # Main
 # =============================================================================
 if __name__ == "__main__":
-    # ローカル開発用
     app.run(host="0.0.0.0", port=5000, debug=True)
