@@ -6,11 +6,10 @@
 
 <p class="muted">
   カメラでバーコード（JAN/EAN/UPC）を読み取るか、ASIN・キーワードを入力して検索します。<br>
-  「検索」を押すと、<b>履歴ページ（/history）</b>にキーワードとして渡します。
+  「検索」で <b>/history</b> にキーワードを渡します。
 </p>
 
 <div class="card">
-  <!-- submit先を /history にすることで、そのまま履歴フィルタに流用 -->
   <form id="f" method="get" action="{{ url_for('history') }}">
     <div class="grid">
       <label class="grow">
@@ -37,11 +36,8 @@
 
     <div class="actions">
       <button type="submit">検索（/history を開く）</button>
-
-      <!-- スキャン起動ボタン（対応ブラウザのみ表示） -->
       <button type="button" id="btnScan" class="ghost" hidden>📷 バーコードをスキャン</button>
 
-      <!-- 画像から解析（対応ブラウザのみ表示） -->
       <label id="lblImg" class="ghost" hidden>
         <input type="file" id="imgInput" accept="image/*" hidden>
         画像から読み取る
@@ -63,9 +59,8 @@
 <div class="card">
   <h3>使い方メモ</h3>
   <ul class="muted">
-    <li>バーコードは JAN/EAN/UPC を自動検出します。</li>
-    <li>ASIN は英数字10桁（例：B0〜で始まる）が候補です。</li>
-    <li>スキャン非対応の端末では、手入力または「画像から読み取る」を使ってください。</li>
+    <li>JAN/EAN/UPC を自動検出します。</li>
+    <li>ASIN（英数字10桁）も入力OK。</li>
   </ul>
 </div>
 
@@ -87,6 +82,9 @@ input,select{padding:10px;border:1px solid #e5e7eb;border-radius:10px;background
 @media (max-width:900px){.grid{grid-template-columns:1fr}}
 </style>
 
+<!-- ZXing（フォールバック用・iPhone Safari でも動作） -->
+<script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/index.min.js"></script>
+
 <script>
 const $ = s => document.querySelector(s);
 const kw = $('#kw');
@@ -98,44 +96,90 @@ const video = $('#video');
 const btnClose = $('#btnClose');
 
 let stream = null;
-let detector = null;
+let detector = null;           // BarcodeDetector
+let zxingReader = null;        // ZXing fallback
+let usingZXing = false;
 
-// ブラウザ機能チェック
+// ===== 機能検出 =====
 (async () => {
+  // 1) まず BarcodeDetector を試す（Android Chrome など）
   if ('BarcodeDetector' in window) {
     try{
       const formats = await BarcodeDetector.getSupportedFormats();
-      detector = new BarcodeDetector({ formats: formats });
+      detector = new BarcodeDetector({ formats });
       btnScan.hidden = false;
       lblImg.hidden = false;
-    }catch(e){
-      // 一部端末で失敗することがあるので、画像読取だけ有効化
-      lblImg.hidden = false;
-    }
-  } else {
-    // 非対応：画像からの読取のみ（後述）。完全非対応の場合は手入力。
+      return;
+    }catch(e){}
+  }
+  // 2) ダメなら ZXing を使う（iPhone Safari 含む）
+  if (window.ZXingBrowser) {
+    zxingReader = new ZXingBrowser.BrowserMultiFormatReader();
+    usingZXing = true;
+    btnScan.hidden = false;
     lblImg.hidden = false;
+  } else {
+    // どちらも無理な超古い環境
+    alert('この端末は自動解析に対応していません。バーコード番号を手入力してください。');
   }
 })();
 
-// ===== ライブカメラスキャン =====
+// ===== スキャン開始 =====
 btnScan?.addEventListener('click', async () => {
-  if (!detector) { alert('この端末はライブスキャンに対応していません。画像から読み取りをお試しください。'); return; }
+  if (detector) return startNativeScan();
+  if (usingZXing) return startZXingScan();
+  alert('この端末はスキャン機能に対応していません。');
+});
+
+// ===== 画像から解析 =====
+imgInput?.addEventListener('change', async (ev) => {
+  const file = ev.target.files?.[0];
+  if (!file) return;
+
+  // BarcodeDetector の still image
+  if (detector) {
+    try{
+      const bmp = await createImageBitmap(file);
+      const codes = await detector.detect(bmp);
+      if (codes && codes.length) kw.value = (codes[0].rawValue || '').trim();
+      else alert('読み取れませんでした。もう一度お試しください。');
+    }catch(e){ alert('解析に失敗しました。'); }
+    finally{ imgInput.value = ''; }
+    return;
+  }
+
+  // ZXing の画像解析
+  if (usingZXing) {
+    try{
+      const url = URL.createObjectURL(file);
+      const res = await zxingReader.decodeFromImageUrl(url);
+      kw.value = res.getText();
+    }catch(e){ alert('読み取れませんでした。もう一度お試しください。'); }
+    finally{
+      URL.revokeObjectURL(url);
+      imgInput.value = '';
+    }
+    return;
+  }
+
+  alert('この端末は画像からの自動解析に対応していません。バーコード番号を手入力してください。');
+});
+
+// ====== BarcodeDetector（ネイティブ） ======
+async function startNativeScan(){
   try{
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio:false });
   }catch(e){
-    alert('カメラが使用できませんでした。権限を許可してください。');
+    alert('カメラ権限を許可してください。');
     return;
   }
   video.srcObject = stream;
   await video.play();
   scanBox.hidden = false;
-  requestAnimationFrame(tick);
-});
+  requestAnimationFrame(tickNative);
+}
 
-btnClose?.addEventListener('click', stopScan);
-
-async function tick(){
+async function tickNative(){
   if (scanBox.hidden || !detector) return;
   try{
     const barcodes = await detector.detect(video);
@@ -143,15 +187,15 @@ async function tick(){
       const raw = (barcodes[0].rawValue || '').trim();
       if (raw){
         kw.value = raw;
-        stopScan();
+        stopNative();
       }
       return;
     }
-  }catch(e){ /* 無視 */ }
-  requestAnimationFrame(tick);
+  }catch(e){}
+  requestAnimationFrame(tickNative);
 }
 
-function stopScan(){
+function stopNative(){
   scanBox.hidden = true;
   try{
     video.pause();
@@ -162,33 +206,33 @@ function stopScan(){
   }catch(e){}
 }
 
-// ===== 画像ファイルからの解析（対応端末のみ） =====
-imgInput?.addEventListener('change', async (ev) => {
-  const file = ev.target.files?.[0];
-  if (!file) return;
-  if (!('BarcodeDetector' in window)){
-    alert('この端末は画像からの自動解析に対応していません。バーコード番号を手入力してください。');
-    return;
-  }
+// ====== ZXing フォールバック ======
+async function startZXingScan(){
+  scanBox.hidden = false;
+
+  // 利用可能カメラから背面を優先
   try{
-    const buf = await file.arrayBuffer();
-    const blob = new Blob([buf]);
-    const bmp = await createImageBitmap(blob);
-    if (!detector){
-      const fmts = await BarcodeDetector.getSupportedFormats();
-      detector = new BarcodeDetector({ formats: fmts });
-    }
-    const codes = await detector.detect(bmp);
-    if (codes && codes.length){
-      kw.value = (codes[0].rawValue || '').trim();
-    }else{
-      alert('読み取れませんでした。もう一度お試しください。');
-    }
+    const devices = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
+    const back = (devices || []).find(d => /back|environment/i.test(d.label))?.deviceId
+              || (devices[0] && devices[0].deviceId)
+              || undefined;
+
+    await zxingReader.decodeFromVideoDevice(back, video, (result, err, controls) => {
+      if (result) {
+        kw.value = result.getText();
+        controls.stop();
+        scanBox.hidden = true;
+      }
+    });
   }catch(e){
-    alert('解析に失敗しました。');
-  }finally{
-    imgInput.value = '';
+    scanBox.hidden = true;
+    alert('カメラが使用できませんでした。権限やブラウザ設定を確認してください。');
   }
+}
+
+btnClose?.addEventListener('click', () => {
+  if (detector) stopNative();
+  if (usingZXing && zxingReader) { try{ zxingReader.reset(); }catch(e){} scanBox.hidden = true; }
 });
 </script>
 
