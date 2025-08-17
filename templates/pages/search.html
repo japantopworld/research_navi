@@ -1,6 +1,195 @@
-﻿{% extends "base/layout.html" %}
-{% block title %}search | リサーチナビ{% endblock %}
+{% extends "base/layout.html" %}
+{% block title %}商品検索 | リサーチナビ{% endblock %}
 {% block content %}
-  <h1>search</h1>
-  <p>このページは雛形です（テンプレ有り）。</p>
+
+<h1>🔎 商品検索（バーコード / ASIN 対応）</h1>
+
+<p class="muted">
+  カメラでバーコード（JAN/EAN/UPC）を読み取るか、ASIN・キーワードを入力して検索します。<br>
+  「検索」を押すと、<b>履歴ページ（/history）</b>にキーワードとして渡します。
+</p>
+
+<div class="card">
+  <!-- submit先を /history にすることで、そのまま履歴フィルタに流用 -->
+  <form id="f" method="get" action="{{ url_for('history') }}">
+    <div class="grid">
+      <label class="grow">
+        <span>キーワード / ASIN / バーコード</span>
+        <input id="kw" name="keyword" placeholder="例）B0XXXXXX10 / 4988001234567 / Switch / LEGO など" autocomplete="off" required>
+      </label>
+
+      <label>
+        <span>プラットフォーム</span>
+        <select name="platform">
+          <option value="">ALL</option>
+          <option>Amazon</option>
+          <option>楽天</option>
+          <option>Yahoo</option>
+          <option>メルカリ</option>
+        </select>
+      </label>
+
+      <label>
+        <span>最低利益（円）</span>
+        <input type="number" name="min_profit" inputmode="numeric" placeholder="0" min="0" step="100">
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="submit">検索（/history を開く）</button>
+
+      <!-- スキャン起動ボタン（対応ブラウザのみ表示） -->
+      <button type="button" id="btnScan" class="ghost" hidden>📷 バーコードをスキャン</button>
+
+      <!-- 画像から解析（対応ブラウザのみ表示） -->
+      <label id="lblImg" class="ghost" hidden>
+        <input type="file" id="imgInput" accept="image/*" hidden>
+        画像から読み取る
+      </label>
+    </div>
+  </form>
+</div>
+
+<!-- スキャン用プレビュー -->
+<div id="scanBox" class="scan" hidden>
+  <div class="scan-head">
+    <strong>カメラでスキャン中…</strong>
+    <button type="button" id="btnClose">閉じる</button>
+  </div>
+  <video id="video" playsinline></video>
+  <div class="hint muted">バーコードを枠内に合わせてください</div>
+</div>
+
+<div class="card">
+  <h3>使い方メモ</h3>
+  <ul class="muted">
+    <li>バーコードは JAN/EAN/UPC を自動検出します。</li>
+    <li>ASIN は英数字10桁（例：B0〜で始まる）が候補です。</li>
+    <li>スキャン非対応の端末では、手入力または「画像から読み取る」を使ってください。</li>
+  </ul>
+</div>
+
+<style>
+.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 220px 220px}
+.grow{grid-column:span 1}
+label{display:flex;flex-direction:column;gap:6px}
+label>span{font-size:12px;color:#6b7280}
+input,select{padding:10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.actions button,.actions .ghost{padding:10px 14px;border-radius:10px;border:1px solid #111;background:#111;color:#fff;cursor:pointer}
+.actions .ghost{background:#fff;color:#111;border-color:#e5e7eb}
+.muted{color:#6b7280}
+.scan{border:1px dashed #cbd5e1;border-radius:12px;padding:10px;background:#f8fafc;margin:10px 0}
+.scan-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+#video{width:100%;max-height:360px;background:#000;border-radius:8px}
+.hint{font-size:12px;margin-top:6px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const kw = $('#kw');
+const btnScan = $('#btnScan');
+const lblImg = $('#lblImg');
+const imgInput = $('#imgInput');
+const scanBox = $('#scanBox');
+const video = $('#video');
+const btnClose = $('#btnClose');
+
+let stream = null;
+let detector = null;
+
+// ブラウザ機能チェック
+(async () => {
+  if ('BarcodeDetector' in window) {
+    try{
+      const formats = await BarcodeDetector.getSupportedFormats();
+      detector = new BarcodeDetector({ formats: formats });
+      btnScan.hidden = false;
+      lblImg.hidden = false;
+    }catch(e){
+      // 一部端末で失敗することがあるので、画像読取だけ有効化
+      lblImg.hidden = false;
+    }
+  } else {
+    // 非対応：画像からの読取のみ（後述）。完全非対応の場合は手入力。
+    lblImg.hidden = false;
+  }
+})();
+
+// ===== ライブカメラスキャン =====
+btnScan?.addEventListener('click', async () => {
+  if (!detector) { alert('この端末はライブスキャンに対応していません。画像から読み取りをお試しください。'); return; }
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio:false });
+  }catch(e){
+    alert('カメラが使用できませんでした。権限を許可してください。');
+    return;
+  }
+  video.srcObject = stream;
+  await video.play();
+  scanBox.hidden = false;
+  requestAnimationFrame(tick);
+});
+
+btnClose?.addEventListener('click', stopScan);
+
+async function tick(){
+  if (scanBox.hidden || !detector) return;
+  try{
+    const barcodes = await detector.detect(video);
+    if (barcodes && barcodes.length){
+      const raw = (barcodes[0].rawValue || '').trim();
+      if (raw){
+        kw.value = raw;
+        stopScan();
+      }
+      return;
+    }
+  }catch(e){ /* 無視 */ }
+  requestAnimationFrame(tick);
+}
+
+function stopScan(){
+  scanBox.hidden = true;
+  try{
+    video.pause();
+    if (stream){
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+  }catch(e){}
+}
+
+// ===== 画像ファイルからの解析（対応端末のみ） =====
+imgInput?.addEventListener('change', async (ev) => {
+  const file = ev.target.files?.[0];
+  if (!file) return;
+  if (!('BarcodeDetector' in window)){
+    alert('この端末は画像からの自動解析に対応していません。バーコード番号を手入力してください。');
+    return;
+  }
+  try{
+    const buf = await file.arrayBuffer();
+    const blob = new Blob([buf]);
+    const bmp = await createImageBitmap(blob);
+    if (!detector){
+      const fmts = await BarcodeDetector.getSupportedFormats();
+      detector = new BarcodeDetector({ formats: fmts });
+    }
+    const codes = await detector.detect(bmp);
+    if (codes && codes.length){
+      kw.value = (codes[0].rawValue || '').trim();
+    }else{
+      alert('読み取れませんでした。もう一度お試しください。');
+    }
+  }catch(e){
+    alert('解析に失敗しました。');
+  }finally{
+    imgInput.value = '';
+  }
+});
+</script>
+
 {% endblock %}
