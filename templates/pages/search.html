@@ -3,7 +3,6 @@
 {% block content %}
 
 <h1>🔎 商品検索（バーコード / ASIN 対応）</h1>
-
 <p class="muted">
   カメラでバーコード（JAN/EAN/UPC）を読み取るか、ASIN・キーワードを入力して検索します。<br>
   「検索」で <b>/history</b> にキーワードを渡します。
@@ -36,9 +35,8 @@
 
     <div class="actions">
       <button type="submit">検索（/history を開く）</button>
-      <button type="button" id="btnScan" class="ghost" hidden>📷 バーコードをスキャン</button>
-
-      <label id="lblImg" class="ghost" hidden>
+      <button type="button" id="btnScan" class="ghost">📷 バーコードをスキャン</button>
+      <label id="lblImg" class="ghost">
         <input type="file" id="imgInput" accept="image/*" hidden>
         画像から読み取る
       </label>
@@ -46,22 +44,17 @@
   </form>
 </div>
 
-<!-- スキャン用プレビュー -->
+<!-- スキャン用UI -->
 <div id="scanBox" class="scan" hidden>
   <div class="scan-head">
-    <strong>カメラでスキャン中…</strong>
+    <strong id="scanTitle">カメラでスキャン中…</strong>
     <button type="button" id="btnClose">閉じる</button>
   </div>
-  <video id="video" playsinline></video>
+  <!-- BarcodeDetector / ZXing 用 -->
+  <video id="video" playsinline style="width:100%;max-height:360px;background:#000;border-radius:8px"></video>
+  <!-- Quagga 用のコンテナ -->
+  <div id="quaggaArea" style="position:relative;width:100%;max-height:360px;border-radius:8px;overflow:hidden"></div>
   <div class="hint muted">バーコードを枠内に合わせてください</div>
-</div>
-
-<div class="card">
-  <h3>使い方メモ</h3>
-  <ul class="muted">
-    <li>JAN/EAN/UPC を自動検出します。</li>
-    <li>ASIN（英数字10桁）も入力OK。</li>
-  </ul>
 </div>
 
 <style>
@@ -77,13 +70,13 @@ input,select{padding:10px;border:1px solid #e5e7eb;border-radius:10px;background
 .muted{color:#6b7280}
 .scan{border:1px dashed #cbd5e1;border-radius:12px;padding:10px;background:#f8fafc;margin:10px 0}
 .scan-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-#video{width:100%;max-height:360px;background:#000;border-radius:8px}
 .hint{font-size:12px;margin-top:6px}
 @media (max-width:900px){.grid{grid-template-columns:1fr}}
 </style>
 
-<!-- ZXing（フォールバック用・iPhone Safari でも動作） -->
+<!-- ZXing と Quagga2 を読み込み（どちらかでもOK） -->
 <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@2.0.0/dist/quagga.min.js"></script>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -92,51 +85,52 @@ const btnScan = $('#btnScan');
 const lblImg = $('#lblImg');
 const imgInput = $('#imgInput');
 const scanBox = $('#scanBox');
+const scanTitle = $('#scanTitle');
 const video = $('#video');
+const quaggaArea = $('#quaggaArea');
 const btnClose = $('#btnClose');
 
 let stream = null;
 let detector = null;           // BarcodeDetector
 let zxingReader = null;        // ZXing fallback
 let usingZXing = false;
+let usingQuagga = false;
 
-// ===== 機能検出 =====
+// ===== 初期化：使える手段を判定 =====
 (async () => {
-  // 1) まず BarcodeDetector を試す（Android Chrome など）
+  // BarcodeDetector
   if ('BarcodeDetector' in window) {
     try{
       const formats = await BarcodeDetector.getSupportedFormats();
       detector = new BarcodeDetector({ formats });
-      btnScan.hidden = false;
-      lblImg.hidden = false;
-      return;
-    }catch(e){}
+    }catch(e){ detector = null; }
   }
-  // 2) ダメなら ZXing を使う（iPhone Safari 含む）
+  // ZXing
   if (window.ZXingBrowser) {
     zxingReader = new ZXingBrowser.BrowserMultiFormatReader();
     usingZXing = true;
-    btnScan.hidden = false;
-    lblImg.hidden = false;
-  } else {
-    // どちらも無理な超古い環境
-    alert('この端末は自動解析に対応していません。バーコード番号を手入力してください。');
+  }
+  // Quagga
+  if (window.Quagga) {
+    usingQuagga = true;
   }
 })();
 
-// ===== スキャン開始 =====
-btnScan?.addEventListener('click', async () => {
+// ====== スキャン開始ボタン ======
+btnScan.addEventListener('click', async () => {
+  // 優先順：BarcodeDetector → ZXing → Quagga
   if (detector) return startNativeScan();
   if (usingZXing) return startZXingScan();
-  alert('この端末はスキャン機能に対応していません。');
+  if (usingQuagga) return startQuaggaScan();
+  alert('この端末ではカメラ解析ライブラリが利用できません。バーコード番号を手入力してください。');
 });
 
 // ===== 画像から解析 =====
-imgInput?.addEventListener('change', async (ev) => {
+imgInput.addEventListener('change', async (ev) => {
   const file = ev.target.files?.[0];
   if (!file) return;
 
-  // BarcodeDetector の still image
+  // 1) BarcodeDetector
   if (detector) {
     try{
       const bmp = await createImageBitmap(file);
@@ -148,17 +142,25 @@ imgInput?.addEventListener('change', async (ev) => {
     return;
   }
 
-  // ZXing の画像解析
+  // 2) ZXing
   if (usingZXing) {
+    let url;
     try{
-      const url = URL.createObjectURL(file);
+      url = URL.createObjectURL(file);
       const res = await zxingReader.decodeFromImageUrl(url);
       kw.value = res.getText();
     }catch(e){ alert('読み取れませんでした。もう一度お試しください。'); }
     finally{
-      URL.revokeObjectURL(url);
+      if (url) URL.revokeObjectURL(url);
       imgInput.value = '';
     }
+    return;
+  }
+
+  // 3) Quagga（静止画デコードは弱いので案内）
+  if (usingQuagga) {
+    alert('この端末は静止画からの解析が弱い可能性があります。「📷 バーコードをスキャン」をお試しください。');
+    imgInput.value = '';
     return;
   }
 
@@ -167,10 +169,13 @@ imgInput?.addEventListener('change', async (ev) => {
 
 // ====== BarcodeDetector（ネイティブ） ======
 async function startNativeScan(){
+  scanTitle.textContent = 'カメラでスキャン中…（高速モード）';
+  quaggaArea.style.display = 'none';
+  video.style.display = 'block';
   try{
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio:false });
   }catch(e){
-    alert('カメラ権限を許可してください。');
+    alert('カメラ権限を許可してください（設定 > サイト別設定 > カメラ）。');
     return;
   }
   video.srcObject = stream;
@@ -178,39 +183,33 @@ async function startNativeScan(){
   scanBox.hidden = false;
   requestAnimationFrame(tickNative);
 }
-
 async function tickNative(){
   if (scanBox.hidden || !detector) return;
   try{
     const barcodes = await detector.detect(video);
     if (barcodes && barcodes.length){
       const raw = (barcodes[0].rawValue || '').trim();
-      if (raw){
-        kw.value = raw;
-        stopNative();
-      }
+      if (raw){ kw.value = raw; stopNative(); }
       return;
     }
   }catch(e){}
   requestAnimationFrame(tickNative);
 }
-
 function stopNative(){
   scanBox.hidden = true;
   try{
     video.pause();
-    if (stream){
-      stream.getTracks().forEach(t => t.stop());
-      stream = null;
-    }
+    if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
   }catch(e){}
 }
 
 // ====== ZXing フォールバック ======
 async function startZXingScan(){
+  scanTitle.textContent = 'カメラでスキャン中…（互換モード：ZXing）';
+  video.style.display = 'block';
+  quaggaArea.style.display = 'none';
   scanBox.hidden = false;
 
-  // 利用可能カメラから背面を優先
   try{
     const devices = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
     const back = (devices || []).find(d => /back|environment/i.test(d.label))?.deviceId
@@ -226,13 +225,60 @@ async function startZXingScan(){
     });
   }catch(e){
     scanBox.hidden = true;
-    alert('カメラが使用できませんでした。権限やブラウザ設定を確認してください。');
+    alert('ZXing が起動できませんでした。Quaggaに切り替えます。');
+    if (usingQuagga) startQuaggaScan();
   }
 }
 
-btnClose?.addEventListener('click', () => {
-  if (detector) stopNative();
-  if (usingZXing && zxingReader) { try{ zxingReader.reset(); }catch(e){} scanBox.hidden = true; }
+// ====== Quagga2 フォールバック（iPhone Safari で強い） ======
+function startQuaggaScan(){
+  scanTitle.textContent = 'カメラでスキャン中…（互換モード：Quagga）';
+  video.style.display = 'none';
+  quaggaArea.style.display = 'block';
+  scanBox.hidden = false;
+
+  const conf = {
+    inputStream: {
+      name: 'Live',
+      type: 'LiveStream',
+      target: quaggaArea,
+      constraints: { facingMode: 'environment' }
+    },
+    decoder: {
+      readers: [
+        'ean_reader','ean_8_reader',
+        'upc_reader','upc_e_reader',
+        'code_128_reader'
+      ]
+    },
+    locate: true
+  };
+
+  Quagga.offDetected(); // 二重登録防止
+  Quagga.onDetected(res => {
+    const code = res?.codeResult?.code;
+    if (code) {
+      kw.value = String(code).trim();
+      Quagga.stop();
+      scanBox.hidden = true;
+    }
+  });
+
+  Quagga.init(conf, err => {
+    if (err) {
+      scanBox.hidden = true;
+      alert('カメラが使用できませんでした。権限やブラウザ設定をご確認ください。');
+      return;
+    }
+    Quagga.start();
+  });
+}
+
+btnClose.addEventListener('click', () => {
+  scanBox.hidden = true;
+  try{ if (detector) stopNative(); }catch(e){}
+  try{ if (usingZXing && zxingReader) zxingReader.reset(); }catch(e){}
+  try{ if (usingQuagga) Quagga.stop(); }catch(e){}
 });
 </script>
 
