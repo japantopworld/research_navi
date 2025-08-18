@@ -1,0 +1,92 @@
+{% raw %}<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>商品検索（確認用ミニマム）</title>
+
+  <!-- ローカルに置いた html5-qrcode を読み込む（CDN不要）-->
+  <script src="{{ url_for('static', filename='js/html5-qrcode.min.js') }}"></script>
+
+  <style>
+    body{font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Hiragino Sans",Meiryo,sans-serif; line-height:1.6; padding:16px;}
+    .badge{background:#dff2eb;color:#0c5132;padding:.6em 1em;border-radius:10px;display:inline-block;margin:6px 0;}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:12px;}
+    .btn{background:#111827;color:#fff;border:none;border-radius:10px;padding:.6em 1em;margin-right:8px}
+    .btn:active{opacity:.8}
+    pre{background:#0b0b0b;color:#7CFC00;border-radius:10px;padding:10px;overflow:auto}
+  </style>
+
+  <script>
+    // 診断用のグローバル
+    window.__h5_src = "{{ url_for('static', filename='js/html5-qrcode.min.js') }}";
+    window.__h5_loaded = false;
+    window.__h5_err = null;
+
+    function __h5_test() {
+      return !!(window.Html5Qrcode || window.Html5QrcodeScanner);
+    }
+    // 同期読み込みなので直後に存在チェック
+    try { window.__h5_loaded = __h5_test(); } catch(e) { window.__h5_err = String(e); }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const diag = document.getElementById('diag');
+
+      // ① JS動作確認
+      document.getElementById('btnCheckJs').onclick = () => {
+        alert('JSは動いています（OK）');
+      };
+
+      // ② ライブラリ読込確認（html5-qrcode）
+      document.getElementById('btnCheckLib').onclick = () => {
+        const ok = !!(window.Html5Qrcode || window.Html5QrcodeScanner);
+        const res = {
+          html5QrcodeLoaded: ok,
+          src: window.__h5_src || '(unknown)',
+          error: window.__h5_err || null,
+          userAgent: navigator.userAgent,
+          time: new Date().toISOString()
+        };
+        diag.textContent = JSON.stringify(res, null, 2);
+        alert(ok ? 'html5-qrcode 読込OK' : 'html5-qrcode が読み込めていません');
+      };
+
+      // ③ カメラ権限チェック（任意）
+      document.getElementById('btnCam').onclick = async () => {
+        const res = { ok:false, error:null };
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          res.ok = true;
+          stream.getTracks().forEach(t => t.stop());
+        } catch(e){ res.error = String(e); }
+        diag.textContent = JSON.stringify(res, null, 2);
+        alert(res.ok ? 'カメラ利用OK' : 'カメラが使えません: ' + res.error);
+      };
+
+      // ④ 強制再読込（キャッシュ無視）
+      document.getElementById('btnReload').onclick = () => {
+        location.replace(location.pathname + '?t=' + Date.now());
+      };
+    });
+  </script>
+</head>
+<body>
+  <div class="badge">SEARCH SETUP OK（確認用ミニマム版）</div>
+
+  <h1>商品検索（確認用）</h1>
+  <p>まずはテンプレートが正しく読めているか、そしてスキャン用ライブラリが読込めるかだけ確認します。</p>
+
+  <div class="card">
+    <button class="btn" id="btnCheckJs">① JS動作確認</button>
+    <button class="btn" id="btnCheckLib">② ライブラリ読込確認（html5-qrcode）</button>
+    <button class="btn" id="btnCam">③ カメラ権限チェック</button>
+    <button class="btn" id="btnReload">④ 強制再読込</button>
+    <pre id="diag">{}</pre>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <input type="text" placeholder="例: 4988001234567 / Switch など" style="width:70%;padding:.6em;border:1px solid #e5e7eb;border-radius:10px;">
+    <button class="btn">🔎 検索</button>
+  </div>
+</body>
+</html>{% endraw %}
