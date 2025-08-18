@@ -1,33 +1,70 @@
 {% extends "base/layout.html" %}
-{% block title %}検索 | リサーチナビ{% endblock %}
+{% block title %}検索（確認用） | リサーチナビ{% endblock %}
 {% block content %}
 
-<!-- ▼ この黄色バナーが見えたら差し替え成功！ -->
-<div style="background:#fff3c4;border:1px solid #facc15;color:#7c2d12;
-            padding:12px;border-radius:10px;margin:8px 0;font-weight:700;text-align:center">
-  SEARCH SETUP OK（確認用ミニマム版）
+<div class="flash" style="margin:12px 0">
+  <div>SEARCH SETUP OK（確認用ミニマム版）</div>
 </div>
 
 <h1>商品検索（確認用）</h1>
-<p>まずはテンプレートが正しく読み込まれているかだけ確認します。</p>
+<p>まずはテンプレートが正しく読めているか、そしてスキャン用ライブラリが読み込めるかだけ確認します。</p>
 
-<form method="get" action="{{ url_for('search') }}" class="card" style="border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0">
-  <label for="keyword" style="display:block;margin-bottom:6px;color:#6b7280;font-size:12px">キーワード / バーコード</label>
-  <input id="keyword" name="q" type="text" placeholder="例: 4988001234567 / Switch など"
-         style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px">
-  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-    <button type="submit" style="padding:10px 14px;border-radius:10px;border:1px solid #111;background:#111;color:#fff;cursor:pointer">🔎 検索</button>
-    <button type="button" id="btn-js" style="padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer">🧪 JSテスト</button>
+<!-- 診断（CDN読込チェック用） -->
+<div class="card" style="margin:16px 0;padding:12px;border:1px solid #e5e7eb;border-radius:10px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button type="button" class="btn" onclick="diagJs()">① JS動作確認</button>
+    <button type="button" class="btn" onclick="diagCdn()">② CDN読込確認（html5-qrcode）</button>
   </div>
+  <pre id="diagOut" style="margin-top:10px;background:#111;color:#0f0;padding:8px;border-radius:8px;max-height:160px;overflow:auto">{}</pre>
+</div>
+
+<!-- いつもの検索フォーム（内容はそのままでOK） -->
+<form action="{{ url_for('search') }}" method="get" style="display:flex;gap:8px;flex-wrap:wrap">
+  <input type="text" name="q" placeholder="例: 4988001234567 / Switch など" style="flex:1;min-width:240px;padding:10px;border:1px solid #e5e7eb;border-radius:8px">
+  <button type="submit" class="btn" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#fff">🔎 検索</button>
 </form>
 
-<div id="log" style="font-size:.85rem;color:#6b7280;margin-top:.5rem"></div>
-
+<!-- ページ専用スクリプト -->
 <script>
-  document.getElementById('btn-js').addEventListener('click', () => {
-    document.getElementById('log').textContent = 'JSは動いています（OK） ' + new Date().toLocaleString();
-    alert('JSは動いています（OK）');
+/* ======== 診断ユーティリティ ======== */
+const out = (obj) => {
+  const el = document.getElementById('diagOut');
+  if (el) el.textContent = JSON.stringify(obj, null, 2);
+};
+function diagJs() {
+  alert('JSは動いています（OK）');
+  out({ ok: true, userAgent: navigator.userAgent, time: new Date().toISOString() });
+}
+
+/* ======== html5-qrcode を遅延読み込み ======== */
+let html5QrcodeLoaded = false;
+function loadHtml5Qrcode() {
+  return new Promise((resolve, reject) => {
+    if (window.Html5Qrcode || window.Html5QrcodeScanner) {
+      html5QrcodeLoaded = true;
+      return resolve('already');
+    }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js';
+    s.crossOrigin = 'anonymous';
+    s.referrerPolicy = 'no-referrer';
+    s.onload = () => { html5QrcodeLoaded = true; resolve('loaded'); };
+    s.onerror = () => reject(new Error('cdn-load-failed'));
+    document.head.appendChild(s);
   });
+}
+
+/* ② CDN 読込確認 */
+async function diagCdn() {
+  try {
+    const status = await loadHtml5Qrcode();
+    alert('html5-qrcode の読み込み成功！');
+    out({ html5QrcodeLoaded, status });
+  } catch (e) {
+    alert('html5-qrcode が読み込めませんでした。通信/フィルタ/キャッシュをご確認ください。');
+    out({ html5QrcodeLoaded, error: String(e) });
+  }
+}
 </script>
 
 {% endblock %}
