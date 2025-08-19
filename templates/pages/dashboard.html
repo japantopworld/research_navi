@@ -2,165 +2,46 @@
 {% block title %}ダッシュボード | リサーチナビ{% endblock %}
 {% block content %}
 
-<h1>ダッシュボード</h1>
+<h1>📊 リサーチナビ｜メインダッシュボード</h1>
+<p>🕒 現在時刻：{{ current_time }}</p>
 
-<div class="filters card">
-  <form id="f" onsubmit="evReload(event)">
-    <label>
-      <span>対象月数</span>
-      <select name="months" id="months">
-        <option value="3">3ヶ月</option>
-        <option value="6">6ヶ月</option>
-        <option value="12" selected>12ヶ月</option>
-        <option value="24">24ヶ月</option>
-        <option value="36">36ヶ月</option>
-      </select>
-    </label>
+<div class="grid-container">
 
-    <label>
-      <span>プラットフォーム</span>
-      <select name="platform" id="platform">
-        <option value="">ALL</option>
-        {% for pf in platforms %}
-          <option value="{{ pf }}">{{ pf }}</option>
-        {% endfor %}
-      </select>
-    </label>
+  <section class="card">
+    <h3>💰 売上サマリー</h3>
+    <p>今月の売上・利益・経費など</p>
+  </section>
 
-    <label class="grow">
-      <span>キーワード（商品名に含む）</span>
-      <input type="text" name="keyword" id="keyword" placeholder="例：Switch / LEGO / iPad">
-    </label>
+  <section class="card">
+    <h3>📦 在庫状況</h3>
+    <p>在庫数・入荷・発送の状況</p>
+  </section>
 
-    <button type="submit">再読込</button>
-  </form>
-</div>
+  <section class="card">
+    <h3>📈 人気商品ランキング</h3>
+    <p>今週の売れ筋・利益商品など</p>
+  </section>
 
-<div class="kpis card" id="kpis">
-  <div>
-    <div class="k-label">合計売上</div>
-    <div class="k-val" id="k_sales">¥0</div>
-  </div>
-  <div>
-    <div class="k-label">合計利益</div>
-    <div class="k-val" id="k_profit">¥0</div>
-  </div>
-  <div>
-    <div class="k-label">件数</div>
-    <div class="k-val" id="k_count">0</div>
-  </div>
-  <div>
-    <div class="k-label">平均利益率</div>
-    <div class="k-val" id="k_margin">0%</div>
-  </div>
-</div>
+  <section class="card">
+    <h3>📝 最新履歴</h3>
+    <p>仕入れ・利益計算・通知の履歴</p>
+  </section>
 
-<div class="grid">
-  <div class="card">
-    <h3>月次推移（売上）</h3>
-    <canvas id="chartSales" height="120"></canvas>
-  </div>
-  <div class="card">
-    <h3>月次推移（利益）</h3>
-    <canvas id="chartProfit" height="120"></canvas>
-  </div>
-  <div class="card">
-    <h3>PF別 利益合計（上位12）</h3>
-    <canvas id="chartPf" height="140"></canvas>
-  </div>
 </div>
 
 <style>
-.card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;margin:10px 0}
-.filters form{display:grid;gap:10px;grid-template-columns:160px 220px 1fr auto}
-.filters label{display:flex;flex-direction:column;gap:6px}
-.filters label>span{font-size:12px;color:#6b7280}
-.filters input,.filters select{padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
-.filters button{padding:8px 12px;border-radius:10px;border:1px solid #111;background:#111;color:#fff;cursor:pointer}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.k-label{font-size:12px;color:#6b7280}
-.k-val{font-size:22px;font-weight:700}
-.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
-@media (max-width:900px){
-  .filters form{grid-template-columns:1fr}
-  .grid{grid-template-columns:1fr}
-  .kpis{grid-template-columns:repeat(2,1fr)}
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+.card {
+  border: 1px solid #ccc;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 8px;
 }
 </style>
-
-<!-- Chart.js（CDN） -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-<script>
-let cSales, cProfit, cPf;
-
-function fmtYen(n){ return '¥' + (Number(n)||0).toLocaleString('ja-JP'); }
-function fmtPct(n){ return (Number(n)||0).toFixed(2) + '%'; }
-
-function evReload(e){
-  e && e.preventDefault();
-  load();
-}
-
-async function load(){
-  const months = document.getElementById('months').value;
-  const pf = document.getElementById('platform').value;
-  const kw = document.getElementById('keyword').value.trim();
-
-  const qs = new URLSearchParams({ months, platform: pf, keyword: kw }).toString();
-  const res = await fetch(`/api/stats/monthly?${qs}`);
-  const j = await res.json();
-
-  // KPIs
-  document.getElementById('k_sales').textContent  = fmtYen(j.totals.sales);
-  document.getElementById('k_profit').textContent = fmtYen(j.totals.profit);
-  document.getElementById('k_count').textContent  = (j.totals.count||0).toLocaleString('ja-JP');
-  document.getElementById('k_margin').textContent = fmtPct(j.totals.avg_margin);
-
-  // 売上ライン
-  const dsSales = { labels: j.labels, datasets: [{ label: '売上', data: j.sales }] };
-  cSales?.destroy();
-  cSales = new Chart(document.getElementById('chartSales'), {
-    type: 'line',
-    data: dsSales,
-    options: {
-      responsive: true,
-      plugins:{ legend:{ display:true } },
-      scales:{ y:{ ticks:{ callback:v=>fmtYen(v) } } }
-    }
-  });
-
-  // 利益ライン
-  const dsProfit = { labels: j.labels, datasets: [{ label: '利益', data: j.profit }] };
-  cProfit?.destroy();
-  cProfit = new Chart(document.getElementById('chartProfit'), {
-    type: 'line',
-    data: dsProfit,
-    options: {
-      responsive: true,
-      plugins:{ legend:{ display:true } },
-      scales:{ y:{ ticks:{ callback:v=>fmtYen(v) } } }
-    }
-  });
-
-  // PF別バー
-  const pfLabels = j.platforms.map(x=>x.platform);
-  const pfVals   = j.platforms.map(x=>x.profit);
-  cPf?.destroy();
-  cPf = new Chart(document.getElementById('chartPf'), {
-    type: 'bar',
-    data: { labels: pfLabels, datasets: [{ label:'利益合計', data: pfVals }] },
-    options: {
-      responsive: true,
-      indexAxis: 'y',
-      plugins:{ legend:{ display:false } },
-      scales:{ x:{ ticks:{ callback:v=>fmtYen(v) } } }
-    }
-  });
-}
-
-// 初回ロード
-document.addEventListener('DOMContentLoaded', load);
-</script>
 
 {% endblock %}
