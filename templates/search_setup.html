@@ -4,11 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>バーコードテスト</title>
-
-  <!-- ✅ html5-qrcodeライブラリ（ローカル読み込み） -->
   <script src="{{ url_for('static', filename='js/html5-qrcode.min.js') }}"></script>
-
-  <!-- ✅ 読み込みチェックバッジのスクリプト -->
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       const badge = document.getElementById("badge");
@@ -34,30 +30,19 @@
           document.getElementById("reader").innerHTML = "";
         },
         errorMessage => {
-          // 読み取り失敗時も何もしない
+          // エラー時は何もしない
         }
       ).catch(err => {
-        alert("カメラの起動に失敗しました: " + err);
+        alert("カメラ起動に失敗: " + err);
       });
     }
   </script>
 </head>
-
 <body>
   <h1>📷 バーコード読み取りテスト</h1>
-
-  <!-- ✅ バッジ表示 -->
-  <div id="badge" style="color: white; padding: 6px 12px; border-radius: 6px; margin-bottom: 10px;">
-    チェック中...
-  </div>
-
-  <!-- ✅ 読み取り結果入力欄 -->
-  <input type="text" id="barcode-input" placeholder="読み取ったバーコード" style="width: 80%; font-size: 1.2em;">
-
-  <!-- ✅ 読み取り開始ボタン -->
-  <button onclick="startBarcodeScan()" style="font-size: 1.2em; margin-top: 10px;">📷 バーコードをスキャン</button>
-
-  <!-- ✅ カメラビュー表示領域 -->
+  <div id="badge" style="color: white; padding: 6px 12px; border-radius: 6px; margin-bottom: 10px;">チェック中...</div>
+  <input type="text" id="barcode-input" placeholder="バーコード結果" style="width: 80%; font-size: 1.2em;">
+  <button onclick="startBarcodeScan()" style="font-size: 1.2em; margin-top: 10px;">📷 スキャン</button>
   <div id="reader" style="width: 300px; margin-top: 20px;"></div>
 </body>
 </html>
