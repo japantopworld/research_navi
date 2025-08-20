@@ -1,65 +1,51 @@
 {% extends "base/layout.html" %}
 {% block title %}ホーム | リサーチナビ{% endblock %}
-
 {% block content %}
 
-<!-- ヒーロー：メインビジュアル（画像は static/hero_main.jpg を使用） -->
-<section class="hero">
-  <picture>
-    <!-- WebP を置く場合は下行を有効化して hero_main.webp を static 直下に置く -->
-    <!-- <source srcset="{{ url_for('static', filename='hero_main.webp') }}" type="image/webp"> -->
-    <img src="{{ url_for('static', filename='hero_main.jpg') }}"
-         alt="リサーチナビのマスコット" loading="eager" decoding="async">
-  </picture>
+<h1>🎉 リサーチナビへようこそ</h1>
 
-  <div class="hero__overlay"></div>
-  <div class="hero__content">
-    <h1 class="hero__title">リサーチナビ</h1>
-    <p class="hero__tagline">最強のせどり・物販支援サービス</p>
-  </div>
-</section>
+<div class="mascot">
+  <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="マスコット" width="180">
+</div>
 
-<!-- 主要機能：指で押しやすいボタンカード -->
-<nav class="home-menu">
-  <a class="menu-card" href="{{ url_for('search') }}">
-    <span class="menu-card__icon">🔎</span>
-    <span class="menu-card__title">商品検索</span>
-  </a>
+<div class="nav-grid">
+  <a href="{{ url_for('search.search') }}" class="nav-card">🔍 商品検索</a>
+  <a href="{{ url_for('ranking.ranking') }}" class="nav-card">📊 ランキング</a>
+  <a href="{{ url_for('dashboard.dashboard') }}" class="nav-card">📈 ダッシュボード</a>
+</div>
 
-  <a class="menu-card" href="{{ url_for('profit') }}">
-    <span class="menu-card__icon">💰</span>
-    <span class="menu-card__title">利益計算</span>
-  </a>
+<p class="footer">制作者：鳳陽合同会社　小島崇彦</p>
 
-  <a class="menu-card" href="{{ url_for('history') }}">
-    <span class="menu-card__icon">📜</span>
-    <span class="menu-card__title">履歴一覧</span>
-  </a>
-
-  <a class="menu-card" href="{{ url_for('ranking') }}">
-    <span class="menu-card__icon">📈</span>
-    <span class="menu-card__title">履歴ランキング</span>
-  </a>
-
-  <a class="menu-card" href="{{ url_for('notifications') }}">
-    <span class="menu-card__icon">📣</span>
-    <span class="menu-card__title">通知一覧</span>
-  </a>
-
-  <a class="menu-card" href="{{ url_for('ocr') }}">
-    <span class="menu-card__icon">📷</span>
-    <span class="menu-card__title">OCR読取</span>
-  </a>
-
-  <a class="menu-card" href="{{ url_for('suppliers') }}">
-    <span class="menu-card__icon">🏪</span>
-    <span class="menu-card__title">仕入れ先</span>
-  </a>
-
-  <a class="menu-card" href="{{ url_for('setting') }}">
-    <span class="menu-card__icon">⚙️</span>
-    <span class="menu-card__title">設定</span>
-  </a>
-</nav>
+<style>
+.mascot {
+  text-align: center;
+  margin: 20px 0;
+}
+.nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 30px 0;
+}
+.nav-card {
+  display: block;
+  background: #f0f4f8;
+  border: 1px solid #ccc;
+  padding: 20px;
+  text-align: center;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+.nav-card:hover {
+  background: #dff0ff;
+}
+.footer {
+  text-align: center;
+  color: #555;
+  margin-top: 40px;
+}
+</style>
 
 {% endblock %}
