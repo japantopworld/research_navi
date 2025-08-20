@@ -1,3 +1,23 @@
-﻿{% extends "base/layout.html" %}
-{% block title %}404 Not Found{% endblock %}
-{% block content %}<h1>404</h1><p>ページが見つかりません。</p>{% endblock %}
+{% extends "base/layout.html" %}
+{% block title %}404 - ページが見つかりません | リサーチナビ{% endblock %}
+{% block content %}
+
+<div style="text-align: center; padding: 50px;">
+  <img src="{{ url_for('static', filename='img/icon-512.png') }}" alt="マスコット" width="120" style="margin-bottom: 20px;" />
+
+  <h1 style="font-size: 2em; margin-bottom: 10px;">404 - ページが見つかりません</h1>
+  <p style="color: #6b7280; margin-bottom: 30px;">
+    お探しのページは存在しないか、移動された可能性があります。
+  </p>
+
+  <a href="/" class="btn" style="
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #3b82f6;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+  ">🏠 ホームに戻る</a>
+</div>
+
+{% endblock %}
