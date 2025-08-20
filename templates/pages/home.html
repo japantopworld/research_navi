@@ -9,14 +9,40 @@
   <img src="{{ url_for('static', filename='img/icon-512.png') }}" alt="マスコット" style="width:200px; border-radius:16px;">
 </div>
 
-<ul>
-  <li><a href="/dashboard">📊 ダッシュボード</a></li>
-  <li><a href="/search">🔍 商品検索</a></li>
-  <li><a href="/ranking">🏆 ランキング</a></li>
-</ul>
+<div class="button-container">
+  <a href="/" class="btn">🏠 ホーム</a>
+  <a href="/dashboard" class="btn">📊 ダッシュボード</a>
+  <a href="/search" class="btn">🔍 商品検索</a>
+  <a href="/ranking" class="btn">🏆 ランキング</a>
+</div>
 
 <footer style="margin-top: 50px; color:gray; font-size:14px;">
   制作者：鳳陽合同会社 小島崇彦
 </footer>
+
+<style>
+  .button-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 12px 20px;
+    background-color: #3b82f6;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: background-color 0.2s ease;
+  }
+
+  .btn:hover {
+    background-color: #2563eb;
+  }
+</style>
 
 {% endblock %}
