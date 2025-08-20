@@ -1,48 +1,22 @@
 {% extends "base/layout.html" %}
 {% block title %}ホーム | リサーチナビ{% endblock %}
+
 {% block content %}
+<div class="text-center py-8">
+  <img src="{{ url_for('static', filename='img/icon-512.png') }}" alt="マスコット画像" class="w-32 h-32 mx-auto mb-4 rounded-full shadow-lg">
+  
+  <h1 class="text-3xl font-bold mb-2">リサーチナビへようこそ！</h1>
+  <p class="text-gray-600 mb-6">使いたいページを選んでください。</p>
 
-<h1>🏠 リサーチナビ ホーム</h1>
-<p>機能を選んでスタート！</p>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-xl mx-auto">
+    <a href="/search" class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg shadow">🔍 商品検索</a>
+    <a href="/ranking" class="bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg shadow">🏆 ランキング</a>
+    <a href="/register" class="bg-yellow-500 hover:bg-yellow-600 text-white py-3 px-4 rounded-lg shadow">📝 作業者登録</a>
+    <a href="/guide" class="bg-purple-500 hover:bg-purple-600 text-white py-3 px-4 rounded-lg shadow">📘 使い方</a>
+    <a href="/terms" class="bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-lg shadow">📜 利用規約</a>
+    <a href="/privacy" class="bg-gray-700 hover:bg-gray-800 text-white py-3 px-4 rounded-lg shadow">🔒 プライバシー</a>
+  </div>
 
-<div style="text-align:center; margin: 30px 0;">
-  <img src="{{ url_for('static', filename='img/icon-512.png') }}" alt="マスコット" style="width:200px; border-radius:16px;">
+  <p class="text-sm text-gray-500 mt-10">制作者：鳳陽合同会社　小島崇彦</p>
 </div>
-
-<div class="button-container">
-  <a href="/" class="btn">🏠 ホーム</a>
-  <a href="/dashboard" class="btn">📊 ダッシュボード</a>
-  <a href="/search" class="btn">🔍 商品検索</a>
-  <a href="/ranking" class="btn">🏆 ランキング</a>
-</div>
-
-<footer style="margin-top: 50px; color:gray; font-size:14px;">
-  制作者：鳳陽合同会社 小島崇彦
-</footer>
-
-<style>
-  .button-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
-  }
-
-  .btn {
-    display: inline-block;
-    padding: 12px 20px;
-    background-color: #3b82f6;
-    color: white;
-    text-decoration: none;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: background-color 0.2s ease;
-  }
-
-  .btn:hover {
-    background-color: #2563eb;
-  }
-</style>
-
 {% endblock %}
