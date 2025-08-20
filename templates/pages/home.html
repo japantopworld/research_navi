@@ -2,50 +2,21 @@
 {% block title %}ホーム | リサーチナビ{% endblock %}
 {% block content %}
 
-<h1>🎉 リサーチナビへようこそ</h1>
+<h1>🏠 リサーチナビ ホーム</h1>
+<p>機能を選んでスタート！</p>
 
-<div class="mascot">
-  <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="マスコット" width="180">
+<div style="text-align:center; margin: 30px 0;">
+  <img src="{{ url_for('static', filename='img/icon-512.png') }}" alt="マスコット" style="width:200px; border-radius:16px;">
 </div>
 
-<div class="nav-grid">
-  <a href="{{ url_for('search.search') }}" class="nav-card">🔍 商品検索</a>
-  <a href="{{ url_for('ranking.ranking') }}" class="nav-card">📊 ランキング</a>
-  <a href="{{ url_for('dashboard.dashboard') }}" class="nav-card">📈 ダッシュボード</a>
-</div>
+<ul>
+  <li><a href="/dashboard">📊 ダッシュボード</a></li>
+  <li><a href="/search">🔍 商品検索</a></li>
+  <li><a href="/ranking">🏆 ランキング</a></li>
+</ul>
 
-<p class="footer">制作者：鳳陽合同会社　小島崇彦</p>
-
-<style>
-.mascot {
-  text-align: center;
-  margin: 20px 0;
-}
-.nav-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin: 30px 0;
-}
-.nav-card {
-  display: block;
-  background: #f0f4f8;
-  border: 1px solid #ccc;
-  padding: 20px;
-  text-align: center;
-  font-weight: bold;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: background 0.3s;
-}
-.nav-card:hover {
-  background: #dff0ff;
-}
-.footer {
-  text-align: center;
-  color: #555;
-  margin-top: 40px;
-}
-</style>
+<footer style="margin-top: 50px; color:gray; font-size:14px;">
+  制作者：鳳陽合同会社 小島崇彦
+</footer>
 
 {% endblock %}
