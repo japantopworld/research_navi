@@ -1,3 +1,24 @@
-﻿{% extends "base/layout.html" %}
-{% block title %}500 Error{% endblock %}
-{% block content %}<h1>500</h1><p>サーバーエラーが発生しました。</p>{% endblock %}
+{% extends "base/layout.html" %}
+{% block title %}500 - サーバーエラー | リサーチナビ{% endblock %}
+{% block content %}
+
+<div style="text-align: center; padding: 50px;">
+  <img src="{{ url_for('static', filename='img/icon-512.png') }}" alt="マスコット" width="120" style="margin-bottom: 20px;" />
+
+  <h1 style="font-size: 2em; margin-bottom: 10px;">500 - サーバーエラーが発生しました</h1>
+  <p style="color: #6b7280; margin-bottom: 30px;">
+    サーバー内部で予期しないエラーが発生しました。<br>
+    少し時間をおいて再度お試しください。
+  </p>
+
+  <a href="/" class="btn" style="
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #ef4444;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+  ">🏠 ホームに戻る</a>
+</div>
+
+{% endblock %}
