@@ -1,22 +1,24 @@
-from flask import Flask
-import os
+from flask import Flask, render_template
+from routes import dashboard, search, ranking, register, guide  # 必要なBlueprintをすべてインポート
 
-# アプリ本体
 app = Flask(__name__)
 
 # Blueprint登録
-from routes import dashboard, search, ranking, guide
 app.register_blueprint(dashboard.dashboard_bp)
 app.register_blueprint(search.search_bp)
 app.register_blueprint(ranking.ranking_bp)
-app.register_blueprint(guide.guide_bp)
+app.register_blueprint(register.register_bp)
+app.register_blueprint(guide.guide_bp)  # 使い方ページ
 
-# Health check（Render用）
-@app.route("/healthz")
-def health_check():
-    return "ok"
+# ホームページ
+@app.route("/")
+def home():
+    return render_template("pages/home.html")
 
-# waitress起動
+# エラーページ
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("pages/404.html"), 404
+
 if __name__ == "__main__":
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(debug=True)
