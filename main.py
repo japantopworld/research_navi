@@ -12,16 +12,15 @@ app.register_blueprint(register_bp)
 app.register_blueprint(search_bp)
 app.register_blueprint(ranking_bp)
 
-# ホーム（トップページ）
+# ✅ トップページ（ホーム）
 @app.route("/")
 def home():
-    return render_template("pages/dashboard.html")
+    return render_template("pages/home.html")
 
-# ✅ Renderのヘルスチェック用ルート
+# ✅ Renderのヘルスチェック用
 @app.route("/healthz")
 def healthz():
     return "OK", 200
 
-# 開発ローカル用（Renderでは使用されません）
 if __name__ == "__main__":
     app.run(debug=True)
