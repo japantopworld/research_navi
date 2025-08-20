@@ -1,23 +1,26 @@
-from flask import Flask
+from flask import Flask, render_template
 import os
 
-# Flaskアプリ初期化
 app = Flask(__name__)
 
-# Blueprint読み込み
-from routes import dashboard, search, ranking, home  # ← homeも追加する
+# Blueprint 読み込み
+from routes import dashboard, search, ranking
 
-app.register_blueprint(home.home_bp)         # トップページ
 app.register_blueprint(dashboard.dashboard_bp)
 app.register_blueprint(search.search_bp)
 app.register_blueprint(ranking.ranking_bp)
 
-# Health Check（Render用）
+# トップページ（ホーム）
+@app.route("/")
+def home():
+    return render_template("pages/home.html")
+
+# Render用Health Check
 @app.route("/healthz")
 def health_check():
     return "ok"
 
-# 本番用起動（waitress）
+# waitress起動（Render対応）
 if __name__ == "__main__":
     from waitress import serve
     serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
