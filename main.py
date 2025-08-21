@@ -28,7 +28,12 @@ def internal_server_error(e):
 def home():
     return render_template("pages/home.html")
 
-# ✅ Render 対応：PORT環境変数を使って起動
+# ✅ Render 用ヘルスチェックエンドポイント
+@app.route("/healthz")
+def health_check():
+    return "OK", 200
+
+# ✅ Render 対応：PORT環境変数で起動
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
