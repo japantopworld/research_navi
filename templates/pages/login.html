@@ -1,0 +1,39 @@
+<!-- templates/pages/login.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ログイン</title>
+  <style>
+    form {
+      max-width: 400px;
+      margin: 2rem auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center">🔐 ログイン</h2>
+  <form method="post" action="/login">
+    <label>ユーザーID</label>
+    <input type="text" name="username" required>
+
+    <label>パスワード</label>
+    <input type="password" name="password" required>
+
+    <button type="submit">ログイン</button>
+  </form>
+</body>
+</html>
