@@ -1,44 +1,88 @@
-from flask import Flask, render_template, session
-from routes.login import login_bp
-from routes.register import register_bp
-from routes.search import search_bp
-from routes.ranking import ranking_bp
-from routes.static_pages import static_pages_bp
+import os
+import csv
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
 
-# Blueprint 登録
-app.register_blueprint(login_bp)
-app.register_blueprint(register_bp)
-app.register_blueprint(search_bp)
-app.register_blueprint(ranking_bp)
-app.register_blueprint(static_pages_bp)
+# 職種コードマッピング
+position_map = {
+    "経理": "ACC",
+    "バイヤー": "BUY",
+    "販売": "SAL",
+    "物流": "LOG",
+    "統括": "SUP",
+    "総合": "GEN"
+}
 
-# エラーハンドラー
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template("errors/404.html"), 404
+@app.route("/users/register", methods=["GET", "POST"])
+def register_user():
+    if request.method == "POST":
+        # フォームデータ取得
+        username = request.form["username"]
+        furigana = request.form["furigana"]
+        birthdate = request.form["birthdate"]  # YYYY-MM-DD
+        age = request.form["age"]
+        tel = request.form["tel"]
+        mobile = request.form["mobile"]
+        email = request.form["email"]
+        department = request.form["department"]
+        position_jp = request.form["position"]
+        ref_code_full = request.form["ref_code"].upper()  # KA, KB, etc.
+        password = request.form["password"]
 
-@app.errorhandler(500)
-def internal_server_error(e):
-    return render_template("errors/500.html"), 500
+        # 【1】紹介者コード（例：KA → A）
+        ref_letter = ref_code_full[-1]
 
-# ✅ ホームルート（ログイン前後で切り替え）
-@app.route("/")
-def home():
-    if 'user_id' in session:
-        return render_template("pages/home.html")  # ログイン済み
-    else:
-        return render_template("pages/welcome.html")  # ログイン前
+        # 【2】誕生日 → MMDD
+        birth_mmdd = birthdate[5:7] + birthdate[8:10]
 
-# ✅ Render 用ヘルスチェック
-@app.route("/healthz")
-def health_check():
-    return "OK", 200
+        # 【3】枝番号カウント
+        filepath = os.path.join("data", "users.csv")
+        branch_no = 1
+        existing_rows = []
 
-# ✅ PORT指定でRender対応
-if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+        if os.path.exists(filepath):
+            with open(filepath, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    existing_rows.append(row)
+                    if row["紹介者NO"] == ref_letter and row["枝番号"].startswith(ref_letter):
+                        branch_no += 1
+
+        branch_code = f"{ref_letter}{branch_no}"  # 例：A1, B3
+
+        # 【4】職種コード
+        position_code = position_map.get(position_jp)
+        if not position_code:
+            return "❌ 無効な職種です"
+
+        # 【5】ID生成：職種コード + 紹介者コード + MMDD + 枝番号
+        user_id = f"{position_code}{ref_letter}{birth_mmdd}{branch_code}"
+
+        # 【6】保存データ
+        save_data = {
+            "ユーザー名": username,
+            "ユーザー名ふり仮名": furigana,
+            "生年月日": birthdate,
+            "年齢": age,
+            "電話番号": tel,
+            "携帯番号": mobile,
+            "メールアドレス": email,
+            "部署": department,
+            "紹介者NO": ref_letter,
+            "ID": user_id,
+            "PASS": password,
+            "枝番号": branch_code
+        }
+
+        # 【7】CSV保存
+        file_exists = os.path.isfile(filepath)
+        with open(filepath, "a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=save_data.keys())
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(save_data)
+
+        return f"✅ 登録完了！割り当てられたIDは {user_id} です"
+
+    return render_template("register_user.html")
