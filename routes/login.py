@@ -1,15 +1,27 @@
-# routes/login.py
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, session, url_for
 
-login_bp = Blueprint('login', __name__)
+login_bp = Blueprint("login", __name__)
 
-@login_bp.route('/login', methods=['GET', 'POST'])
+# ダミーユーザー（本番はDB管理）
+DUMMY_USERS = {
+    "admin": "password123",
+    "user": "testpass"
+}
+
+@login_bp.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if username == 'admin' and password == 'pass':
-            return redirect(url_for('dashboard.dashboard'))
+    error = None
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        if username in DUMMY_USERS and DUMMY_USERS[username] == password:
+            session["user"] = username
+            return redirect(url_for("home"))
         else:
-            return "ログイン失敗", 401
-    return render_template("pages/login.html")
+            error = "ログイン失敗：ユーザー名またはパスワードが違います"
+    return render_template("pages/login.html", error=error)
+
+@login_bp.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect(url_for("login.login"))
