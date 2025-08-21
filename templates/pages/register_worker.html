@@ -1,56 +1,28 @@
-<!-- templates/pages/register_worker.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>作業者 登録フォーム</title>
-  <style>
-    body { font-family: sans-serif; background: #f4f4f4; padding: 2rem; }
-    .container { max-width: 500px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    h2 { text-align: center; }
-    label { display: block; margin-top: 1rem; font-weight: bold; }
-    input, select {
-      width: 100%; padding: 0.5rem; margin-top: 0.3rem;
-      border: 1px solid #ccc; border-radius: 4px;
-    }
-    button {
-      width: 100%; margin-top: 2rem; padding: 0.8rem;
-      background-color: #2563eb; color: white; border: none; border-radius: 4px;
-    }
-  </style>
+  <title>新規登録 | リサーチナビ</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <div class="container">
-    <h2>📝 作業者登録フォーム</h2>
-    <form method="POST">
-      <label>氏名</label>
-      <input type="text" name="fullname" required>
+    <h1>👤 新規登録</h1>
+    <form method="POST" action="/register">
+      <div class="form-group">
+        <label for="username">ユーザー名</label>
+        <input type="text" class="form-control" id="username" name="username" required>
+      </div>
 
-      <label>ふりがな</label>
-      <input type="text" name="furigana" required>
+      <div class="form-group">
+        <label for="password">パスワード</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+      </div>
 
-      <label>年齢</label>
-      <input type="number" name="age" min="18" max="99" required>
-
-      <label>作業名</label>
-      <select name="position" required>
-        <option value="">選択してください</option>
-        <option value="経理">経理</option>
-        <option value="バイヤー">バイヤー</option>
-        <option value="販売員">販売員</option>
-        <option value="物流">物流</option>
-        <option value="合統括">合統括</option>
-        <option value="総合">総合</option>
-      </select>
-
-      <label>電話番号</label>
-      <input type="tel" name="phone" pattern="[\d\-]+" placeholder="090-1234-5678" required>
-
-      <label>メールアドレス</label>
-      <input type="email" name="email" required>
-
-      <button type="submit">登録する</button>
+      <button type="submit" class="btn btn-primary">登録</button>
     </form>
+    <br>
+    <a href="/login">🔑 ログインへ戻る</a>
   </div>
 </body>
 </html>
