@@ -27,16 +27,16 @@ def register_user():
         email = request.form["email"]
         department = request.form["department"]
         position_jp = request.form["position"]
-        ref_code_full = request.form["ref_code"].upper()  # KA, KB, etc.
+        ref_code_full = request.form["ref_code"].upper()  # 例：KA、KB、KC
         password = request.form["password"]
 
         # 【1】紹介者コード（例：KA → A）
         ref_letter = ref_code_full[-1]
 
-        # 【2】誕生日 → MMDD
+        # 【2】誕生日 → MMDD（西暦は使わない）
         birth_mmdd = birthdate[5:7] + birthdate[8:10]
 
-        # 【3】枝番号カウント
+        # 【3】枝番号カウント（紹介者ごとに通し番号）
         filepath = os.path.join("data", "users.csv")
         branch_no = 1
         existing_rows = []
@@ -56,7 +56,7 @@ def register_user():
         if not position_code:
             return "❌ 無効な職種です"
 
-        # 【5】ID生成：職種コード + 紹介者コード + MMDD + 枝番号
+        # 【5】ID生成：職種コード + 紹介者 + MMDD + 枝番号
         user_id = f"{position_code}{ref_letter}{birth_mmdd}{branch_code}"
 
         # 【6】保存データ
@@ -86,3 +86,11 @@ def register_user():
         return f"✅ 登録完了！割り当てられたIDは {user_id} です"
 
     return render_template("register_user.html")
+
+
+# Renderの起動確認用ルート
+@app.route("/")
+def index():
+    return "✅ リサーチナビは起動しています！"
+
+# 🔸注意：Renderでは app.run() は書かない！
