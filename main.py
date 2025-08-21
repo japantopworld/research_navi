@@ -3,11 +3,11 @@ import csv
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # 任意の安全な文字列にしてください
+app.secret_key = 'your_secret_key'
 
 USERS_FILE = 'users.csv'
 
-# 管理者アカウント（特別扱い）
+# 管理者情報（特別扱い）
 ADMIN_ID = 'KING1192'
 ADMIN_PASS = '11922960'
 
@@ -17,7 +17,7 @@ def home():
         if session['user_id'] == ADMIN_ID:
             return f'👑 管理者ログイン成功：{session["user_id"]}'
         else:
-            return f'✅ 一般ユーザーログイン成功：{session["user_id"]}'
+            return f'✅ 一般ユーザーとしてログイン中：{session["user_id"]}'
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -30,17 +30,19 @@ def register():
         password = request.form['password']
 
         if len(password) < 8:
-            return 'パスワードは8文字以上である必要があります。'
+            return '❌ パスワードは8文字以上である必要があります。'
 
+        # ログインID構築：職種 + 紹介者 + 誕生日 + 枝番号
         login_id = job_code + ref_code + birthday + branch
 
-        # 保存
+        # 保存処理
         with open(USERS_FILE, 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([login_id, password])
 
-        return f'✅ 登録完了！あなたのIDは「{login_id}」です。'
-    return render_template('register.html')
+        return f'✅ 登録完了！あなたのIDは「{login_id}」です。<br><a href="/login">ログインへ</a>'
+    
+    return render_template('pages/register_worker.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -63,7 +65,8 @@ def login():
                         return redirect(url_for('home'))
 
         return '❌ IDまたはパスワードが間違っています。'
-    return render_template('login.html')
+    
+    return render_template('pages/login.html')
 
 @app.route('/logout')
 def logout():
