@@ -1,22 +1,48 @@
-{% extends "base/layout.html" %}
-{% block title %}ホーム | リサーチナビ{% endblock %}
+<!-- templates/pages/home.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>リサーチナビ</title>
+  <style>
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 200px;
+      margin: 2rem auto;
+    }
+    .btn {
+      display: block;
+      padding: 12px;
+      background-color: #2563eb;
+      color: white;
+      text-align: center;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .btn:hover {
+      background-color: #1e40af;
+    }
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align:center">🔍 リサーチナビ</h1>
+  <p style="text-align:center">ご利用ページを選んでください</p>
 
-{% block content %}
-<div class="text-center py-8">
-  <img src="{{ url_for('static', filename='img/icon-512.png') }}" alt="マスコット画像" class="w-32 h-32 mx-auto mb-4 rounded-full shadow-lg">
-  
-  <h1 class="text-3xl font-bold mb-2">リサーチナビへようこそ！</h1>
-  <p class="text-gray-600 mb-6">使いたいページを選んでください。</p>
-
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-xl mx-auto">
-    <a href="/search" class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg shadow">🔍 商品検索</a>
-    <a href="/ranking" class="bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg shadow">🏆 ランキング</a>
-    <a href="/register" class="bg-yellow-500 hover:bg-yellow-600 text-white py-3 px-4 rounded-lg shadow">📝 作業者登録</a>
-    <a href="/guide" class="bg-purple-500 hover:bg-purple-600 text-white py-3 px-4 rounded-lg shadow">📘 使い方</a>
-    <a href="/terms" class="bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-lg shadow">📜 利用規約</a>
-    <a href="/privacy" class="bg-gray-700 hover:bg-gray-800 text-white py-3 px-4 rounded-lg shadow">🔒 プライバシー</a>
+  <div class="button-group">
+    <a href="/dashboard" class="btn">📊 ダッシュボード</a>
+    <a href="/ranking" class="btn">🏆 ランキング</a>
+    <a href="/search" class="btn">🔎 商品検索</a>
+    <a href="/login" class="btn">🔐 ログイン</a>
   </div>
 
-  <p class="text-sm text-gray-500 mt-10">制作者：鳳陽合同会社　小島崇彦</p>
-</div>
-{% endblock %}
+  <footer>制作者：鳳陽合同会社 小島崇彦</footer>
+</body>
+</html>
