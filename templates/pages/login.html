@@ -1,39 +1,15 @@
-<!-- templates/pages/login.html -->
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>ログイン</title>
-  <style>
-    form {
-      max-width: 400px;
-      margin: 2rem auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 1rem;
-    }
-    button {
-      background-color: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-  </style>
-</head>
-<body>
-  <h2 style="text-align:center">🔐 ログイン</h2>
-  <form method="post" action="/login">
-    <label>ユーザーID</label>
-    <input type="text" name="username" required>
-
-    <label>パスワード</label>
-    <input type="password" name="password" required>
-
-    <button type="submit">ログイン</button>
-  </form>
-</body>
-</html>
+{% extends "base/layout.html" %}
+{% block title %}ログイン | リサーチナビ{% endblock %}
+{% block content %}
+<h2>🔐 ログイン</h2>
+{% if error %}
+  <p style="color: red;">{{ error }}</p>
+{% endif %}
+<form method="POST">
+  <label>ユーザー名：</label><br>
+  <input type="text" name="username" required><br>
+  <label>パスワード：</label><br>
+  <input type="password" name="password" required><br><br>
+  <button type="submit">ログイン</button>
+</form>
+{% endblock %}
