@@ -3,7 +3,28 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>リサーチナビ</title>
+  <title>リサーチナビ</title><!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ホーム | リサーチナビ</title>
+</head>
+<body>
+    {% include 'components/navbar.html' %}
+
+    <h1>📊 ホーム画面（ログイン後）</h1>
+    <p>ここから各機能にアクセスできます：</p>
+
+    <ul>
+        <li><a href="/search">🔍 商品検索</a></li>
+        <li><a href="/ranking">📈 ランキング</a></li>
+        <li><a href="/guide">📘 使い方</a></li>
+    </ul>
+
+    <p><a href="/logout">ログアウト</a></p>
+</body>
+</html>
+
   <style>
     .button-group {
       display: flex;
@@ -46,3 +67,4 @@
   <footer>制作者：鳳陽合同会社 小島崇彦</footer>
 </body>
 </html>
+
