@@ -1,23 +1,33 @@
-from flask import Flask
+from flask import Flask, render_template
+from routes.login import login_bp
+from routes.register import register_bp
 from routes.search import search_bp
 from routes.ranking import ranking_bp
-from routes.register import register_bp
-from routes.login import login_bp  # ← ログインルート
+from routes.static_pages import static_bp
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'
 
-# Blueprint 登録（1回だけ、追記禁止）
+# Blueprint 登録
+app.register_blueprint(login_bp)
+app.register_blueprint(register_bp)
 app.register_blueprint(search_bp)
 app.register_blueprint(ranking_bp)
-app.register_blueprint(register_bp)
-app.register_blueprint(login_bp)
+app.register_blueprint(static_bp)
+
+# エラーハンドラー
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("errors/404.html"), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template("errors/500.html"), 500
 
 # ホームルート
-@app.route('/')
+@app.route("/")
 def home():
-    return "✅ ホーム画面またはログイン画面にリダイレクト予定"
+    return render_template("pages/home.html")
 
-# Render 用
 if __name__ == "__main__":
     app.run(debug=True)
+
