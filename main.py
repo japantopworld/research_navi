@@ -3,18 +3,18 @@ from routes.login import login_bp
 from routes.register import register_bp
 from routes.search import search_bp
 from routes.ranking import ranking_bp
-from routes.static_pages import static_bp
+from routes.static_pages import static_pages_bp  # ← 修正済み！
 
 app = Flask(__name__)
 
-# Blueprint 登録
+# ✅ Blueprint 登録
 app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(search_bp)
 app.register_blueprint(ranking_bp)
-app.register_blueprint(static_bp)
+app.register_blueprint(static_pages_bp)  # ← 名前を揃えて登録
 
-# エラーハンドラー
+# ✅ エラーハンドラー
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("errors/404.html"), 404
@@ -23,17 +23,17 @@ def page_not_found(e):
 def internal_server_error(e):
     return render_template("errors/500.html"), 500
 
-# ホームルート
+# ✅ ホームルート
 @app.route("/")
 def home():
     return render_template("pages/home.html")
 
-# ✅ Render 用ヘルスチェックエンドポイント
+# ✅ Render 用ヘルスチェック
 @app.route("/healthz")
 def health_check():
     return "OK", 200
 
-# ✅ Render 対応：PORT環境変数で起動
+# ✅ Render 対応のポート指定
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
