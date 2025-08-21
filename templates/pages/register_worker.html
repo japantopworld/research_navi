@@ -1,28 +1,28 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>新規登録 | リサーチナビ</title>
-  <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <title>ユーザー登録</title>
 </head>
 <body>
-  <div class="container">
-    <h1>👤 新規登録</h1>
-    <form method="POST" action="/register">
-      <div class="form-group">
-        <label for="username">ユーザー名</label>
-        <input type="text" class="form-control" id="username" name="username" required>
-      </div>
+    <h1>🔰 ユーザー登録フォーム</h1>
+    <form method="post">
+        <label>職種コード（例：ACC）:</label><br>
+        <input type="text" name="job_code" required><br><br>
 
-      <div class="form-group">
-        <label for="password">パスワード</label>
-        <input type="password" class="form-control" id="password" name="password" required>
-      </div>
+        <label>紹介者コード（A〜E）:</label><br>
+        <input type="text" name="ref_code" maxlength="1" required><br><br>
 
-      <button type="submit" class="btn btn-primary">登録</button>
+        <label>誕生日（MMDD）:</label><br>
+        <input type="text" name="birthday" pattern="\d{4}" maxlength="4" required><br><br>
+
+        <label>枝番号（例：A1, B3など）:</label><br>
+        <input type="text" name="branch" required><br><br>
+
+        <label>パスワード（8文字以上）:</label><br>
+        <input type="password" name="password" minlength="8" required><br><br>
+
+        <input type="submit" value="登録">
     </form>
-    <br>
-    <a href="/login">🔑 ログインへ戻る</a>
-  </div>
 </body>
 </html>
