@@ -1,33 +1,38 @@
-from flask import Blueprint, render_template, request, redirect, session, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session
 import csv
 import os
 
-login_bp = Blueprint('login', __name__, url_prefix='/login')
+login_bp = Blueprint("login_bp", __name__)
 
-# CSVファイルからユーザー読み込み
-def load_users():
-    users = {}
-    if os.path.exists('data/users.csv'):
-        with open('data/users.csv', newline='', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                if len(row) >= 2:
-                    users[row[0]] = row[1]
-    return users
+# 管理者アカウント（直書き）
+ADMIN_ID = "KING1192"
+ADMIN_PASS = "11922960"
 
-@login_bp.route('/', methods=['GET', 'POST'])
+@login_bp.route("/login", methods=["GET", "POST"])
 def login():
-    error = None
-    users = load_users()
+    if request.method == "POST":
+        login_id = request.form["login_id"]
+        password = request.form["password"]
 
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        # ✅ 管理者チェック
+        if login_id == ADMIN_ID and password == ADMIN_PASS:
+            session["user_id"] = login_id
+            return redirect(url_for("home"))
 
-        if username in users and users[username] == password:
-            session['user'] = username
-            return redirect('/')
-        else:
-            error = "IDまたはパスワードが違います"
+        # ✅ 一般ユーザー（CSV認証）
+        if os.path.exists("users.csv"):
+            with open("users.csv", newline="") as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    if row[0] == login_id and row[1] == password:
+                        session["user_id"] = login_id
+                        return redirect(url_for("home"))
 
-    return render_template('pages/login.html', error=error)
+        return "❌ IDまたはパスワードが間違っています。"
+
+    return render_template("pages/login.html")
+
+@login_bp.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
