@@ -1,6 +1,16 @@
 {% extends "base/layout.html" %}
 {% block title %}ホーム | リサーチナビ{% endblock %}
 {% block content %}
-<h1>ようこそ {{ user_name }} さん！</h1>
-<p>ここはリサーチナビのホーム画面です。</p>
+
+<div style="text-align: center; margin-top: 40px;">
+  <!-- ✅ メイン画像 -->
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ メイン画像" style="max-width: 90%; height: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-bottom: 40px;">
+
+  <!-- ✅ ボタンエリア -->
+  <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success" style="width: 220px; font-size: 1.2em;">🆕 新規登録</a>
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary" style="width: 220px; font-size: 1.2em;">🔐 ログイン</a>
+  </div>
+</div>
+
 {% endblock %}
