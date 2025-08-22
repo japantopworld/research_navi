@@ -31,7 +31,7 @@ def register_user():
         password = request.form["password"]
 
         # 【1】紹介者コード（例：KA → A）
-        ref_letter = ref_code_full[-1]
+        ref_letter = ref_code_full.replace("K", "")  # "KA" → "A"
 
         # 【2】誕生日 → MMDD（西暦は使わない）
         birth_mmdd = birthdate[5:7] + birthdate[8:10]
@@ -76,7 +76,6 @@ def register_user():
         }
 
         # 【7】CSV保存
-        os.makedirs("data", exist_ok=True)
         file_exists = os.path.isfile(filepath)
         with open(filepath, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=save_data.keys())
@@ -86,15 +85,15 @@ def register_user():
 
         return f"✅ 登録完了！割り当てられたIDは {user_id} です"
 
-    return render_template("register_user.html")
+    # 登録フォーム表示
+    return render_template("pages/register_user.html")
 
-
-# ✅ / ルート：Renderの起動確認に使われる
+# 🔁 起動確認用
 @app.route("/")
 def index():
-    return "✅ アプリは正常に起動しています！（/）"
+    return "✅ リサーチナビは起動しています！"
 
-# ✅ /healthz：RenderのHealth Check用
+# 🩺 Render用のヘルスチェック
 @app.route("/healthz")
 def healthz():
-    return "ok", 200
+    return "OK"
