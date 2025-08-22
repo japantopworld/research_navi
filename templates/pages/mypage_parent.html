@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>親ユーザーマイページ</title>
+</head>
+<body>
+  <h1>👑 親ユーザー専用マイページ</h1>
+  <p>こんにちは、{{ session.get('user_id') }} さん！</p>
+
+  <ul>
+    <li><a href="{{ url_for('search') }}">🔍 商品検索</a></li>
+    <li><a href="{{ url_for('calc_profit') }}">💰 利益計算</a></li>
+    <li><a href="{{ url_for('history') }}">📜 利益履歴</a></li>
+    <li><a href="{{ url_for('admin_dashboard') }}">🛠 管理画面</a></li>
+    <li><a href="{{ url_for('logout') }}">🚪 ログアウト</a></li>
+  </ul>
+</body>
+</html>
