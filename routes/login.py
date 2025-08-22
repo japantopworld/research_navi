@@ -25,7 +25,7 @@ def login():
         if user:
             session["user_id"] = login_id
             session["user_name"] = user.get("ユーザー名", "未登録")
-            return redirect(url_for("home"))  # ✅ 修正点：Blueprint名を外して直接 home 関数へ
+            return redirect(url_for("home"))
         else:
             flash("ログインIDまたはパスワードが違います", "danger")
 
