@@ -1,6 +1,6 @@
 import os
 import csv
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, Blueprint
 
 app = Flask(__name__)
 
@@ -14,6 +14,17 @@ position_map = {
     "総合": "GEN"
 }
 
+# ルート（ホーム画面）
+@app.route("/")
+def index():
+    return render_template("pages/home.html")
+
+# ヘルスチェック（Render用）
+@app.route("/healthz")
+def health_check():
+    return "ok", 200
+
+# 新規ユーザー登録ページ
 @app.route("/users/register", methods=["GET", "POST"])
 def register_user():
     if request.method == "POST":
@@ -31,7 +42,7 @@ def register_user():
         password = request.form["password"]
 
         # 【1】紹介者コード（例：KA → A）
-        ref_letter = ref_code_full.replace("K", "")  # "KA" → "A"
+        ref_letter = ref_code_full[-1]
 
         # 【2】誕生日 → MMDD（西暦は使わない）
         birth_mmdd = birthdate[5:7] + birthdate[8:10]
@@ -85,15 +96,6 @@ def register_user():
 
         return f"✅ 登録完了！割り当てられたIDは {user_id} です"
 
-    # 登録フォーム表示
     return render_template("pages/register_user.html")
 
-# 🔁 起動確認用
-@app.route("/")
-def index():
-    return "✅ リサーチナビは起動しています！"
-
-# 🩺 Render用のヘルスチェック
-@app.route("/healthz")
-def healthz():
-    return "OK"
+# 注意：Renderでは app.run() は不要！
