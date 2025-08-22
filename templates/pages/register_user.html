@@ -6,40 +6,42 @@
   <style>
     body {
       font-family: 'Helvetica Neue', sans-serif;
-      background-color: #f4f4f4;
+      background-color: #f9f9f9;
       padding: 30px;
     }
     h1 {
       color: #2c3e50;
+      text-align: center;
     }
     form {
-      background: #fff;
-      padding: 20px;
+      background: #ffffff;
+      padding: 25px;
       border-radius: 8px;
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      max-width: 640px;
+      margin: 30px auto;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     label {
       display: block;
-      margin-top: 12px;
+      margin-top: 15px;
       font-weight: bold;
     }
     input, select {
       width: 100%;
-      padding: 8px;
-      margin-top: 4px;
+      padding: 10px;
+      margin-top: 5px;
       border-radius: 4px;
       border: 1px solid #ccc;
     }
     button {
-      margin-top: 20px;
-      padding: 10px 20px;
+      margin-top: 25px;
+      width: 100%;
+      padding: 12px;
       background: #3498db;
       color: white;
       border: none;
-      border-radius: 4px;
-      font-weight: bold;
+      border-radius: 6px;
+      font-size: 16px;
       cursor: pointer;
     }
     button:hover {
@@ -49,9 +51,9 @@
 </head>
 <body>
 
-  <h1>📝 ユーザー新規登録</h1>
+  <h1>📝 ユーザー新規登録フォーム</h1>
 
-  <form method="post">
+  <form method="POST">
     <label>ユーザー名</label>
     <input type="text" name="username" required>
 
