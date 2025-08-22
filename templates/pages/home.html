@@ -1,70 +1,7 @@
-<!-- templates/pages/home.html -->
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>リサーチナビ</title><!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>ホーム | リサーチナビ</title>
-</head>
-<body>
-    {% include 'components/navbar.html' %}
-
-    <h1>📊 ホーム画面（ログイン後）</h1>
-    <p>ここから各機能にアクセスできます：</p>
-
-    <ul>
-        <li><a href="/search">🔍 商品検索</a></li>
-        <li><a href="/ranking">📈 ランキング</a></li>
-        <li><a href="/guide">📘 使い方</a></li>
-    </ul>
-
-    <p><a href="/logout">ログアウト</a></p>
-</body>
-</html>
-
-  <style>
-    .button-group {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      width: 200px;
-      margin: 2rem auto;
-    }
-    .btn {
-      display: block;
-      padding: 12px;
-      background-color: #2563eb;
-      color: white;
-      text-align: center;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    .btn:hover {
-      background-color: #1e40af;
-    }
-    footer {
-      text-align: center;
-      margin-top: 3rem;
-      color: #888;
-    }
-  </style>
-</head>
-<body>
-  <h1 style="text-align:center">🔍 リサーチナビ</h1>
-  <p style="text-align:center">ご利用ページを選んでください</p>
-
-  <div class="button-group">
-    <a href="/dashboard" class="btn">📊 ダッシュボード</a>
-    <a href="/ranking" class="btn">🏆 ランキング</a>
-    <a href="/search" class="btn">🔎 商品検索</a>
-    <a href="/login" class="btn">🔐 ログイン</a>
-  </div>
-
-  <footer>制作者：鳳陽合同会社 小島崇彦</footer>
-</body>
-</html>
-
+{% extends "layout.html" %}
+{% block title %}ホーム{% endblock %}
+{% block content %}
+<h1>✅ リサーチナビは起動しています！</h1>
+<p><a href="{{ url_for('login_bp.login') }}">ログインはこちら</a></p>
+<p><a href="{{ url_for('register_bp.register') }}">新規登録はこちら</a></p>
+{% endblock %}
