@@ -1,38 +1,10 @@
-{% extends "base/base.html" %}
-
+{% extends "base/layout.html" %}
 {% block title %}ログイン | リサーチナビ{% endblock %}
-
 {% block content %}
-<div class="container mt-5" style="max-width: 500px;">
-    <div class="card">
-        <div class="card-header text-center">
-            <h4>🔐 ログイン</h4>
-        </div>
-        <div class="card-body">
-            {% if error %}
-            <div class="alert alert-danger" role="alert">
-                {{ error }}
-            </div>
-            {% endif %}
-
-            <form method="POST" action="/login">
-                <div class="mb-3">
-                    <label for="username" class="form-label">ユーザー名</label>
-                    <input type="text" class="form-control" id="username" name="username" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="password" class="form-label">パスワード</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">ログイン</button>
-            </form>
-
-            <div class="mt-3 text-center">
-                <a href="/register">アカウントをお持ちでない方はこちら</a>
-            </div>
-        </div>
-    </div>
-</div>
+<h2>ログイン</h2>
+<form method="POST">
+  <label>ID</label><input name="login_id"><br>
+  <label>パスワード</label><input type="password" name="password"><br>
+  <button type="submit">ログイン</button>
+</form>
 {% endblock %}
