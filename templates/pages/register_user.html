@@ -2,71 +2,99 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ユーザー新規登録</title>
+  <title>ユーザー登録 | リサーチナビ</title>
   <style>
-    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
-    .form-container {
-      max-width: 600px; margin: auto; background: white; padding: 2rem;
-      border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    body {
+      font-family: 'Helvetica Neue', sans-serif;
+      background-color: #f4f4f4;
+      padding: 30px;
     }
-    label { display: block; margin-top: 1rem; font-weight: bold; }
+    h1 {
+      color: #2c3e50;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
     input, select {
-      width: 100%; padding: 0.5rem; margin-top: 0.3rem;
-      border: 1px solid #ccc; border-radius: 4px;
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
     }
     button {
-      width: 100%; margin-top: 2rem; padding: 0.8rem;
-      background-color: #2563eb; color: white; border: none; border-radius: 4px;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2980b9;
     }
   </style>
 </head>
 <body>
-  <div class="form-container">
-    <h2>📝 ユーザー新規登録</h2>
-    <form method="POST">
-      <label>ユーザー名</label>
-      <input type="text" name="username" required>
 
-      <label>ふりがな</label>
-      <input type="text" name="furigana" required>
+  <h1>📝 ユーザー新規登録</h1>
 
-      <label>生年月日</label>
-      <input type="date" name="birthdate" required>
+  <form method="post">
+    <label>ユーザー名</label>
+    <input type="text" name="username" required>
 
-      <label>年齢</label>
-      <input type="number" name="age" min="0" required>
+    <label>ふりがな</label>
+    <input type="text" name="furigana" required>
 
-      <label>電話番号</label>
-      <input type="tel" name="tel" required>
+    <label>生年月日</label>
+    <input type="date" name="birthdate" required>
 
-      <label>携帯番号</label>
-      <input type="tel" name="mobile" required>
+    <label>年齢</label>
+    <input type="number" name="age" required>
 
-      <label>メールアドレス</label>
-      <input type="email" name="email" required>
+    <label>電話番号</label>
+    <input type="tel" name="tel">
 
-      <label>部署</label>
-      <input type="text" name="department" required>
+    <label>携帯番号</label>
+    <input type="tel" name="mobile">
 
-      <label>職種（日本語）</label>
-      <select name="position" required>
-        <option value="">選択してください</option>
-        <option value="経理">経理</option>
-        <option value="バイヤー">バイヤー</option>
-        <option value="販売">販売</option>
-        <option value="物流">物流</option>
-        <option value="統括">統括</option>
-        <option value="総合">総合</option>
-      </select>
+    <label>メールアドレス</label>
+    <input type="email" name="email" required>
 
-      <label>紹介者NO（例：KA、KB）</label>
-      <input type="text" name="ref_code" pattern="K[A-E]" required>
+    <label>部署</label>
+    <input type="text" name="department">
 
-      <label>パスワード</label>
-      <input type="password" name="password" required>
+    <label>職種</label>
+    <select name="position" required>
+      <option value="">-- 選択してください --</option>
+      <option value="経理">経理</option>
+      <option value="バイヤー">バイヤー</option>
+      <option value="販売">販売</option>
+      <option value="物流">物流</option>
+      <option value="統括">統括</option>
+      <option value="総合">総合</option>
+    </select>
 
-      <button type="submit">登録する</button>
-    </form>
-  </div>
+    <label>紹介者コード（例：KA）</label>
+    <input type="text" name="ref_code" required>
+
+    <label>パスワード</label>
+    <input type="password" name="password" required>
+
+    <button type="submit">登録する</button>
+  </form>
+
 </body>
 </html>
