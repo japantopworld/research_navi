@@ -1,62 +1,59 @@
 {% extends "base/layout.html" %}
-{% block title %}新規登録 | リサーチナビ{% endblock %}
+{% block title %}新規登録{% endblock %}
+
 {% block content %}
+<div class="container mt-5">
+  <h2>📝 新規登録</h2>
+  <form method="POST" action="/register">
+    <div class="mb-3">
+      <label>ユーザー名</label>
+      <input type="text" class="form-control" name="username" required>
+    </div>
 
-<h1>📝 新規ユーザー登録</h1>
-<p style="color:#6b7280">必要事項を入力してください。</p>
+    <div class="mb-3">
+      <label>ふりがな</label>
+      <input type="text" class="form-control" name="furigana" required>
+    </div>
 
-<form method="post" class="mt-4">
-  <div class="mb-3">
-    <label class="form-label">ユーザー名</label>
-    <input type="text" class="form-control" name="username" required>
-  </div>
+    <div class="mb-3">
+      <label>生年月日</label>
+      <input type="date" class="form-control" name="birthdate" required>
+    </div>
 
-  <div class="mb-3">
-    <label class="form-label">ふりがな</label>
-    <input type="text" class="form-control" name="furigana" required>
-  </div>
+    <div class="mb-3">
+      <label>メールアドレス</label>
+      <input type="email" class="form-control" name="email" required>
+    </div>
 
-  <div class="mb-3">
-    <label class="form-label">生年月日</label>
-    <input type="date" class="form-control" name="birthdate" required>
-    <small class="form-text text-muted">形式：yyyy/mm/dd</small>
-  </div>
+    <div class="mb-3">
+      <label>パスワード</label>
+      <input type="password" class="form-control" name="password" required>
+    </div>
 
-  <div class="mb-3">
-    <label class="form-label">電話番号</label>
-    <input type="tel" class="form-control" name="tel" placeholder="半角数字・ハイフンなし">
-  </div>
+    <div class="mb-3">
+      <label>部署名</label>
+      <select class="form-select" name="department" required>
+        <option value="経理">経理</option>
+        <option value="販売">販売</option>
+        <option value="物流">物流</option>
+        <option value="バイヤー">バイヤー</option>
+        <option value="その他">その他（鳳陽管理職）</option>
+      </select>
+    </div>
 
-  <div class="mb-3">
-    <label class="form-label">携帯番号</label>
-    <input type="tel" class="form-control" name="mobile" placeholder="半角数字・ハイフンなし">
-  </div>
+    <div class="mb-3">
+      <label>紹介者コード</label>
+      <select class="form-select" name="ref_code" required>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+        <option value="E">E</option>
+      </select>
+    </div>
 
-  <div class="mb-3">
-    <label class="form-label">メールアドレス</label>
-    <input type="email" class="form-control" name="email" required>
-  </div>
-
-  <div class="mb-3">
-    <label class="form-label">部署名</label>
-    <input type="text" class="form-control" name="department">
-  </div>
-
-  <div class="mb-3">
-    <label class="form-label">紹介者コード</label>
-    <input type="text" class="form-control" name="referrer">
-  </div>
-
-  <!-- ログインIDはサーバー側で自動生成するためフォームに表示しない -->
-
-  <div class="mb-3">
-    <label class="form-label">パスワード</label>
-    <input type="password" class="form-control" name="password" required>
-  </div>
-
-  <button type="submit" class="btn btn-primary">登録</button>
-</form>
-
-<a href="{{ url_for('home_bp.home') }}" class="btn btn-secondary mt-3">🏠 トップページに戻る</a>
-
+    <button type="submit" class="btn btn-primary">登録</button>
+    <a href="{{ url_for('home_bp.home') }}" class="btn btn-secondary ms-2">🏠 トップページに戻る</a>
+  </form>
+</div>
 {% endblock %}
