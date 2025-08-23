@@ -1,16 +1,18 @@
 {% extends "base/layout.html" %}
-{% block title %}トップページ | リサーチナビ{% endblock %}
+{% block title %}リサーチナビ | トップページ{% endblock %}
+
 {% block content %}
+<div class="text-center mt-5">
+  <h1 class="mb-4">🔎 ようこそ「リサーチナビ」へ！</h1>
+  <p class="text-muted">ログインまたは新規登録して、最強の物販支援ツールを今すぐ使いましょう。</p>
 
-<div style="text-align:center; padding: 2em;">
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット" style="max-width:300px; border-radius:20px;"><br><br>
+  <div class="my-4">
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary btn-lg mx-2">🔐 ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success btn-lg mx-2">🆕 新規登録</a>
+  </div>
 
-  <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary btn-lg m-2">🔐 ログイン</a>
-  <a href="{{ url_for('register_bp.register') }}" class="btn btn-success btn-lg m-2">📝 新規登録</a>
+  <div class="mt-5">
+    <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="マスコット画像" style="max-width: 300px;" class="img-fluid rounded shadow">
+  </div>
 </div>
-
-<footer class="text-center text-muted mt-5">
-  <small>制作者：鳳陽合同会社　小島崇彦</small>
-</footer>
-
 {% endblock %}
