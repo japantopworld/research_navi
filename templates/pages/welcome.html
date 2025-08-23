@@ -6,20 +6,20 @@
   <h1 class="mb-3">🔍 リサーチナビへようこそ！</h1>
   <p class="text-muted">このツールはログイン後に利用できます。</p>
 
-  <!-- ✅ マスコット画像（大きめ） -->
+  <!-- ✅ マスコット画像（最大600pxに拡大） -->
   <img src="{{ url_for('static', filename='img/hero_main.jpg') }}"
        alt="マスコット画像"
        class="img-fluid my-4"
-       style="max-width: 400px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+       style="max-width: 600px; width: 100%; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
 
-  <!-- ✅ ボタン（大きめ＆余白あり） -->
+  <!-- ✅ ログイン／登録ボタン -->
   <div class="mt-4">
-    <a href="{{ url_for('login_bp.login') }}" class="btn btn-lg btn-primary mx-3 px-4">ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" class="btn btn-lg btn-success mx-3 px-4">新規登録</a>
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-lg btn-primary mx-3 px-5 py-2">ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-lg btn-success mx-3 px-5 py-2">新規登録</a>
   </div>
 
-  <!-- ✅ サブリンク -->
-  <div class="mt-4">
+  <!-- ✅ 補助リンク -->
+  <div class="mt-4 small">
     <a href="/guide" class="text-decoration-none mx-2">使い方</a>
     <a href="/terms" class="text-decoration-none mx-2">利用規約</a>
     <a href="/privacy" class="text-decoration-none mx-2">プライバシーポリシー</a>
