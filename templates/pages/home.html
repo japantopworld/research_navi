@@ -1,10 +1,10 @@
 {% extends "base/layout.html" %}
-{% block title %}リサーチナビ - トップページ{% endblock %}
+{% block title %}リサーチナビ - ホーム{% endblock %}
 {% block content %}
 
 <div class="text-center mt-5">
   <h1>🔍 リサーチナビ</h1>
-  <p>最強のせどり支援ツールへようこそ！</p>
+  <p>ようこそ、{{ user_name }} さん！</p>
 
   <!-- マスコット画像 -->
   <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット画像" class="img-fluid my-4" style="max-width: 300px;">
