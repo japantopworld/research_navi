@@ -11,21 +11,15 @@ app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(home_bp)
 
-# ヘルスチェック用（Render用）
+# ✅ ヘルスチェック対応（Render用）
 @app.route("/healthz")
 def health_check():
-    return "OK", 200
+    return "OK"
 
-# エラーハンドラ：404
+# ✅ 404 ページ対応
 @app.errorhandler(404)
-def not_found(e):
+def page_not_found(e):
     return "ページが見つかりませんでした（404）", 404
 
-# エラーハンドラ：500
-@app.errorhandler(500)
-def server_error(e):
-    return "内部サーバーエラー（500）", 500
-
-# アプリ起動
 if __name__ == "__main__":
     app.run(debug=True)
