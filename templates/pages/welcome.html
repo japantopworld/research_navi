@@ -1,15 +1,29 @@
 {% extends "base/layout.html" %}
-{% block title %}ようこそ - リサーチナビ{% endblock %}
+{% block title %}リサーチナビ - ようこそ{% endblock %}
 {% block content %}
 
 <div class="text-center mt-5">
-  <h1>🔐 リサーチナビへようこそ</h1>
-  <p>このツールはログイン後に使えます。</p>
 
-  <div class="mt-4">
-    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary mx-2">ログインする</a>
-    <a href="{{ url_for('register_bp.register') }}" class="btn btn-outline-secondary mx-2">新規登録</a>
+  <!-- タイトル -->
+  <h1 class="mb-3">🔍 リサーチナビへようこそ！</h1>
+  <p class="text-muted">このツールはログイン後に利用できます。</p>
+
+  <!-- マスコット画像 -->
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット" class="img-fluid my-4" style="max-width: 300px;">
+
+  <!-- ボタン -->
+  <div class="mt-3">
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary mx-2">ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success mx-2">新規登録</a>
   </div>
+
+  <!-- 下部リンク -->
+  <p class="mt-4">
+    <a href="/guide" class="text-decoration-none mx-2">使い方</a> |
+    <a href="/terms" class="text-decoration-none mx-2">利用規約</a> |
+    <a href="/privacy" class="text-decoration-none mx-2">プライバシーポリシー</a>
+  </p>
+
 </div>
 
 {% endblock %}
