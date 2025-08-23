@@ -7,29 +7,53 @@
 
 <form method="post" class="mt-4">
   <div class="mb-3">
-    <label for="username" class="form-label">ユーザー名</label>
+    <label class="form-label">ユーザー名</label>
     <input type="text" class="form-control" name="username" required>
   </div>
+
   <div class="mb-3">
-    <label for="furigana" class="form-label">ふりがな</label>
+    <label class="form-label">ふりがな</label>
     <input type="text" class="form-control" name="furigana" required>
   </div>
+
   <div class="mb-3">
-    <label for="birthdate" class="form-label">生年月日</label>
+    <label class="form-label">生年月日</label>
     <input type="date" class="form-control" name="birthdate" required>
+    <small class="form-text text-muted">形式：yyyy/mm/dd</small>
   </div>
+
   <div class="mb-3">
-    <label for="email" class="form-label">メールアドレス</label>
+    <label class="form-label">電話番号</label>
+    <input type="tel" class="form-control" name="tel" placeholder="半角数字・ハイフンなし">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">携帯番号</label>
+    <input type="tel" class="form-control" name="mobile" placeholder="半角数字・ハイフンなし">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">メールアドレス</label>
     <input type="email" class="form-control" name="email" required>
   </div>
+
   <div class="mb-3">
-    <label for="user_id" class="form-label">ログインID</label>
-    <input type="text" class="form-control" name="user_id" required>
+    <label class="form-label">部署名</label>
+    <input type="text" class="form-control" name="department">
   </div>
+
   <div class="mb-3">
-    <label for="password" class="form-label">パスワード</label>
+    <label class="form-label">紹介者コード</label>
+    <input type="text" class="form-control" name="referrer">
+  </div>
+
+  <!-- ログインIDはサーバー側で自動生成するためフォームに表示しない -->
+
+  <div class="mb-3">
+    <label class="form-label">パスワード</label>
     <input type="password" class="form-control" name="password" required>
   </div>
+
   <button type="submit" class="btn btn-primary">登録</button>
 </form>
 
