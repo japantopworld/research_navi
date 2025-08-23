@@ -1,16 +1,16 @@
 {% extends "base/layout.html" %}
-{% block title %}ホーム | リサーチナビ{% endblock %}
+{% block title %}トップページ | リサーチナビ{% endblock %}
 {% block content %}
 
-<div style="text-align: center; margin-top: 40px;">
-  <!-- ✅ メイン画像 -->
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ メイン画像" style="max-width: 90%; height: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-bottom: 40px;">
+<div style="text-align:center; padding: 2em;">
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット" style="max-width:300px; border-radius:20px;"><br><br>
 
-  <!-- ✅ ボタンエリア -->
-  <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
-    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success" style="width: 220px; font-size: 1.2em;">🆕 新規登録</a>
-    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary" style="width: 220px; font-size: 1.2em;">🔐 ログイン</a>
-  </div>
+  <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary btn-lg m-2">🔐 ログイン</a>
+  <a href="{{ url_for('register_bp.register') }}" class="btn btn-success btn-lg m-2">📝 新規登録</a>
 </div>
+
+<footer class="text-center text-muted mt-5">
+  <small>制作者：鳳陽合同会社　小島崇彦</small>
+</footer>
 
 {% endblock %}
