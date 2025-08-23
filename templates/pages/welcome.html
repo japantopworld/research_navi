@@ -1,19 +1,19 @@
 {% extends "base/layout.html" %}
-{% block title %}リサーチナビ - ようこそ{% endblock %}
+{% block title %}ようこそ - リサーチナビ{% endblock %}
+
 {% block content %}
+<div style="text-align: center; margin-top: 50px;">
+  <h1>🔍 リサーチナビへようこそ！</h1>
 
-<div class="container text-center mt-5">
-  <h1 class="mb-4">🔍 リサーチナビへようこそ！</h1>
+  <img src="{{ url_for('static', filename='img/mascot.png') }}"
+       alt="マスコット" style="width: 300px; max-width: 90%; margin: 30px auto; display: block; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" />
 
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット" class="img-fluid rounded" style="max-width: 400px;">
-
-  <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
-    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary px-4">ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success px-4">新規登録</a>
-    <a href="{{ url_for('guide') }}" class="btn btn-info px-4">使い方</a>
-    <a href="{{ url_for('terms') }}" class="btn btn-secondary px-4">利用規約</a>
-    <a href="{{ url_for('privacy') }}" class="btn btn-dark px-4">プライバシー</a>
+  <div style="margin-top: 30px;">
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary" style="margin: 5px;">ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success" style="margin: 5px;">新規登録</a>
+    <a href="{{ url_for('guide') }}" class="btn btn-info" style="margin: 5px;">使い方</a>
+    <a href="{{ url_for('terms') }}" class="btn btn-secondary" style="margin: 5px;">利用規約</a>
+    <a href="{{ url_for('privacy') }}" class="btn btn-dark" style="margin: 5px;">プライバシーポリシー</a>
   </div>
 </div>
-
 {% endblock %}
