@@ -5,3 +5,7 @@ psycopg[binary]>=3.1
 waitress>=3.0
 reportlab>=4.0
 Pillow>=10.0
+
+# Google Sheets連携
+gspread
+oauth2client
