@@ -1,10 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import csv
 import os
 from datetime import datetime
 
 register_bp = Blueprint("register_bp", __name__)
-
 USERS_CSV = "data/users.csv"
 
 DEPARTMENTS = {
@@ -27,20 +26,14 @@ def generate_login_id(department_code, birthday_str, intro_code_alpha):
         return None
 
     if not os.path.exists(USERS_CSV):
-        existing_users = []
+        existing = []
     else:
         with open(USERS_CSV, "r", encoding="utf-8") as f:
-            existing_users = list(csv.DictReader(f))
+            existing = list(csv.DictReader(f))
 
     base = f"{department_code}{intro_code_alpha}{mmdd}"
     suffix_letter = intro_code_alpha
-
-    similar_ids = [
-        u["ID"]
-        for u in existing_users
-        if u["ID"].startswith(f"{base}{suffix_letter}")
-    ]
-
+    similar_ids = [u["ID"] for u in existing if u["ID"].startswith(f"{base}{suffix_letter}")]
     serial = len(similar_ids) + 1
     return f"{base}{suffix_letter}{serial}"
 
@@ -55,12 +48,9 @@ def register():
         intro_code_alpha = request.form.get("intro_code")
         password = request.form.get("password")
 
-        department_code = next(
-            (code for code, name in DEPARTMENTS.items() if name == department),
-            "KIN"
-        )
-
+        department_code = next((code for code, name in DEPARTMENTS.items() if name == department), "KIN")
         login_id = generate_login_id(department_code, birthday, intro_code_alpha)
+
         if not login_id:
             flash("登録情報に誤りがあります。", "danger")
             return redirect(url_for("register_bp.register"))
@@ -69,22 +59,12 @@ def register():
         with open(USERS_CSV, "a", encoding="utf-8", newline="") as f:
             writer = csv.writer(f)
             if not file_exists:
-                writer.writerow([
-                    "ユーザー名", "ふりがな", "生年月日", "年齢", "メールアドレス",
-                    "部署", "紹介者NO", "ID", "PASS"
-                ])
+                writer.writerow(["ユーザー名", "ふりがな", "生年月日", "年齢", "メールアドレス", "部署", "紹介者NO", "ID", "PASS"])
 
             age = datetime.today().year - datetime.strptime(birthday, "%Y/%m/%d").year
-            writer.writerow([
-                username, kana, birthday, age, email,
-                department, intro_code_alpha, login_id, password
-            ])
+            writer.writerow([username, kana, birthday, age, email, department, intro_code_alpha, login_id, password])
 
         flash(f"登録が完了しました。あなたのログインIDは {login_id} です。", "success")
         return redirect(url_for("login_bp.login"))
 
-    return render_template(
-        "auth/register.html",
-        departments=DEPARTMENTS.values(),
-        intro_codes=["A", "B", "C", "D", "E"]
-    )
+    return render_template("auth/register.html", departments=DEPARTMENTS.values(), intro_codes=["A", "B", "C", "D", "E"])
