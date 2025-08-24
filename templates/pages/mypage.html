@@ -1,6 +1,21 @@
 {% extends "base/base.html" %}
 
-{% block title %}マイページ | リサーチナビ{% endblock %}
+{% block title %}{% extends "base/layout.html" %}
+{% block content %}
+<h1>🧑‍💼 マイページ</h1>
+<table>
+  <tr><th>名前</th><td>{{ user.name }}</td></tr>
+  <tr><th>ふりがな</th><td>{{ user.furigana }}</td></tr>
+  <tr><th>生年月日</th><td>{{ user.birthdate }}</td></tr>
+  <tr><th>年齢</th><td>{{ user.age }}</td></tr>
+  <tr><th>電話番号</th><td>{{ user.tel }}</td></tr>
+  <tr><th>携帯番号</th><td>{{ user.mobile }}</td></tr>
+  <tr><th>メールアドレス</th><td>{{ user.email }}</td></tr>
+  <tr><th>部署</th><td>{{ user.department }}</td></tr>
+  <tr><th>紹介者NO</th><td>{{ user.ref_no }}</td></tr>
+  <tr><th>ID</th><td>{{ user.login_id }}</td></tr>
+{% endblock %}
+マイページ | リサーチナビ{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -42,3 +57,4 @@
     </div>
 </div>
 {% endblock %}
+
