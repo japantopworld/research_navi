@@ -4,10 +4,12 @@ import os
 from datetime import datetime
 
 register_bp = Blueprint("register_bp", __name__)
-USERS_CSV = "data/users.csv"
+
+# ✅ 保存先を絶対パスで指定（Googleドライブ G: ドライブ）
+USERS_CSV = r"G:\マイドライブ\リサーチナビ\research_navi\data\users.csv"
 
 DEPARTMENTS = {
-    "KIN": "鳳陽管理職(その他)",
+    "KIN": "鳳陽管理職（その他）",
     "BYR": "バイヤー",
     "KEI": "経理",
     "HAN": "販売員",
