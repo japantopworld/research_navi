@@ -1,16 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from datetime import datetime
-import os
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from models.user_model import db, User
 
-register_bp = Blueprint("register_bp", __name__)
-
-# Google Sheets 設定
-SCOPES = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-CREDS_FILE = os.path.join("credentials", "service_account.json")
-SPREADSHEET_KEY = "1XwTbWlJw9y6nsGxMwMiIko2wyEX88kMfez83hFTfz84"
-SHEET_NAME = "users_register_data"  # ✅ シート名を変更
+register_bp = Blueprint("register_bp", __name__, url_prefix="/register")
 
 DEPARTMENTS = {
     "KIN": "鳳陽管理職(その他)",
@@ -21,53 +13,34 @@ DEPARTMENTS = {
     "GOT": "合統括"
 }
 
-def get_worksheet():
-    creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, SCOPES)
-    client = gspread.authorize(creds)
-    spreadsheet = client.open_by_key(SPREADSHEET_KEY)
-    return spreadsheet.worksheet(SHEET_NAME)
-
-def generate_login_id(department_code, birthday_str, intro_code_alpha, existing_ids):
-    try:
-        birthday = datetime.strptime(birthday_str, "%Y/%m/%d")
-        mmdd = birthday.strftime("%m%d")
-    except:
-        return None
-
-    if intro_code_alpha not in ["A", "B", "C", "D", "E"]:
-        return None
-
-    base = f"{department_code}{intro_code_alpha}{mmdd}"
-    suffix = intro_code_alpha
-    similar = [row for row in existing_ids if row.startswith(f"{base}{suffix}")]
-    serial = len(similar) + 1
-    return f"{base}{suffix}{serial}"
-
-@register_bp.route("/register", methods=["GET", "POST"])
+@register_bp.route("/", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form.get("username")
-        kana = request.form.get("kana")
-        birthday = request.form.get("birthday")
+        name = request.form.get("username")
+        furigana = request.form.get("kana")
+        birthdate = request.form.get("birthday")
         tel = request.form.get("tel")
         mobile = request.form.get("mobile")
         email = request.form.get("email")
-        department = request.form.get("department")
-        intro_code_alpha = request.form.get("intro_code")
+        department_name = request.form.get("department")
+        ref_no = request.form.get("intro_code")
+        login_id = request.form.get("login_id")
         password = request.form.get("password")
 
         # 入力チェック
         errors = []
-        if not username:
+        if not name:
             errors.append("ユーザー名が未入力です。")
-        if not kana:
+        if not furigana:
             errors.append("ふりがなが未入力です。")
-        if not birthday:
+        if not birthdate:
             errors.append("生年月日が未入力です。")
         if not (tel or mobile):
             errors.append("電話番号または携帯番号を入力してください。")
         if not email:
             errors.append("メールアドレスが未入力です。")
+        if not login_id:
+            errors.append("ログインIDが未入力です。")
         if not password:
             errors.append("パスワードが未入力です。")
 
@@ -77,32 +50,34 @@ def register():
             return redirect(url_for("register_bp.register"))
 
         try:
-            worksheet = get_worksheet()
-            existing_data = worksheet.get_all_records()
-            existing_ids = [row["ID"] for row in existing_data if "ID" in row]
+            age = datetime.today().year - datetime.strptime(birthdate, "%Y/%m/%d").year
+            department_code = next((code for code, name in DEPARTMENTS.items() if name == department_name), "KIN")
 
-            department_code = next((code for code, name in DEPARTMENTS.items() if name == department), "KIN")
-            login_id = generate_login_id(department_code, birthday, intro_code_alpha, existing_ids)
+            # IDの重複チェック
+            existing = User.query.filter_by(login_id=login_id).first()
+            if existing:
+                flash("このログインIDは既に使われています。", "danger")
+                return redirect(url_for("register_bp.register"))
 
-            age = datetime.today().year - datetime.strptime(birthday, "%Y/%m/%d").year
+            new_user = User(
+                name=name,
+                furigana=furigana,
+                birthdate=birthdate,
+                age=age,
+                tel=tel,
+                mobile=mobile,
+                email=email,
+                department=department_name,
+                ref_no=ref_no,
+                login_id=login_id,
+                password=password
+            )
+            db.session.add(new_user)
+            db.session.commit()
 
-            new_row = [
-                username,
-                kana,
-                birthday,
-                age,
-                tel,
-                mobile,
-                email,
-                department,
-                intro_code_alpha,
-                login_id,
-                password
-            ]
-
-            worksheet.append_row(new_row)
-            flash(f"登録が完了しました。あなたのログインIDは {login_id} です。", "success")
-            return redirect(url_for("login_bp.login"))
+            flash(f"登録が完了しました。ログインID: {login_id}", "success")
+            session["login_id"] = login_id  # 自動ログイン
+            return redirect(url_for("mypage_bp.mypage"))
 
         except Exception as e:
             flash(f"登録中にエラーが発生しました: {str(e)}", "danger")
