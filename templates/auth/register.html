@@ -1,78 +1,70 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-import csv
-import os
-from datetime import datetime
+{% extends "base/layout.html" %}
+{% block title %}新規登録 | リサーチナビ{% endblock %}
+{% block content %}
 
-register_bp = Blueprint("register_bp", __name__)
+<div class="container mt-5" style="max-width: 600px;">
+  <h2 class="mb-4 text-center">📝 新規登録</h2>
 
-USERS_CSV = "data/users.csv"
-DEPARTMENTS = {
-    "KIN": "鳳陽管理職（その他）",
-    "BYR": "バイヤー",
-    "KEI": "経理",
-    "HAN": "販売員",
-    "BUT": "物流",
-    "GOT": "合統括"
-}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
-def generate_login_id(department_code, birthday_str, intro_code_alpha):
-    try:
-        # 誕生日（月日4桁）を取り出し
-        birthday = datetime.strptime(birthday_str, "%Y/%m/%d")
-        mmdd = birthday.strftime("%m%d")
-    except:
-        return None  # 不正な日付ならID生成しない
+  <form method="POST">
+    <div class="mb-3">
+      <label for="username" class="form-label">ユーザー名</label>
+      <input type="text" class="form-control" id="username" name="username" required>
+    </div>
 
-    # 英字紹介コードがないと生成不可
-    if intro_code_alpha not in ["A", "B", "C", "D", "E"]:
-        return None
+    <div class="mb-3">
+      <label for="kana" class="form-label">ふりがな</label>
+      <input type="text" class="form-control" id="kana" name="kana" required>
+    </div>
 
-    # CSV から既存ユーザーを読み取り
-    if not os.path.exists(USERS_CSV):
-        existing = []
-    else:
-        with open(USERS_CSV, "r", encoding="utf-8") as f:
-            existing = list(csv.DictReader(f))
+    <div class="mb-3">
+      <label for="birthday" class="form-label">生年月日（YYYY/MM/DD）</label>
+      <input type="text" class="form-control" id="birthday" name="birthday" placeholder="例：1990/01/01" required>
+    </div>
 
-    # 同じ条件（部署・紹介コード・誕生日・末尾英字）で連番を付ける
-    base = f"{department_code}{intro_code_alpha}{mmdd}"
-    suffix_letter = intro_code_alpha  # A〜E
-    similar_ids = [u["ID"] for u in existing if u["ID"].startswith(f"{base}{suffix_letter}")]
-    serial = len(similar_ids) + 1
+    <div class="mb-3">
+      <label for="email" class="form-label">メールアドレス</label>
+      <input type="email" class="form-control" id="email" name="email" required>
+    </div>
 
-    return f"{base}{suffix_letter}{serial}"
+    <div class="mb-3">
+      <label for="department" class="form-label">部署</label>
+      <select class="form-select" id="department" name="department" required>
+        {% for dept in departments %}
+        <option value="{{ dept }}">{{ dept }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-@register_bp.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        username = request.form.get("username")
-        kana = request.form.get("kana")
-        birthday = request.form.get("birthday")
-        email = request.form.get("email")
-        department = request.form.get("department")
-        intro_code_alpha = request.form.get("intro_code")
+    <div class="mb-3">
+      <label for="intro_code" class="form-label">紹介者コード（A〜E）</label>
+      <select class="form-select" id="intro_code" name="intro_code" required>
+        {% for code in intro_codes %}
+        <option value="{{ code }}">{{ code }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-        password = request.form.get("password")
+    <div class="mb-3">
+      <label for="password" class="form-label">パスワード</label>
+      <input type="password" class="form-control" id="password" name="password" required>
+    </div>
 
-        # 部署略称を取得
-        department_code = next((code for code, name in DEPARTMENTS.items() if name == department), "KIN")
+    <div class="d-grid gap-2">
+      <button type="submit" class="btn btn-success">登録する</button>
+      <a href="{{ url_for('login_bp.login') }}" class="btn btn-secondary">ログインへ戻る</a>
+    </div>
+  </form>
+</div>
 
-        login_id = generate_login_id(department_code, birthday, intro_code_alpha)
-
-        if not login_id:
-            flash("登録情報に誤りがあります。", "danger")
-            return redirect(url_for("register_bp.register"))
-
-        # 保存
-        file_exists = os.path.exists(USERS_CSV)
-        with open(USERS_CSV, "a", encoding="utf-8", newline="") as f:
-            writer = csv.writer(f)
-            if not file_exists:
-                writer.writerow(["ユーザー名", "ふりがな", "生年月日", "年齢", "メールアドレス", "部署", "紹介者NO", "ID", "PASS"])
-            age = datetime.today().year - datetime.strptime(birthday, "%Y/%m/%d").year
-            writer.writerow([username, kana, birthday, age, email, department, intro_code_alpha, login_id, password])
-
-        flash(f"登録が完了しました。あなたのログインIDは {login_id} です。", "success")
-        return redirect(url_for("login_bp.login"))
-
-    return render_template("auth/register.html", departments=DEPARTMENTS.values(), intro_codes=["A", "B", "C", "D", "E"])
+{% endblock %}
