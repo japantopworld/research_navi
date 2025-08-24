@@ -10,7 +10,7 @@ register_bp = Blueprint("register_bp", __name__)
 SCOPES = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 CREDS_FILE = os.path.join("credentials", "service_account.json")
 SPREADSHEET_KEY = "1XwTbWlJw9y6nsGxMwMiIko2wyEX88kMfez83hFTfz84"
-SHEET_NAME = "ユーザーリスト"
+SHEET_NAME = "users_register_data"  # ✅ シート名を変更
 
 DEPARTMENTS = {
     "KIN": "鳳陽管理職(その他)",
