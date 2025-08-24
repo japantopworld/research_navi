@@ -4,10 +4,13 @@ import os
 from datetime import datetime
 
 register_bp = Blueprint("register_bp", __name__)
+
+# 保存先（Googleドライブ上の実パスに対応）
 USERS_CSV = "data/users.csv"
 
+# 部署定義
 DEPARTMENTS = {
-    "KIN": "鳳陽管理職（その他）",
+    "KIN": "鳳陽管理職(その他)",
     "BYR": "バイヤー",
     "KEI": "経理",
     "HAN": "販売員",
@@ -15,6 +18,7 @@ DEPARTMENTS = {
     "GOT": "合統括"
 }
 
+# ID自動生成
 def generate_login_id(department_code, birthday_str, intro_code_alpha):
     try:
         birthday = datetime.strptime(birthday_str, "%Y/%m/%d")
@@ -35,6 +39,7 @@ def generate_login_id(department_code, birthday_str, intro_code_alpha):
     suffix_letter = intro_code_alpha
     similar_ids = [u["ID"] for u in existing if u["ID"].startswith(f"{base}{suffix_letter}")]
     serial = len(similar_ids) + 1
+
     return f"{base}{suffix_letter}{serial}"
 
 @register_bp.route("/register", methods=["GET", "POST"])
@@ -43,46 +48,46 @@ def register():
         username = request.form.get("username")
         kana = request.form.get("kana")
         birthday = request.form.get("birthday")
-        phone = request.form.get("phone")
-        mobile = request.form.get("mobile")
+        phone = request.form.get("phone", "").strip()
+        mobile = request.form.get("mobile", "").strip()
         email = request.form.get("email")
         department = request.form.get("department")
-        job_title = request.form.get("job_title")
         intro_code_alpha = request.form.get("intro_code")
         password = request.form.get("password")
 
-        # バリデーション
-        errors = []
-        if not username: errors.append("ユーザー名が未入力です。")
-        if not kana: errors.append("ふりがなが未入力です。")
-        if not birthday: errors.append("生年月日が未入力です。")
-        if not email: errors.append("メールアドレスが未入力です。")
-        if not intro_code_alpha: errors.append("紹介者NOが未入力です。")
-        if not password: errors.append("パスワードが未入力です。")
+        # 電話か携帯のどちらかが未入力ならエラー
         if not phone and not mobile:
-            errors.append("電話番号または携帯番号のいずれかを入力してください。")
-
-        if errors:
-            for error in errors:
-                flash(error, "danger")
+            flash("電話番号または携帯番号のどちらかを入力してください。", "danger")
             return redirect(url_for("register_bp.register"))
 
         department_code = next((code for code, name in DEPARTMENTS.items() if name == department), "KIN")
         login_id = generate_login_id(department_code, birthday, intro_code_alpha)
 
         if not login_id:
-            flash("ID生成に失敗しました。入力内容を確認してください。", "danger")
+            flash("登録情報に誤りがあります。IDが生成できませんでした。", "danger")
             return redirect(url_for("register_bp.register"))
 
         file_exists = os.path.exists(USERS_CSV)
         with open(USERS_CSV, "a", encoding="utf-8", newline="") as f:
             writer = csv.writer(f)
             if not file_exists:
-                writer.writerow(["ユーザー名", "ふりがな", "生年月日", "年齢", "電話番号", "携帯番号", "メールアドレス", "部署", "職種", "紹介者NO", "ID", "PASS"])
+                writer.writerow([
+                    "ユーザー名", "ふりがな", "生年月日", "年齢", 
+                    "電話番号", "携帯番号", "メールアドレス", 
+                    "部署", "紹介者NO", "ID", "PASS"
+                ])
             age = datetime.today().year - datetime.strptime(birthday, "%Y/%m/%d").year
-            writer.writerow([username, kana, birthday, age, phone, mobile, email, department, job_title, intro_code_alpha, login_id, password])
+            writer.writerow([
+                username, kana, birthday, age, 
+                phone, mobile, email, 
+                department, intro_code_alpha, login_id, password
+            ])
 
         flash(f"登録が完了しました。あなたのログインIDは {login_id} です。", "success")
         return redirect(url_for("login_bp.login"))
 
-    return render_template("auth/register.html", departments=DEPARTMENTS.values(), intro_codes=["A", "B", "C", "D", "E"])
+    return render_template(
+        "auth/register.html",
+        departments=DEPARTMENTS.values(),
+        intro_codes=["A", "B", "C", "D", "E"]
+    )
