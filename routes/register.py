@@ -5,12 +5,13 @@ from datetime import datetime
 
 register_bp = Blueprint("register_bp", __name__)
 
-# 保存先（Googleドライブ上の実パスに対応）
-USERS_CSV = "data/users.csv"
+# ✅ users.csv の保存先（dataフォルダ）
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # /routes/
+USERS_CSV = os.path.join(BASE_DIR, "..", "data", "users.csv")
 
-# 部署定義
+# ✅ 部署名（略称 → フル名）
 DEPARTMENTS = {
-    "KIN": "鳳陽管理職(その他)",
+    "KIN": "鳳陽管理職（その他）",
     "BYR": "バイヤー",
     "KEI": "経理",
     "HAN": "販売員",
@@ -18,7 +19,6 @@ DEPARTMENTS = {
     "GOT": "合統括"
 }
 
-# ID自動生成
 def generate_login_id(department_code, birthday_str, intro_code_alpha):
     try:
         birthday = datetime.strptime(birthday_str, "%Y/%m/%d")
@@ -48,39 +48,42 @@ def register():
         username = request.form.get("username")
         kana = request.form.get("kana")
         birthday = request.form.get("birthday")
-        phone = request.form.get("phone", "").strip()
-        mobile = request.form.get("mobile", "").strip()
         email = request.form.get("email")
         department = request.form.get("department")
         intro_code_alpha = request.form.get("intro_code")
         password = request.form.get("password")
+        tel = request.form.get("tel")
+        mobile = request.form.get("mobile")
 
-        # 電話か携帯のどちらかが未入力ならエラー
-        if not phone and not mobile:
-            flash("電話番号または携帯番号のどちらかを入力してください。", "danger")
+        # ✅ 入力チェック（どちらかは必須）
+        if not tel and not mobile:
+            flash("電話番号または携帯番号のいずれかを入力してください。", "danger")
             return redirect(url_for("register_bp.register"))
 
+        # ✅ ログインID生成
         department_code = next((code for code, name in DEPARTMENTS.items() if name == department), "KIN")
         login_id = generate_login_id(department_code, birthday, intro_code_alpha)
 
         if not login_id:
-            flash("登録情報に誤りがあります。IDが生成できませんでした。", "danger")
+            flash("登録情報に誤りがあります。部署・紹介コード・誕生日をご確認ください。", "danger")
             return redirect(url_for("register_bp.register"))
 
+        # ✅ users.csv へ保存
         file_exists = os.path.exists(USERS_CSV)
         with open(USERS_CSV, "a", encoding="utf-8", newline="") as f:
             writer = csv.writer(f)
             if not file_exists:
                 writer.writerow([
-                    "ユーザー名", "ふりがな", "生年月日", "年齢", 
-                    "電話番号", "携帯番号", "メールアドレス", 
+                    "ユーザー名", "ふりがな", "生年月日", "年齢",
+                    "電話番号", "携帯番号", "メールアドレス",
                     "部署", "紹介者NO", "ID", "PASS"
                 ])
             age = datetime.today().year - datetime.strptime(birthday, "%Y/%m/%d").year
             writer.writerow([
-                username, kana, birthday, age, 
-                phone, mobile, email, 
-                department, intro_code_alpha, login_id, password
+                username, kana, birthday, age,
+                tel, mobile, email,
+                department, intro_code_alpha,
+                login_id, password
             ])
 
         flash(f"登録が完了しました。あなたのログインIDは {login_id} です。", "success")
