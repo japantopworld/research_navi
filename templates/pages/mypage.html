@@ -5,18 +5,16 @@
 <h1>👤 {{ user.username }} さんのマイページ</h1>
 
 <ul>
-  <li><strong>ふりがな：</strong> {{ user.kana }}</li>
-  <li><strong>生年月日：</strong> {{ user.birthday }}</li>
-  <li><strong>年齢：</strong> {{ user.age }}歳</li>
-  <li><strong>電話番号：</strong> {{ user.tel }}</li>
-  <li><strong>携帯番号：</strong> {{ user.mobile }}</li>
-  <li><strong>メール：</strong> {{ user.email }}</li>
-  <li><strong>部署：</strong> {{ user.department }}</li>
-  <li><strong>紹介者NO：</strong> {{ user.intro_code }}</li>
-  <li><strong>ログインID：</strong> {{ user.login_id }}</li>
+  <li><strong>ふりがな：</strong>{{ user.kana }}</li>
+  <li><strong>生年月日：</strong>{{ user.birthday }}</li>
+  <li><strong>年齢：</strong>{{ user.age }}歳</li>
+  <li><strong>電話番号：</strong>{{ user.tel }}</li>
+  <li><strong>携帯番号：</strong>{{ user.mobile }}</li>
+  <li><strong>メールアドレス：</strong>{{ user.email }}</li>
+  <li><strong>部署：</strong>{{ user.department }}</li>
+  <li><strong>紹介コード：</strong>{{ user.intro_code }}</li>
+  <li><strong>ログインID：</strong>{{ user.login_id }}</li>
 </ul>
 
-<p style="margin-top:2em;">
-  ※ 情報を編集したい場合は、後ほど「編集ページ」を追加予定です。
-</p>
+<a href="{{ url_for('home_bp.home') }}">🏠 トップに戻る</a>
 {% endblock %}
