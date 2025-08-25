@@ -1,60 +1,22 @@
-{% extends "base/base.html" %}
-
-{% block title %}{% extends "base/layout.html" %}
-{% block content %}
-<h1>🧑‍💼 マイページ</h1>
-<table>
-  <tr><th>名前</th><td>{{ user.name }}</td></tr>
-  <tr><th>ふりがな</th><td>{{ user.furigana }}</td></tr>
-  <tr><th>生年月日</th><td>{{ user.birthdate }}</td></tr>
-  <tr><th>年齢</th><td>{{ user.age }}</td></tr>
-  <tr><th>電話番号</th><td>{{ user.tel }}</td></tr>
-  <tr><th>携帯番号</th><td>{{ user.mobile }}</td></tr>
-  <tr><th>メールアドレス</th><td>{{ user.email }}</td></tr>
-  <tr><th>部署</th><td>{{ user.department }}</td></tr>
-  <tr><th>紹介者NO</th><td>{{ user.ref_no }}</td></tr>
-  <tr><th>ID</th><td>{{ user.login_id }}</td></tr>
-{% endblock %}
-マイページ | リサーチナビ{% endblock %}
+{% extends "base/layout.html" %}
+{% block title %}マイページ{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">👤 マイページ</h2>
+<h1>👤 {{ user.username }} さんのマイページ</h1>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title">ユーザー情報</h5>
-            <p><strong>ユーザー名：</strong> {{ user.username }}</p>
-            <p><strong>メールアドレス：</strong> {{ user.email }}</p>
-            <p><strong>登録日：</strong> {{ user.created_at.strftime('%Y-%m-%d') }}</p>
-        </div>
-    </div>
+<ul>
+  <li><strong>ふりがな：</strong> {{ user.kana }}</li>
+  <li><strong>生年月日：</strong> {{ user.birthday }}</li>
+  <li><strong>年齢：</strong> {{ user.age }}歳</li>
+  <li><strong>電話番号：</strong> {{ user.tel }}</li>
+  <li><strong>携帯番号：</strong> {{ user.mobile }}</li>
+  <li><strong>メール：</strong> {{ user.email }}</li>
+  <li><strong>部署：</strong> {{ user.department }}</li>
+  <li><strong>紹介者NO：</strong> {{ user.intro_code }}</li>
+  <li><strong>ログインID：</strong> {{ user.login_id }}</li>
+</ul>
 
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">🔔 通知設定</h5>
-                    <p>メールやLINE通知の受信設定を変更できます。</p>
-                    <a href="{{ url_for('settings') }}" class="btn btn-outline-primary btn-sm">設定を変更</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 mt-3 mt-md-0">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">📊 利用履歴</h5>
-                    <p>これまでの検索・利益計算・通知履歴を確認できます。</p>
-                    <a href="{{ url_for('history') }}" class="btn btn-outline-primary btn-sm">履歴を確認</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="text-center mt-4">
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">ログアウト</a>
-    </div>
-</div>
+<p style="margin-top:2em;">
+  ※ 情報を編集したい場合は、後ほど「編集ページ」を追加予定です。
+</p>
 {% endblock %}
-
