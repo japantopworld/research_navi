@@ -1,16 +1,11 @@
-from flask import Blueprint, render_template, session
-from models.user_model import User
+from flask import Blueprint, render_template, session, redirect, url_for
 
-mypage_bp = Blueprint("mypage_bp", __name__, url_prefix="/mypage")
+mypage_bp = Blueprint("mypage_bp", __name__)
 
-@mypage_bp.route("/")
+@mypage_bp.route("/mypage")
 def mypage():
-    login_id = session.get("login_id")
-    if not login_id:
-        return "ログインしてください", 401
+    if "user_info" not in session:
+        return redirect(url_for("login_bp.login"))
 
-    user = User.query.filter_by(login_id=login_id).first()
-    if not user:
-        return "ユーザー情報が見つかりません", 404
-
-    return render_template("pages/mypage.html", user=user)
+    user_info = session["user_info"]
+    return render_template("pages/mypage.html", user_info=user_info)
