@@ -5,6 +5,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 login_bp = Blueprint("login_bp", __name__)
 
+# Google Sheets 認証情報
 SCOPES = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 CREDS_FILE = os.path.join("credentials", "service_account.json")
 SPREADSHEET_KEY = "1XwTbWlJw9y6nsGxMwMiIko2wyEX88kMfez83hFTfz84"
@@ -47,7 +48,7 @@ def login():
                     }
 
                     flash("ログインに成功しました！", "success")
-                    return redirect(url_for("mypage_bp.mypage"))
+                    return redirect(url_for("home_bp.mypage"))  # ✅ 修正済み
 
             flash("ログインIDまたはパスワードが違います", "danger")
             return redirect(url_for("login_bp.login"))
