@@ -16,4 +16,8 @@
   <tr><th>紹介者NO</th><td>{{ user_info.intro_code }}</td></tr>
   <tr><th>ログインID</th><td>{{ user_info.login_id }}</td></tr>
 </table>
+
+<p style="margin-top: 20px;">
+  <a href="{{ url_for('logout_bp.logout') }}" class="button">🚪 ログアウト</a>
+</p>
 {% endblock %}
