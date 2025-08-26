@@ -29,6 +29,7 @@ def login():
                             "mobile": row["携帯番号"],
                             "email": row["メールアドレス"],
                             "department": row["部署"],
+                            "role": row["職種"],
                             "intro_code": row["紹介者NO"],
                             "login_id": row["ID"]
                         }
