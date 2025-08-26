@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from models.user_model import db  # SQLAlchemyインスタンスをインポート
+import os
 
 # ルーティング
 from routes.login import login_bp
@@ -12,9 +13,8 @@ from routes.logout import logout_bp
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
-# 🔸 SQLite or PostgreSQL 用（Render用なら下の行を使う）
-# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg://<ユーザー名>:<パスワード>@<ホスト名>:5432/<DB名>"
+# ✅ Render用：PostgreSQL 環境変数から読み取る
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -28,7 +28,7 @@ app.register_blueprint(home_bp)
 app.register_blueprint(mypage_bp)
 app.register_blueprint(logout_bp)
 
-# Health check
+# Health check（Render対策）
 @app.route("/healthz")
 def healthz():
     return "ok", 200
@@ -36,5 +36,5 @@ def healthz():
 # アプリ起動
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()  # テーブル作成
+        db.create_all()  # テーブル作成（初回のみ有効）
     app.run(debug=True)
