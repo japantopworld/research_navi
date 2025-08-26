@@ -2,6 +2,7 @@ from flask import Flask
 from routes.login import login_bp
 from routes.register import register_bp
 from routes.home import home_bp
+from routes.mypage import mypage_bp  # ✅ マイページを追加
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"  # セッション用の秘密鍵（適宜変更）
@@ -10,6 +11,7 @@ app.secret_key = "your_secret_key"  # セッション用の秘密鍵（適宜変
 app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(home_bp)
+app.register_blueprint(mypage_bp)  # ✅ マイページのルート登録
 
 # Health check（Render でのタイムアウト対策用）
 @app.route("/healthz")
