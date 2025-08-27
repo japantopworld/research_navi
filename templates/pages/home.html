@@ -1,36 +1,99 @@
 {% extends "base/layout.html" %}
-{% block title %}リサーチナビ{% endblock %}
+{% block title %}ホーム | リサーチナビ{% endblock %}
+
 {% block content %}
+<style>
+  body, html {
+    height: 100%;
+    margin: 0;
+  }
 
-<div style="text-align: center; margin-top: 40px;">
-  <h1 style="font-size: 2.4em;">
-    🔍 <span style="color: #e11d48;">リサーチナビ</span>
-  </h1>
-  <p style="margin-top: 8px; font-size: 1.1em; color: #4b5563;">
-    最強のせどり支援ツールへようこそ！
-  </p>
+  .home-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;  /* ← 上下中央寄せ */
+    align-items: center;
+    padding: 2rem;
+    font-family: 'Noto Sans JP', sans-serif;
+    text-align: center;
+    box-sizing: border-box;
+  }
 
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}"
-       alt="リサーチナビ マスコット"
-       style="width: min(90%, 420px); border-radius: 20px; margin: 30px auto 15px; box-shadow: 0 6px 16px rgba(0,0,0,0.2); display: block;">
+  .home-title {
+    font-size: 2.4rem;
+    font-weight: bold;
+    color: #b91c1c;
+    margin-bottom: 0.5rem;
+  }
 
-  <div style="margin-top: 15px;">
-    <a href="{{ url_for('login_bp.login') }}">
-      <button style="padding: 12px 24px; margin: 8px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-size: 1em;">
-        ログイン
-      </button>
-    </a>
-    <a href="{{ url_for('register_bp.register') }}">
-      <button style="padding: 12px 24px; margin: 8px; background-color: #10b981; color: white; border: none; border-radius: 6px; font-size: 1em;">
-        新規登録
-      </button>
-    </a>
+  .home-subtitle {
+    font-size: 1.2rem;
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+  }
+
+  .home-image {
+    width: 70%;
+    max-width: 280px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin-bottom: 1.5rem;
+  }
+
+  .home-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .home-buttons a {
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    color: white;
+  }
+
+  .login-btn {
+    background-color: #3b82f6;
+  }
+
+  .register-btn {
+    background-color: #10b981;
+  }
+
+  .credit {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    .home-title { font-size: 6vw; }
+    .home-subtitle { font-size: 4vw; }
+    .home-buttons a { font-size: 4.5vw; padding: 3vw 6vw; }
+    .credit { font-size: 3.2vw; }
+  }
+</style>
+
+<div class="home-container">
+  <div class="home-title">🔍 リサーチナビ</div>
+  <div class="home-subtitle">最強のせどり支援ツールへようこそ！</div>
+
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット" class="home-image" />
+
+  <div class="home-buttons">
+    <a href="{{ url_for('login_bp.login') }}" class="login-btn">ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="register-btn">新規登録</a>
   </div>
 
-  <div style="margin-top: 35px; font-size: 0.9em; color: #6b7280;">
+  <div class="credit">
     制作者：鳳陽合同会社　小島崇彦<br>
     © 2025 Research Navi. All rights reserved.
   </div>
 </div>
-
 {% endblock %}
