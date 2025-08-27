@@ -1,99 +1,82 @@
 {% extends "base/layout.html" %}
-{% block title %}ホーム | リサーチナビ{% endblock %}
+{% block title %}リサーチナビ{% endblock %}
 
 {% block content %}
 <style>
-  body, html {
-    height: 100%;
-    margin: 0;
-  }
-
-  .home-container {
+  .hero-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    padding: 2vh 2vw;
-    font-family: 'Noto Sans JP', sans-serif;
     text-align: center;
-    min-height: 100vh;
-    box-sizing: border-box;
+    padding: 2rem 1rem;
   }
 
-  .home-title {
-    font-size: 8vw;
-    font-weight: bold;
+  .hero-container h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
     color: #b91c1c;
-    margin-bottom: 1vh;
   }
 
-  .home-subtitle {
-    font-size: 5vw;
+  .hero-container p {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
     color: #6b7280;
-    margin-bottom: 2vh;
   }
 
-  .home-image {
-    width: 80vw;
-    max-width: 400px;
-    border-radius: 16px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    margin-bottom: 3vh;
+  .hero-container img {
+    width: 80%;
+    max-width: 300px;
+    height: auto;
+    margin-bottom: 1rem;
   }
 
-  .home-buttons {
+  .hero-buttons {
     display: flex;
-    gap: 4vw;
+    gap: 1rem;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 3vh;
+    margin-bottom: 1.5rem;
   }
 
-  .home-buttons a {
-    padding: 4vw 8vw;
-    font-size: 5vw;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: bold;
-    color: white;
-    display: inline-block;
+  .hero-buttons a {
+    font-size: 1.2rem;
+    padding: 0.75rem 1.5rem;
   }
 
-  .login-btn {
-    background-color: #3b82f6;
-  }
-
-  .register-btn {
-    background-color: #10b981;
-  }
-
-  .credit {
-    font-size: 3.5vw;
+  .footer-text {
+    font-size: 0.85rem;
     color: #6b7280;
-    margin-top: 2vh;
-    line-height: 1.4;
+    text-align: center;
+    margin-top: 1rem;
   }
 
-  @media (min-width: 768px) {
-    .home-title { font-size: 2.5rem; }
-    .home-subtitle { font-size: 1.5rem; }
-    .home-buttons a { font-size: 1.1rem; padding: 1rem 2rem; }
-    .credit { font-size: 0.9rem; }
+  @media screen and (max-width: 480px) {
+    .hero-container h1 {
+      font-size: 1.8rem;
+    }
+
+    .hero-container p {
+      font-size: 1rem;
+    }
+
+    .hero-buttons a {
+      font-size: 1.1rem;
+      padding: 0.6rem 1.2rem;
+    }
   }
 </style>
 
-<div class="home-container">
-  <div class="home-title">🔍 リサーチナビ</div>
-  <div class="home-subtitle">最強のせどり支援ツールへようこそ！</div>
-
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット" class="home-image" />
-
-  <div class="home-buttons">
-    <a href="{{ url_for('login_bp.login') }}" class="login-btn">ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" class="register-btn">新規登録</a>
+<div class="hero-container">
+  <h1>🔍 リサーチナビ</h1>
+  <p>最強のせどり支援ツールへようこそ！</p>
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット画像">
+  
+  <div class="hero-buttons">
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success">新規登録</a>
   </div>
 
-  <div class="credit">
+  <div class="footer-text">
     制作者：鳳陽合同会社　小島崇彦<br>
     © 2025 Research Navi. All rights reserved.
   </div>
