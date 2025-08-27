@@ -1,16 +1,11 @@
-# routes/home.py
+{% extends "base/layout.html" %}
 
-from flask import Blueprint, render_template, session
-from utils.auth_required import login_required
-
-home_bp = Blueprint("home_bp", __name__)
-
-@home_bp.route("/")
-def home():
-    return render_template("pages/home.html")
-
-@home_bp.route("/mypage")
-@login_required
-def mypage():
-    user_info = session.get("user_info", {})
-    return render_template("pages/mypage.html", user_info=user_info)
+{% block content %}
+  <h1>🔍 リサーチナビ</h1>
+  <p>最強のせどり支援ツールへようこそ！</p>
+  <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="マスコット" style="width:200px; border-radius: 12px;">
+  <p style="margin-top: 1rem;">
+    <a href="{{ url_for('login_bp.login') }}">ログイン</a> | 
+    <a href="{{ url_for('register_bp.register') }}">新規登録</a>
+  </p>
+{% endblock %}
