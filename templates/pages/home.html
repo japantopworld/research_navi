@@ -1,79 +1,94 @@
 {% extends "base/layout.html" %}
-{% block title %}リサーチナビ{% endblock %}
-
+{% block title %}リサーチナビ | ホーム{% endblock %}
 {% block content %}
+
 <style>
   .hero-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 2rem 1rem;
+    padding: 5vh 2vw;
+    font-size: 1.3rem;
   }
 
   .hero-container h1 {
-    font-size: 2rem;
+    font-size: 2.2rem;
     margin-bottom: 0.5rem;
-    color: #b91c1c;
   }
 
   .hero-container p {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    color: #555;
     margin-bottom: 1.5rem;
-    color: #6b7280;
   }
 
   .hero-container img {
-    width: 80%;
     max-width: 300px;
+    width: 80%;
     height: auto;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
   }
 
   .hero-buttons {
     display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
+    gap: 1.5rem;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
 
   .hero-buttons a {
+    padding: 1rem 2rem;
     font-size: 1.2rem;
-    padding: 0.75rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+  }
+
+  .hero-buttons a.login {
+    background-color: #3b82f6;
+  }
+
+  .hero-buttons a.register {
+    background-color: #10b981;
   }
 
   .footer-text {
-    font-size: 0.85rem;
-    color: #6b7280;
-    text-align: center;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #666;
   }
 
   @media screen and (max-width: 480px) {
-    .hero-container h1 {
-      font-size: 1.8rem;
-    }
-
-    .hero-container p {
-      font-size: 1rem;
-    }
-
-    .hero-buttons a {
+    .hero-container {
       font-size: 1.1rem;
-      padding: 0.6rem 1.2rem;
+    }
+    .hero-container h1 {
+      font-size: 1.7rem;
+    }
+    .hero-buttons a {
+      font-size: 1rem;
+      padding: 0.8rem 1.5rem;
+    }
+    .footer-text {
+      font-size: 0.8rem;
     }
   }
 </style>
 
 <div class="hero-container">
-  <h1>🔍 リサーチナビ</h1>
+  <h1>
+    🔍 <span style="color:#d92d20;">リサーチナビ</span>
+  </h1>
   <p>最強のせどり支援ツールへようこそ！</p>
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット画像">
-  
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ" />
+
   <div class="hero-buttons">
-    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success">新規登録</a>
+    <a href="{{ url_for('login_bp.login') }}" class="login">ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="register">新規登録</a>
   </div>
 
   <div class="footer-text">
@@ -81,4 +96,5 @@
     © 2025 Research Navi. All rights reserved.
   </div>
 </div>
+
 {% endblock %}
