@@ -1,11 +1,20 @@
 {% extends "base/layout.html" %}
 
 {% block content %}
-  <h1>🔍 リサーチナビ</h1>
-  <p>最強のせどり支援ツールへようこそ！</p>
-  <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="マスコット" style="width:200px; border-radius: 12px;">
-  <p style="margin-top: 1rem;">
-    <a href="{{ url_for('login_bp.login') }}">ログイン</a> | 
-    <a href="{{ url_for('register_bp.register') }}">新規登録</a>
-  </p>
+<div style="text-align:center; margin-top: 40px;">
+  <h1 style="font-size: 2.5rem; color: #ef4444;">🔍 リサーチナビ</h1>
+  <p style="font-size: 1.2rem; color: #6b7280;">最強のせどり支援ツールへようこそ！</p>
+
+  <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="マスコット" style="width:200px; border-radius: 50%; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+
+  <div style="margin-top: 30px;">
+    <a href="{{ url_for('login_bp.login') }}" style="padding: 10px 20px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; margin-right: 15px;">ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" style="padding: 10px 20px; background: #10b981; color: white; border-radius: 8px; text-decoration: none;">新規登録</a>
+  </div>
+
+  <div style="margin-top: 40px; font-size: 0.9rem; color: #9ca3af;">
+    <p>制作者：<strong>鳳陽合同会社　小島崇彦</strong></p>
+    <p>© 2025 Research Navi. All rights reserved.</p>
+  </div>
+</div>
 {% endblock %}
