@@ -1,30 +1,72 @@
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>新規登録</title></head>
-<body>
-  <h1>👤 新規ユーザー登録</h1>
-  <form method="post">
-    <label>ユーザー名：<input type="text" name="username" required></label><br>
-    <label>ふりがな：<input type="text" name="furigana" required></label><br>
-    <label>生年月日：<input type="date" name="birthdate" required></label><br>
-    <label>年齢：<input type="number" name="age" required></label><br>
-    <label>電話番号：<input type="text" name="tel"></label><br>
-    <label>携帯番号：<input type="text" name="mobile" required></label><br>
-    <label>メールアドレス：<input type="email" name="email" required></label><br>
-    <label>部署：<input type="text" name="department"></label><br>
-    <label>職種：
-      <select name="position" required>
-        <option value="経理">経理</option>
-        <option value="バイヤー">バイヤー</option>
-        <option value="販売">販売</option>
-        <option value="物流">物流</option>
-        <option value="統括">統括</option>
-        <option value="総合">総合</option>
-      </select>
-    </label><br>
-    <label>紹介者コード（例：KA）：<input type="text" name="ref_code" required></label><br>
-    <label>パスワード：<input type="password" name="password" required></label><br>
-    <button type="submit">登録</button>
-  </form>
-</body>
-</html>
+{% extends "base/layout.html" %}
+{% block title %}新規登録 | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container py-4 d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+  <div class="card shadow p-4" style="max-width: 500px; width: 100%;">
+    <h3 class="text-center mb-4">🆕 新規登録</h3>
+    
+    <form method="POST" action="{{ url_for('register_bp.register') }}">
+      <div class="mb-3">
+        <label for="username" class="form-label">氏名（漢字）</label>
+        <input type="text" class="form-control" id="username" name="username" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="furigana" class="form-label">氏名（ふりがな）</label>
+        <input type="text" class="form-control" id="furigana" name="furigana" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="birthday" class="form-label">生年月日</label>
+        <input type="date" class="form-control" id="birthday" name="birthday" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="phone" class="form-label">電話番号</label>
+        <input type="tel" class="form-control" id="phone" name="phone">
+      </div>
+
+      <div class="mb-3">
+        <label for="mobile" class="form-label">携帯番号</label>
+        <input type="tel" class="form-control" id="mobile" name="mobile" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="email" class="form-label">メールアドレス</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="department" class="form-label">部署名</label>
+        <input type="text" class="form-control" id="department" name="department">
+      </div>
+
+      <div class="mb-3">
+        <label for="referrer" class="form-label">紹介者コード</label>
+        <input type="text" class="form-control" id="referrer" name="referrer" placeholder="例：KA / KB1など">
+      </div>
+
+      <div class="mb-3">
+        <label for="login_id" class="form-label">ログインID</label>
+        <input type="text" class="form-control" id="login_id" name="login_id" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="password" class="form-label">パスワード</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+      </div>
+
+      <div class="d-grid gap-2 mt-4">
+        <button type="submit" class="btn btn-success btn-lg">登録する</button>
+        <a href="{{ url_for('login_bp.login') }}" class="btn btn-secondary">← ログインに戻る</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<footer class="text-center text-muted small mt-5">
+  制作者：鳳陽合同会社　小島崇彦<br>
+  © 2025 Research Navi. All rights reserved.
+</footer>
+{% endblock %}
