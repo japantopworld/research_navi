@@ -2,32 +2,32 @@
 {% block title %}リサーチナビ{% endblock %}
 {% block content %}
 
-<div style="text-align: center; margin-top: 60px;">
-  <h1 style="font-size: 2.2em;">
+<div style="text-align: center; margin-top: 40px;">
+  <h1 style="font-size: 2.4em;">
     🔍 <span style="color: #e11d48;">リサーチナビ</span>
   </h1>
-  <p style="margin-top: 5px; font-size: 1.1em; color: #4b5563;">
+  <p style="margin-top: 8px; font-size: 1.1em; color: #4b5563;">
     最強のせどり支援ツールへようこそ！
   </p>
 
   <img src="{{ url_for('static', filename='img/hero_main.jpg') }}"
-       alt="マスコット"
-       style="width:300px; max-width:90%; border-radius: 20px; margin: 25px auto 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
+       alt="リサーチナビ マスコット"
+       style="width: min(90%, 420px); border-radius: 20px; margin: 30px auto 15px; box-shadow: 0 6px 16px rgba(0,0,0,0.2); display: block;">
 
   <div style="margin-top: 15px;">
     <a href="{{ url_for('login_bp.login') }}">
-      <button style="padding: 10px 20px; margin: 5px; background-color: #2563eb; color: white; border: none; border-radius: 5px;">
+      <button style="padding: 12px 24px; margin: 8px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-size: 1em;">
         ログイン
       </button>
     </a>
     <a href="{{ url_for('register_bp.register') }}">
-      <button style="padding: 10px 20px; margin: 5px; background-color: #10b981; color: white; border: none; border-radius: 5px;">
+      <button style="padding: 12px 24px; margin: 8px; background-color: #10b981; color: white; border: none; border-radius: 6px; font-size: 1em;">
         新規登録
       </button>
     </a>
   </div>
 
-  <div style="margin-top: 30px; font-size: 0.9em; color: #6b7280;">
+  <div style="margin-top: 35px; font-size: 0.9em; color: #6b7280;">
     制作者：鳳陽合同会社　小島崇彦<br>
     © 2025 Research Navi. All rights reserved.
   </div>
