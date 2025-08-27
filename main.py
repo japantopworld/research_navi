@@ -1,38 +1,40 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from models.user_model import db
+# main.py
 
-# Blueprintルート
+from flask import Flask, render_template, redirect, url_for, session
 from routes.login import login_bp
+from routes.logout import logout_bp
 from routes.register import register_bp
 from routes.home import home_bp
-from routes.mypage import mypage_bp
-from routes.logout import logout_bp
+
+import os
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"
-
-# 本番用（PostgreSQL）
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg://<ユーザー名>:<パスワード>@<ホスト名>:5432/<DB名>"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-db.init_app(app)
+app.secret_key = os.environ.get("SECRET_KEY", "default_secret_key")
 
 # Blueprint 登録
 app.register_blueprint(login_bp)
+app.register_blueprint(logout_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(home_bp)
-app.register_blueprint(mypage_bp)
-app.register_blueprint(logout_bp)
 
-# ヘルスチェック
+# ルートはホームにリダイレクト
+@app.route("/")
+def index():
+    return redirect(url_for("home_bp.home"))
+
+# ✅ ヘルスチェック用
 @app.route("/healthz")
-def healthz():
-    return "ok", 200
+def health_check():
+    return "OK"
 
-# アプリ起動
+# エラーハンドラ（必要に応じて拡張）
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("errors/404.html"), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template("errors/500.html"), 500
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=8080)
+    app.run(debug=True)
