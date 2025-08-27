@@ -1,20 +1,36 @@
 {% extends "base/layout.html" %}
-
+{% block title %}リサーチナビ{% endblock %}
 {% block content %}
-<div style="text-align:center; margin-top: 40px;">
-  <h1 style="font-size: 2.5rem; color: #ef4444;">🔍 リサーチナビ</h1>
-  <p style="font-size: 1.2rem; color: #6b7280;">最強のせどり支援ツールへようこそ！</p>
 
-  <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="マスコット" style="width:200px; border-radius: 50%; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+<div style="text-align: center; margin-top: 60px;">
+  <h1 style="font-size: 2.2em;">
+    🔍 <span style="color: #e11d48;">リサーチナビ</span>
+  </h1>
+  <p style="margin-top: 5px; font-size: 1.1em; color: #4b5563;">
+    最強のせどり支援ツールへようこそ！
+  </p>
 
-  <div style="margin-top: 30px;">
-    <a href="{{ url_for('login_bp.login') }}" style="padding: 10px 20px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; margin-right: 15px;">ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" style="padding: 10px 20px; background: #10b981; color: white; border-radius: 8px; text-decoration: none;">新規登録</a>
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}"
+       alt="マスコット"
+       style="width:300px; max-width:90%; border-radius: 20px; margin: 25px auto 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
+
+  <div style="margin-top: 15px;">
+    <a href="{{ url_for('login_bp.login') }}">
+      <button style="padding: 10px 20px; margin: 5px; background-color: #2563eb; color: white; border: none; border-radius: 5px;">
+        ログイン
+      </button>
+    </a>
+    <a href="{{ url_for('register_bp.register') }}">
+      <button style="padding: 10px 20px; margin: 5px; background-color: #10b981; color: white; border: none; border-radius: 5px;">
+        新規登録
+      </button>
+    </a>
   </div>
 
-  <div style="margin-top: 40px; font-size: 0.9rem; color: #9ca3af;">
-    <p>制作者：<strong>鳳陽合同会社　小島崇彦</strong></p>
-    <p>© 2025 Research Navi. All rights reserved.</p>
+  <div style="margin-top: 30px; font-size: 0.9em; color: #6b7280;">
+    制作者：鳳陽合同会社　小島崇彦<br>
+    © 2025 Research Navi. All rights reserved.
   </div>
 </div>
+
 {% endblock %}
