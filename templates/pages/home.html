@@ -1,19 +1,16 @@
-{% extends "base/layout.html" %}
-{% block title %}リサーチナビ - トップページ{% endblock %}
-{% block content %}
+# routes/home.py
 
-<div class="text-center mt-5">
-  <h1>🔍 リサーチナビ</h1>
-  <p>最強のせどり支援ツールへようこそ！</p>
+from flask import Blueprint, render_template, session
+from utils.auth_required import login_required
 
-  <!-- マスコット画像 -->
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="マスコット画像" class="img-fluid my-4" style="max-width: 300px;">
+home_bp = Blueprint("home_bp", __name__)
 
-  <!-- ボタン -->
-  <div class="mt-3">
-    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary btn-lg mx-2">ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success btn-lg mx-2">新規登録</a>
-  </div>
-</div>
+@home_bp.route("/")
+def home():
+    return render_template("pages/home.html")
 
-{% endblock %}
+@home_bp.route("/mypage")
+@login_required
+def mypage():
+    user_info = session.get("user_info", {})
+    return render_template("pages/mypage.html", user_info=user_info)
