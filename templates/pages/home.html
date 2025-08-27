@@ -9,53 +9,54 @@
   }
 
   .home-container {
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;  /* ← 上下中央寄せ */
+    justify-content: center;
     align-items: center;
-    padding: 2rem;
+    padding: 2vh 2vw;
     font-family: 'Noto Sans JP', sans-serif;
     text-align: center;
+    min-height: 100vh;
     box-sizing: border-box;
   }
 
   .home-title {
-    font-size: 2.4rem;
+    font-size: 8vw;
     font-weight: bold;
     color: #b91c1c;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1vh;
   }
 
   .home-subtitle {
-    font-size: 1.2rem;
+    font-size: 5vw;
     color: #6b7280;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2vh;
   }
 
   .home-image {
-    width: 70%;
-    max-width: 280px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    margin-bottom: 1.5rem;
+    width: 80vw;
+    max-width: 400px;
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    margin-bottom: 3vh;
   }
 
   .home-buttons {
     display: flex;
-    gap: 1rem;
+    gap: 4vw;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 3vh;
   }
 
   .home-buttons a {
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
-    border-radius: 8px;
+    padding: 4vw 8vw;
+    font-size: 5vw;
+    border-radius: 12px;
     text-decoration: none;
     font-weight: bold;
     color: white;
+    display: inline-block;
   }
 
   .login-btn {
@@ -67,16 +68,17 @@
   }
 
   .credit {
-    font-size: 0.9rem;
+    font-size: 3.5vw;
     color: #6b7280;
-    margin-top: 1rem;
+    margin-top: 2vh;
+    line-height: 1.4;
   }
 
-  @media (max-width: 480px) {
-    .home-title { font-size: 6vw; }
-    .home-subtitle { font-size: 4vw; }
-    .home-buttons a { font-size: 4.5vw; padding: 3vw 6vw; }
-    .credit { font-size: 3.2vw; }
+  @media (min-width: 768px) {
+    .home-title { font-size: 2.5rem; }
+    .home-subtitle { font-size: 1.5rem; }
+    .home-buttons a { font-size: 1.1rem; padding: 1rem 2rem; }
+    .credit { font-size: 0.9rem; }
   }
 </style>
 
