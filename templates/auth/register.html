@@ -1,63 +1,109 @@
 {% extends "base/layout.html" %}
-{% block title %}新規登録{% endblock %}
+{% block title %}新規登録 | リサーチナビ{% endblock %}
 
 {% block content %}
-<h1>📝 新規登録フォーム</h1>
+<div class="container mt-4">
+  <h2 class="mb-4">📝 新規登録</h2>
 
-<form method="POST" autocomplete="off">
-  <div>
-    <label>ユーザー名</label>
-    <input type="text" name="username" required autocomplete="off">
-  </div>
-
-  <div>
-    <label>ふりがな</label>
-    <input type="text" name="kana" required autocomplete="off">
-  </div>
-
-  <div>
-    <label>生年月日（YYYY/MM/DD）</label>
-    <input type="text" name="birthday" placeholder="例：1990/01/01" required autocomplete="off">
-  </div>
-
-  <div>
-    <label>電話番号</label>
-    <input type="text" name="phone" autocomplete="off">
-  </div>
-
-  <div>
-    <label>携帯番号</label>
-    <input type="text" name="mobile" autocomplete="off">
-  </div>
-
-  <div>
-    <label>メールアドレス</label>
-    <input type="email" name="email" required autocomplete="off">
-  </div>
-
-  <div>
-    <label>部署</label>
-    <select name="department" required>
-      {% for dep in departments %}
-        <option value="{{ dep }}">{{ dep }}</option>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+        </div>
       {% endfor %}
-    </select>
-  </div>
+    {% endif %}
+  {% endwith %}
 
-  <div>
-    <label>紹介者NO（A〜E）</label>
-    <select name="intro_code" required>
-      {% for code in intro_codes %}
-        <option value="{{ code }}">{{ code }}</option>
-      {% endfor %}
-    </select>
-  </div>
+  <form method="POST" action="{{ url_for('register_bp.register') }}">
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label>ユーザー名</label>
+        <input type="text" name="username" class="form-control" required>
+      </div>
+      <div class="col-md-6">
+        <label>ふりがな</label>
+        <input type="text" name="kana" class="form-control" required>
+      </div>
+    </div>
 
-  <div>
-    <label>パスワード</label>
-    <input type="password" name="password" required autocomplete="new-password">
-  </div>
+    <div class="row mb-2">
+      <div class="col-md-4">
+        <label>生年月日</label>
+        <input type="date" name="birthday" class="form-control" required>
+      </div>
+      <div class="col-md-2">
+        <label>年齢</label>
+        <input type="number" name="age" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label>電話番号</label>
+        <input type="tel" name="tel" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label>携帯番号</label>
+        <input type="tel" name="mobile" class="form-control">
+      </div>
+    </div>
 
-  <button type="submit">登録する</button>
-</form>
+    <div class="mb-2">
+      <label>メールアドレス</label>
+      <input type="email" name="email" class="form-control" required>
+    </div>
+
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label>部署</label>
+        <input type="text" name="department" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label>職種</label>
+        <input type="text" name="role" class="form-control">
+      </div>
+    </div>
+
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label>紹介者NO</label>
+        <input type="text" name="intro_code" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label>ログインID</label>
+        <input type="text" name="login_id" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label>パスワード</label>
+        <input type="password" name="password" class="form-control" required>
+      </div>
+    </div>
+
+    <div class="form-group mt-3">
+      <input type="checkbox" id="agree" name="agree" required>
+      <label for="agree">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>に同意します。
+      </label>
+    </div>
+
+    <div class="mt-4">
+      <button type="submit" class="btn btn-primary">登録する</button>
+      <a href="{{ url_for('login_bp.login') }}" class="btn btn-link">ログインはこちら</a>
+    </div>
+  </form>
+</div>
+
+<!-- 利用規約モーダル -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="termsModalLabel">利用規約（リサーチナビ）</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+      </div>
+      <div class="modal-body" style="white-space: pre-wrap; font-size: 0.9rem;">
+        {% include 'policy/terms.html' %}
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
