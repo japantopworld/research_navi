@@ -1,45 +1,47 @@
-{% extends "base/layout.html" %}
-{% block title %}新規登録{% endblock %}
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+import csv
+import os
 
-{% block content %}
-<h2>📝 新規登録フォーム</h2>
-<form method="POST" class="form-grid">
-  <label>ユーザー名</label>
-  <input type="text" name="username" required>
+register_bp = Blueprint("register_bp", __name__)
 
-  <label>ふりがな</label>
-  <input type="text" name="kana" required>
+CSV_FILE = os.path.join("data", "users.csv")
 
-  <label>生年月日</label>
-  <input type="date" name="birthday" required>
+@register_bp.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        user_data = {
+            "ユーザー名": request.form.get("username"),
+            "ふりがな": request.form.get("kana"),
+            "生年月日": request.form.get("birthday"),
+            "年齢": request.form.get("age"),
+            "電話番号": request.form.get("tel"),
+            "携帯番号": request.form.get("mobile"),
+            "メールアドレス": request.form.get("email"),
+            "部署": request.form.get("department"),
+            "職種": request.form.get("role"),
+            "紹介者NO": request.form.get("intro_code"),
+            "ID": request.form.get("login_id"),
+            "PASS": request.form.get("password")
+        }
 
-  <label>年齢</label>
-  <input type="number" name="age" min="0" required>
+        # IDの重複チェック
+        if os.path.exists(CSV_FILE):
+            with open(CSV_FILE, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row["ID"] == user_data["ID"]:
+                        flash("このIDは既に使われています", "danger")
+                        return redirect(url_for("register_bp.register"))
 
-  <label>電話番号</label>
-  <input type="tel" name="tel">
+        # CSVに保存（ヘッダー付き）
+        file_exists = os.path.exists(CSV_FILE)
+        with open(CSV_FILE, mode="a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=user_data.keys())
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(user_data)
 
-  <label>携帯番号</label>
-  <input type="tel" name="mobile" required>
+        flash("登録が完了しました。ログインしてください。", "success")
+        return redirect(url_for("login_bp.login"))
 
-  <label>メールアドレス</label>
-  <input type="email" name="email" required>
-
-  <label>部署</label>
-  <input type="text" name="department">
-
-  <label>職種</label>
-  <input type="text" name="role">
-
-  <label>紹介者NO</label>
-  <input type="text" name="intro_code">
-
-  <label>ログインID</label>
-  <input type="text" name="login_id" required>
-
-  <label>パスワード</label>
-  <input type="password" name="password" required>
-
-  <button type="submit" class="btn btn-primary">登録する</button>
-</form>
-{% endblock %}
+    return render_template("auth/register.html")
