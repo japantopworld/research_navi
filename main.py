@@ -1,10 +1,9 @@
-# main.py
-
 from flask import Flask, render_template, redirect, url_for, session
 from routes.login import login_bp
 from routes.logout import logout_bp
 from routes.register import register_bp
 from routes.home import home_bp
+from routes.policy import policy_bp  # ✅ 利用規約用
 
 import os
 
@@ -16,6 +15,7 @@ app.register_blueprint(login_bp)
 app.register_blueprint(logout_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(home_bp)
+app.register_blueprint(policy_bp)  # ✅ 利用規約のルートを有効化
 
 # ルートはホームにリダイレクト
 @app.route("/")
@@ -27,7 +27,7 @@ def index():
 def health_check():
     return "OK"
 
-# エラーハンドラ（必要に応じて拡張）
+# エラーハンドラ
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("errors/404.html"), 404
