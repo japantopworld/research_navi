@@ -24,7 +24,6 @@ def register():
             "PASS": request.form.get("password")
         }
 
-        # ID重複チェック
         if os.path.exists(CSV_FILE):
             with open(CSV_FILE, newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
@@ -33,7 +32,6 @@ def register():
                         flash("このIDは既に使われています", "danger")
                         return redirect(url_for("register_bp.register"))
 
-        # ヘッダー付きで追記
         file_exists = os.path.exists(CSV_FILE)
         with open(CSV_FILE, mode="a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=user_data.keys())
