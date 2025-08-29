@@ -1,10 +1,30 @@
 {% extends "base/layout.html" %}
-{% block title %}ログイン | リサーチナビ{% endblock %}
+{% block title %}ログイン{% endblock %}
+
 {% block content %}
-<h2>ログイン</h2>
-<form method="POST">
-  <label>ID</label><input name="login_id"><br>
-  <label>パスワード</label><input type="password" name="password"><br>
-  <button type="submit">ログイン</button>
+<h1>🔐 ログイン</h1>
+
+<form method="POST" class="form-box">
+  <div class="form-group">
+    <label for="login_id">ログインID</label>
+    <input type="text" name="login_id" id="login_id" required>
+  </div>
+
+  <div class="form-group">
+    <label for="password">パスワード</label>
+    <input type="password" name="password" id="password" required>
+  </div>
+
+  <div class="form-group">
+    <button type="submit" class="button">▶ ログイン</button>
+  </div>
 </form>
+
+{% if get_flashed_messages() %}
+  <div class="flash-message">
+    {% for message in get_flashed_messages() %}
+      <p style="color: red;">{{ message }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
 {% endblock %}
