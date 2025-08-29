@@ -1,1 +1,28 @@
+{% extends "base/layout.html" %}
+{% block title %}マイページ編集{% endblock %}
+
+{% block content %}
+<h1>🛠️ マイページ編集（管理者専用）</h1>
+
+<form method="post">
+  <input type="hidden" name="login_id" value="{{ user_info.login_id }}">
+
+  <table>
+    <tr><th>ユーザー名</th><td><input type="text" name="username" value="{{ user_info.username }}"></td></tr>
+    <tr><th>ふりがな</th><td><input type="text" name="kana" value="{{ user_info.kana }}"></td></tr>
+    <tr><th>生年月日</th><td><input type="date" name="birthday" value="{{ user_info.birthday }}"></td></tr>
+    <tr><th>年齢</th><td><input type="number" name="age" value="{{ user_info.age }}"></td></tr>
+    <tr><th>電話番号</th><td><input type="text" name="tel" value="{{ user_info.tel }}"></td></tr>
+    <tr><th>携帯番号</th><td><input type="text" name="mobile" value="{{ user_info.mobile }}"></td></tr>
+    <tr><th>メールアドレス</th><td><input type="email" name="email" value="{{ user_info.email }}"></td></tr>
+    <tr><th>部署</th><td><input type="text" name="department" value="{{ user_info.department }}"></td></tr>
+    <tr><th>紹介者NO</th><td><input type="text" name="intro_code" value="{{ user_info.intro_code }}"></td></tr>
+  </table>
+
+  <p style="margin-top: 20px;">
+    <button type="submit">💾 更新する</button>
+    <a href="{{ url_for('mypage_bp.mypage') }}">← 戻る</a>
+  </p>
+</form>
+{% endblock %}
 
