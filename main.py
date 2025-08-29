@@ -1,40 +1,24 @@
-from flask import Flask, render_template, redirect, url_for, session
-from routes.login import login_bp
-from routes.logout import logout_bp
-from routes.register import register_bp
-from routes.home import home_bp
-from routes.policy import policy_bp  # ✅ 利用規約用
-
-import os
+from flask import Flask
+from routes import login, register, mypage, mypage_edit  # 各Blueprintの読み込み
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "default_secret_key")
+app.secret_key = "your_secret_key"  # セッション用の秘密鍵（適宜変更）
 
-# Blueprint 登録
-app.register_blueprint(login_bp)
-app.register_blueprint(logout_bp)
-app.register_blueprint(register_bp)
-app.register_blueprint(home_bp)
-app.register_blueprint(policy_bp)  # ✅ 利用規約のルートを有効化
+# Blueprint登録
+app.register_blueprint(login.login_bp)
+app.register_blueprint(register.register_bp)
+app.register_blueprint(mypage.mypage_bp)
+app.register_blueprint(mypage_edit.mypage_edit_bp)
 
-# ルートはホームにリダイレクト
-@app.route("/")
-def index():
-    return redirect(url_for("home_bp.home"))
-
-# ✅ ヘルスチェック用
+# ヘルスチェック用（Renderのタイムアウト防止用）
 @app.route("/healthz")
 def health_check():
-    return "OK"
+    return "OK", 200
 
-# エラーハンドラ
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template("errors/404.html"), 404
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    return render_template("errors/500.html"), 500
+# ホーム（未ログイン時はリダイレクトさせてもOK）
+@app.route("/")
+def index():
+    return "Welcome to Research Navi App"
 
 if __name__ == "__main__":
     app.run(debug=True)
