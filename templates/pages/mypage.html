@@ -4,20 +4,20 @@
 {% block content %}
 <h1>👤 マイページ</h1>
 
-<table border="1">
-  <tr><th>ユーザー名</th><td>{{ user_info.username }}</td></tr>
-  <tr><th>ふりがな</th><td>{{ user_info.kana }}</td></tr>
-  <tr><th>生年月日</th><td>{{ user_info.birthday }}</td></tr>
-  <tr><th>年齢</th><td>{{ user_info.age }}</td></tr>
-  <tr><th>電話番号</th><td>{{ user_info.tel }}</td></tr>
-  <tr><th>携帯番号</th><td>{{ user_info.mobile }}</td></tr>
-  <tr><th>メールアドレス</th><td>{{ user_info.email }}</td></tr>
-  <tr><th>部署</th><td>{{ user_info.department }}</td></tr>
-  <tr><th>紹介者NO</th><td>{{ user_info.intro_code }}</td></tr>
-  <tr><th>ログインID</th><td>{{ user_info.login_id }}</td></tr>
+<table border="1" cellpadding="8" cellspacing="0" style="margin-top: 20px;">
+  <tr><th>ユーザー名</th><td>{{ user_info["username"] }}</td></tr>
+  <tr><th>ふりがな</th><td>{{ user_info["kana"] }}</td></tr>
+  <tr><th>生年月日</th><td>{{ user_info["birthday"] }}</td></tr>
+  <tr><th>年齢</th><td>{{ user_info["age"] }}</td></tr>
+  <tr><th>電話番号</th><td>{{ user_info["tel"] }}</td></tr>
+  <tr><th>携帯番号</th><td>{{ user_info["mobile"] }}</td></tr>
+  <tr><th>メールアドレス</th><td>{{ user_info["email"] }}</td></tr>
+  <tr><th>部署</th><td>{{ user_info["department"] }}</td></tr>
+  <tr><th>紹介者NO</th><td>{{ user_info["intro_code"] }}</td></tr>
+  <tr><th>ログインID</th><td>{{ user_info["login_id"] }}</td></tr>
 </table>
 
-<p style="margin-top: 20px;">
+<p style="margin-top: 30px;">
   <a href="{{ url_for('logout_bp.logout') }}" class="button">🚪 ログアウト</a>
 </p>
 {% endblock %}
