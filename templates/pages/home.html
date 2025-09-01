@@ -1,100 +1,20 @@
 {% extends "base/layout.html" %}
-{% block title %}リサーチナビ | ホーム{% endblock %}
+{% block title %}ホーム | Research Navi{% endblock %}
+
 {% block content %}
+<div style="text-align: center; margin-top: 50px;">
+  <h1>🏠 ようこそ、{{ session.get('username', 'ゲスト') }} さん！</h1>
+  <p>以下のメニューから業務機能を選択してください。</p>
 
-<style>
-  .hero-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 5vh 2vw;
-    font-size: 1.3rem;
-  }
-
-  .hero-container h1 {
-    font-size: 2.2rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .hero-container p {
-    font-size: 1.2rem;
-    color: #555;
-    margin-bottom: 1.5rem;
-  }
-
-  .hero-container img {
-    max-width: 300px;
-    width: 80%;
-    height: auto;
-    margin-bottom: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-
-  .hero-buttons {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    margin-bottom: 2rem;
-  }
-
-  .hero-buttons a {
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    color: white;
-    font-weight: bold;
-  }
-
-  .hero-buttons a.login {
-    background-color: #3b82f6;
-  }
-
-  .hero-buttons a.register {
-    background-color: #10b981;
-  }
-
-  .footer-text {
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
-    color: #666;
-  }
-
-  @media screen and (max-width: 480px) {
-    .hero-container {
-      font-size: 1.1rem;
-    }
-    .hero-container h1 {
-      font-size: 1.7rem;
-    }
-    .hero-buttons a {
-      font-size: 1rem;
-      padding: 0.8rem 1.5rem;
-    }
-    .footer-text {
-      font-size: 0.8rem;
-    }
-  }
-</style>
-
-<div class="hero-container">
-  <h1>
-    🔍 <span style="color:#d92d20;">リサーチナビ</span>
-  </h1>
-  <p>最強のせどり支援ツールへようこそ！</p>
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ" />
-
-  <div class="hero-buttons">
-    <a href="{{ url_for('login_bp.login') }}" class="login">ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" class="register">新規登録</a>
+  <div style="margin: 30px auto; max-width: 400px;">
+    <a href="{{ url_for('pages_bp.mypage') }}" class="button">👤 マイページ（登録情報確認）</a><br><br>
+    <a href="{{ url_for('profit_bp.calculator') }}" class="button">💰 利益計算ツール</a><br><br>
+    <a href="{{ url_for('history_bp.list') }}" class="button">📜 履歴一覧</a><br><br>
+    <!-- 必要に応じて他の機能追加 -->
   </div>
 
-  <div class="footer-text">
-    制作者：鳳陽合同会社　小島崇彦<br>
-    © 2025 Research Navi. All rights reserved.
-  </div>
+  <p style="margin-top: 40px;">
+    <a href="{{ url_for('login_bp.logout') }}" class="button">🚪 ログアウト</a>
+  </p>
 </div>
-
 {% endblock %}
