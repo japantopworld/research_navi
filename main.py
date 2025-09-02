@@ -2,21 +2,23 @@ from flask import Flask
 from routes.login import login_bp
 from routes.register import register_bp
 from routes.pages import pages_bp
+from routes.mypage import mypage_bp
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
-# Blueprint登録
+# Blueprint 登録
 app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(pages_bp)
+app.register_blueprint(mypage_bp)
 
-# 初期ルート（ログインページへ）
+# ホーム画面（公開）
 @app.route("/")
 def index():
-    return "<a href='/login'>ログインはこちら</a>"
+    return render_template("pages/home.html")
 
-# Renderでヘルスチェック用
+# Render 用ヘルスチェック
 @app.route("/healthz")
 def health_check():
     return "ok"
