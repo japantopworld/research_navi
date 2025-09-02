@@ -1,7 +1,4 @@
-from flask import Blueprint, render_template, session
+from flask import Blueprint
 
 pages_bp = Blueprint("pages_bp", __name__)
-
-@pages_bp.route("/home")
-def home():
-    return render_template("pages/home.html")
+# / は main.py 側で処理するので不要
