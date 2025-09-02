@@ -1,17 +1,11 @@
-from flask import Blueprint, render_template, session, redirect, url_for
+# routes/pages.py
 
-pages_bp = Blueprint("pages_bp", __name__)
+from flask import Blueprint, render_template, session
 
-@pages_bp.route("/home")
-def home():
-    if "user_info" not in session:
-        return redirect(url_for("login_bp.login"))
-    return render_template("pages/home.html")
+# Blueprint名を pages_bp に統一（home.htmlと一致）
+pages_bp = Blueprint("pages_bp", __name__, url_prefix="/mypage")
 
-@pages_bp.route("/mypage")
+@pages_bp.route("/")
 def mypage():
-    if "user_info" not in session:
-        return redirect(url_for("login_bp.login"))
-
-    user_info = session["user_info"]
-    return render_template("pages/mypage.html", user_info=user_info)
+    username = session.get("username", "ゲスト")
+    return render_template("pages/mypage.html", username=username)
