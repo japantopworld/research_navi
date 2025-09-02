@@ -1,35 +1,25 @@
-from flask import Flask, render_template, redirect, url_for, session
+from flask import Flask
 from routes.login import login_bp
 from routes.register import register_bp
-from routes.mypage import mypage_bp
+from routes.pages import pages_bp
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"  # セキュリティのため必須！
+app.secret_key = "your_secret_key"
 
-# Blueprint 登録
+# Blueprint登録
 app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
-app.register_blueprint(mypage_bp)
+app.register_blueprint(pages_bp)
 
-# ✅ トップページ（誰でもアクセス可能）
+# 初期ルート（ログインページへ）
 @app.route("/")
-def home():
-    return render_template("pages/home.html")
+def index():
+    return "<a href='/login'>ログインはこちら</a>"
 
-# ✅ /healthz（Render用のヘルスチェック）
+# Renderでヘルスチェック用
 @app.route("/healthz")
 def health_check():
-    return "ok", 200
-
-# ✅ 404 エラーハンドリング
-@app.errorhandler(404)
-def not_found(e):
-    return render_template("errors/404.html"), 404
-
-# ✅ 500 エラーハンドリング
-@app.errorhandler(500)
-def internal_error(e):
-    return render_template("errors/500.html"), 500
+    return "ok"
 
 if __name__ == "__main__":
     app.run(debug=True)
