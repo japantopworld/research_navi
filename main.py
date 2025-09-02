@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from routes.login import login_bp
 from routes.register import register_bp
 from routes.pages import pages_bp
@@ -13,7 +13,7 @@ app.register_blueprint(register_bp)
 app.register_blueprint(pages_bp)
 app.register_blueprint(mypage_bp)
 
-# ホーム画面（公開）
+# ✅ 修正ポイント：初期画面をテンプレートに変更
 @app.route("/")
 def index():
     return render_template("pages/home.html")
