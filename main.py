@@ -7,18 +7,18 @@ from routes.mypage import mypage_bp
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
-# Blueprint 登録
+# Blueprint登録
 app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(pages_bp)
 app.register_blueprint(mypage_bp)
 
-# ✅ 修正ポイント：初期画面をテンプレートに変更
+# ✅ 最初の画面をホーム画面に変更
 @app.route("/")
-def index():
+def home():
     return render_template("pages/home.html")
 
-# Render 用ヘルスチェック
+# ✅ Renderのヘルスチェック用
 @app.route("/healthz")
 def health_check():
     return "ok"
