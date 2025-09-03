@@ -2,13 +2,58 @@
 {% block title %}新規登録 | リサーチナビ{% endblock %}
 {% block content %}
 
-<h1>📝 新規登録</h1>
-<p style="color: #6b7280">以下の情報を入力してください。</p>
+<h1>📝 新規登録フォーム</h1>
+<p style="color: #6b7280">以下の項目をすべて入力してください。</p>
 
 <form method="POST" action="{{ url_for('register_bp.register') }}">
   <div class="form-group">
     <label for="username">ユーザー名</label>
     <input type="text" class="form-control" name="username" id="username" required>
+  </div>
+
+  <div class="form-group">
+    <label for="furigana">ふりがな</label>
+    <input type="text" class="form-control" name="furigana" id="furigana">
+  </div>
+
+  <div class="form-group">
+    <label for="birthday">生年月日</label>
+    <input type="date" class="form-control" name="birthday" id="birthday">
+  </div>
+
+  <div class="form-group">
+    <label for="age">年齢</label>
+    <input type="number" class="form-control" name="age" id="age">
+  </div>
+
+  <div class="form-group">
+    <label for="phone">電話番号</label>
+    <input type="tel" class="form-control" name="phone" id="phone">
+  </div>
+
+  <div class="form-group">
+    <label for="mobile">携帯番号</label>
+    <input type="tel" class="form-control" name="mobile" id="mobile">
+  </div>
+
+  <div class="form-group">
+    <label for="email">メールアドレス</label>
+    <input type="email" class="form-control" name="email" id="email">
+  </div>
+
+  <div class="form-group">
+    <label for="department">部署名</label>
+    <input type="text" class="form-control" name="department" id="department">
+  </div>
+
+  <div class="form-group">
+    <label for="referrer">紹介者番号</label>
+    <input type="text" class="form-control" name="referrer" id="referrer">
+  </div>
+
+  <div class="form-group">
+    <label for="user_id">ログインID</label>
+    <input type="text" class="form-control" name="user_id" id="user_id" required>
   </div>
 
   <div class="form-group">
