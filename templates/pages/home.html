@@ -1,14 +1,28 @@
 {% extends "base/layout.html" %}
-{% block title %}ホーム | Research Navi{% endblock %}
+{% block title %}ホーム | リサーチナビ{% endblock %}
 
 {% block content %}
-<div style="text-align: center; margin-top: 50px;">
-  <h1>🏠 Research Naviへようこそ</h1>
-  <p>以下のメニューから選択してください。</p>
+<div class="container text-center mt-5">
+  <h1 class="mb-2">
+    🔍 <span style="color:#d90429;">リサーチナビ</span>
+  </h1>
+  <p class="mb-4 text-muted">最強のせどり支援ツールへようこそ！</p>
 
-  <div style="margin-top: 30px;">
-    <a href="{{ url_for('login_bp.login') }}" class="button">🔐 ログイン</a><br><br>
-    <a href="{{ url_for('register_bp.register') }}" class="button">🆕 新規登録</a>
+  <!-- マスコット画像 -->
+  <div class="mb-4">
+    <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="リサーチナビマスコット" class="img-fluid" style="max-height: 220px;">
+  </div>
+
+  <!-- ログイン・登録ボタン -->
+  <div class="d-flex justify-content-center gap-3">
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success">新規登録</a>
+  </div>
+
+  <!-- フッター -->
+  <div class="mt-4 text-muted small">
+    <p>制作者：鳳陽合同会社　小島崇彦</p>
+    <p>© 2025 Research Navi. All rights reserved.</p>
   </div>
 </div>
 {% endblock %}
