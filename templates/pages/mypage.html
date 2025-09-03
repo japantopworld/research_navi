@@ -1,15 +1,26 @@
 {% extends "base/layout.html" %}
-{% block title %}マイページ | Research Navi{% endblock %}
-
+{% block title %}マイページ | リサーチナビ{% endblock %}
 {% block content %}
-<div style="text-align: center; margin-top: 50px;">
-  <h1>👤 マイページ</h1>
-  <p>こんにちは、{{ session.get('username', 'ゲスト') }} さん</p>
+<h1>📊 利益商品リスト（マイページ）</h1>
 
-  <div style="margin-top: 30px;">
-    <a href="{{ url_for('profit_bp.calculator') }}" class="button">💰 利益計算ツール</a><br><br>
-    <a href="{{ url_for('history_bp.list') }}" class="button">📜 履歴一覧</a><br><br>
-    <a href="{{ url_for('login_bp.logout') }}" class="button">🚪 ログアウト</a>
+<form method="post">
+  <label>利益率で絞り込み：</label>
+  <input type="number" name="min_profit_rate" value="{{ min_rate }}" step="0.1"> 〜
+  <input type="number" name="max_profit_rate" value="{{ max_rate }}" step="0.1"> %
+  <button type="submit">適用</button>
+</form>
+
+<hr>
+
+<div class="grid">
+  {% for item in items %}
+  <div class="card">
+    <h3>{{ item.name }}</h3>
+    <p>仕入価格：¥{{ item.buy_price }}</p>
+    <p>販売価格：¥{{ item.sell_price }}</p>
+    <p>利益：+¥{{ item.profit }}（{{ item.profit_rate }}%）</p>
+    <p>回転率：{{ item.rotation }}/月</p>
   </div>
+  {% endfor %}
 </div>
 {% endblock %}
