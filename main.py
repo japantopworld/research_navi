@@ -1,31 +1,28 @@
-from flask import Flask
+from flask import Flask, render_template
 from routes.login import login_bp
 from routes.register import register_bp
-from routes.home import home_bp
 from routes.mypage import mypage_bp
+from routes.pages import pages_bp
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = "your_secret_key"
 
-# Blueprint登録
+# Blueprint 登録
 app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
-app.register_blueprint(home_bp)
 app.register_blueprint(mypage_bp)
+app.register_blueprint(pages_bp)
 
-# ホームルート
-@app.route('/')
+# ✅ 最初のホーム画面表示（ログインではなく home.html）
+@app.route("/")
 def index():
-    return """
-    <h1>🏠 ホーム画面</h1>
-    <ul>
-      <li><a href="/login">ログイン</a></li>
-      <li><a href="/register">新規登録</a></li>
-      <li><a href="/mypage">マイページ</a></li>
-    </ul>
-    <p>制作者：鳳陽合同会社　小島崇彦</p>
-    <img src="/static/img/mascot.png" width="200">
-    """
+    return render_template("pages/home.html")
 
-if __name__ == '__main__':
+# ✅ Render 用のヘルスチェック（タイムアウト対策）
+@app.route("/healthz")
+def health_check():
+    return "ok", 200
+
+# 🔸 ローカル実行用（Renderでは使われないが残してOK）
+if __name__ == "__main__":
     app.run(debug=True)
