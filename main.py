@@ -7,6 +7,11 @@ app.secret_key = 'your_secret_key'
 # Blueprint登録
 app.register_blueprint(mypage_bp)
 
+# ✅ Render用 Healthチェック
+@app.route('/healthz')
+def health_check():
+    return 'ok', 200
+
 @app.route('/')
 def index():
     return '<h1>ホーム画面（後で整備）</h1><a href="/mypage">マイページへ</a>'
