@@ -1,44 +1,64 @@
 {% extends "base/layout.html" %}
-{% block title %}マイページ | リサーチナビ{% endblock %}
-{% block content %}
-<h2>👤 マイページ</h2>
-<p style="color: #6b7280;">各機能へのナビゲーションです。個人情報は別ページで確認・編集できます。</p>
 
-<ul class="link-list">
-  <li><a href="/dashboard">📊 ダッシュボード</a></li>
-  <li><a href="/search">🔎 商品検索</a></li>
-  <li><a href="/profit">💰 利益計算</a></li>
-  <li><a href="/ranking">📈 ランキング一覧</a></li>
-  <li><a href="/history">📂 履歴管理</a></li>
-  <li><a href="/notifications">🔔 通知ボックス</a></li>
-  <li><a href="/settings">⚙️ システム設定</a></li>
-  <li><a href="/profile">🗂️ 個人情報（確認・変更）</a></li>
-  <li><a href="/guide">📖 使い方ガイド</a></li>
-  <li><a href="/terms">📜 利用規約</a></li>
-  <li><a href="/privacy">🔐 プライバシーポリシー</a></li>
-</ul>
+{% block title %}マイページ | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 style="text-align: center;">👤 マイページ</h1>
+  <p style="text-align: center; color: gray;">ご利用中の機能にアクセスできます</p>
+
+  <div class="card-grid">
+    <a href="/profile" class="card">📝 プロフィール確認・変更</a>
+    <a href="/history" class="card">📜 利用履歴</a>
+    <a href="/alerts" class="card">🔔 通知一覧</a>
+    <a href="/ranking" class="card">🏆 人気商品ランキング</a>
+    <a href="/profit" class="card">💰 利益計算ツール</a>
+    <a href="/search" class="card">🔍 商品リサーチ</a>
+    <a href="/settings" class="card">⚙️ 設定</a>
+  </div>
+</div>
 
 <style>
-  .link-list {
-    list-style: none;
-    padding: 0;
-    margin: 1rem 0;
+  .container {
+    max-width: 900px;
+    margin: 60px auto;
+    padding: 40px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
-  .link-list li {
-    margin: 0.5rem 0;
-    padding: 0.6rem 1rem;
-    background: #f3f4f6;
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+  }
+
+  .card {
+    display: block;
+    padding: 20px;
+    text-align: center;
+    background-color: #f9f9f9;
     border-radius: 8px;
-    transition: background 0.2s ease;
-  }
-  .link-list li:hover {
-    background: #e5e7eb;
-  }
-  .link-list a {
     text-decoration: none;
-    color: #1f2937;
-    font-weight: 500;
+    color: #333;
+    font-weight: bold;
+    border: 1px solid #ddd;
+    transition: 0.3s;
+  }
+
+  .card:hover {
+    background-color: #e0f7fa;
+    color: #000;
+    border-color: #00bcd4;
+  }
+
+  @media (max-width: 600px) {
+    .container {
+      margin: 20px;
+      padding: 20px;
+    }
   }
 </style>
-
 {% endblock %}
