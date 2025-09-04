@@ -1,26 +1,61 @@
-/* デフォルト（パソコン向け） */
-.form-container {
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 30px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
-}
+{% extends "base/layout.html" %}
+{% block title %}ホーム | リサーチナビ{% endblock %}
 
-/* スマホ画面（横幅が600px以下の場合） */
-@media (max-width: 600px) {
-  .form-container {
-    max-width: 90%;
-    padding: 20px;
-  }
+{% block content %}
 
-  .form-container h2 {
-    font-size: 20px;
-  }
+<!-- マスコット画像表示 -->
+<img src="{{ url_for('static', filename='img/mascot.jpeg') }}" alt="マスコット画像" class="mascot-img">
 
-  .form-container input,
-  .form-container button {
-    font-size: 16px;
+<h1 class="main-title">リサーチナビへようこそ！</h1>
+<p class="sub-text">最強のせどり＆物販支援ツール</p>
+
+<div class="nav-buttons">
+  <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">ログイン</a>
+  <a href="{{ url_for('register_bp.register') }}" class="btn btn-secondary">新規登録</a>
+</div>
+
+<style>
+  .mascot-img {
+    width: 180px;
+    height: auto;
+    border-radius: 10px;
+    margin: 20px auto;
+    display: block;
   }
-}
+  .main-title {
+    text-align: center;
+    font-size: 2em;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  .sub-text {
+    text-align: center;
+    color: #6b7280;
+    margin-bottom: 20px;
+  }
+  .nav-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  .btn {
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 1em;
+  }
+  .btn-primary {
+    background-color: #1e3a8a;
+    color: white;
+  }
+  .btn-secondary {
+    background-color: #6b7280;
+    color: white;
+  }
+  .btn:hover {
+    opacity: 0.9;
+  }
+</style>
+
+{% endblock %}
