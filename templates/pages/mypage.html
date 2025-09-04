@@ -1,51 +1,44 @@
 {% extends "base/layout.html" %}
 {% block title %}マイページ | リサーチナビ{% endblock %}
-
 {% block content %}
-<div class="container mt-5">
-  <div class="text-center mb-4">
-    <h1 class="display-5 fw-bold">👤 マイページ</h1>
-    <p class="text-muted">登録情報や設定を確認・変更できます。</p>
-  </div>
+<h2>👤 マイページ</h2>
+<p style="color: #6b7280;">各機能へのナビゲーションです。個人情報は別ページで確認・編集できます。</p>
 
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card shadow p-4 mb-4">
-        <h4 class="mb-3">🔐 ユーザー情報</h4>
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item">ユーザーID：
-            <a href="#" class="text-decoration-none">{{ session.get("user_id", "未ログイン") }}</a>
-          </li>
-          <li class="list-group-item">ふりがな：
-            <a href="#">{{ session.get("furigana", "未登録") }}</a>
-          </li>
-          <li class="list-group-item">メールアドレス：
-            <a href="#">{{ session.get("email", "未登録") }}</a>
-          </li>
-          <li class="list-group-item">電話番号：
-            <a href="#">{{ session.get("tel", "未登録") }}</a>
-          </li>
-          <li class="list-group-item">生年月日：
-            <a href="#">{{ session.get("birthday", "未登録") }}</a>
-          </li>
-          <li class="list-group-item">部署：
-            <a href="#">{{ session.get("department", "未登録") }}</a>
-          </li>
-          <li class="list-group-item">紹介者コード：
-            <a href="#">{{ session.get("referrer", "なし") }}</a>
-          </li>
-        </ul>
-      </div>
+<ul class="link-list">
+  <li><a href="/dashboard">📊 ダッシュボード</a></li>
+  <li><a href="/search">🔎 商品検索</a></li>
+  <li><a href="/profit">💰 利益計算</a></li>
+  <li><a href="/ranking">📈 ランキング一覧</a></li>
+  <li><a href="/history">📂 履歴管理</a></li>
+  <li><a href="/notifications">🔔 通知ボックス</a></li>
+  <li><a href="/settings">⚙️ システム設定</a></li>
+  <li><a href="/profile">🗂️ 個人情報（確認・変更）</a></li>
+  <li><a href="/guide">📖 使い方ガイド</a></li>
+  <li><a href="/terms">📜 利用規約</a></li>
+  <li><a href="/privacy">🔐 プライバシーポリシー</a></li>
+</ul>
 
-      <div class="card shadow p-4 mb-4 text-center">
-        <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="マスコット" class="img-fluid mb-3" style="max-height: 180px;">
-        <p class="text-muted">制作：鳳陽合同会社 小島崇彦</p>
-      </div>
+<style>
+  .link-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+  }
+  .link-list li {
+    margin: 0.5rem 0;
+    padding: 0.6rem 1rem;
+    background: #f3f4f6;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+  }
+  .link-list li:hover {
+    background: #e5e7eb;
+  }
+  .link-list a {
+    text-decoration: none;
+    color: #1f2937;
+    font-weight: 500;
+  }
+</style>
 
-      <div class="text-center mt-4">
-        <a href="/" class="btn btn-outline-primary">🏠 ホームへ戻る</a>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}
