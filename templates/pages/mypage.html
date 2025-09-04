@@ -1,26 +1,51 @@
 {% extends "base/layout.html" %}
 {% block title %}マイページ | リサーチナビ{% endblock %}
+
 {% block content %}
-<h1>📊 利益商品リスト（マイページ）</h1>
-
-<form method="post">
-  <label>利益率で絞り込み：</label>
-  <input type="number" name="min_profit_rate" value="{{ min_rate }}" step="0.1"> 〜
-  <input type="number" name="max_profit_rate" value="{{ max_rate }}" step="0.1"> %
-  <button type="submit">適用</button>
-</form>
-
-<hr>
-
-<div class="grid">
-  {% for item in items %}
-  <div class="card">
-    <h3>{{ item.name }}</h3>
-    <p>仕入価格：¥{{ item.buy_price }}</p>
-    <p>販売価格：¥{{ item.sell_price }}</p>
-    <p>利益：+¥{{ item.profit }}（{{ item.profit_rate }}%）</p>
-    <p>回転率：{{ item.rotation }}/月</p>
+<div class="container mt-5">
+  <div class="text-center mb-4">
+    <h1 class="display-5 fw-bold">👤 マイページ</h1>
+    <p class="text-muted">登録情報や設定を確認・変更できます。</p>
   </div>
-  {% endfor %}
+
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow p-4 mb-4">
+        <h4 class="mb-3">🔐 ユーザー情報</h4>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">ユーザーID：
+            <a href="#" class="text-decoration-none">{{ session.get("user_id", "未ログイン") }}</a>
+          </li>
+          <li class="list-group-item">ふりがな：
+            <a href="#">{{ session.get("furigana", "未登録") }}</a>
+          </li>
+          <li class="list-group-item">メールアドレス：
+            <a href="#">{{ session.get("email", "未登録") }}</a>
+          </li>
+          <li class="list-group-item">電話番号：
+            <a href="#">{{ session.get("tel", "未登録") }}</a>
+          </li>
+          <li class="list-group-item">生年月日：
+            <a href="#">{{ session.get("birthday", "未登録") }}</a>
+          </li>
+          <li class="list-group-item">部署：
+            <a href="#">{{ session.get("department", "未登録") }}</a>
+          </li>
+          <li class="list-group-item">紹介者コード：
+            <a href="#">{{ session.get("referrer", "なし") }}</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card shadow p-4 mb-4 text-center">
+        <img src="{{ url_for('static', filename='img/mascot.png') }}" alt="マスコット" class="img-fluid mb-3" style="max-height: 180px;">
+        <p class="text-muted">制作：鳳陽合同会社 小島崇彦</p>
+      </div>
+
+      <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-primary">🏠 ホームへ戻る</a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
