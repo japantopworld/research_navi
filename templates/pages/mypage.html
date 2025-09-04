@@ -1,68 +1,71 @@
 {% extends "base/layout.html" %}
-
 {% block title %}マイページ | リサーチナビ{% endblock %}
 
 {% block content %}
-<div class="container">
-  <h1 style="text-align: center;">👤 マイページ</h1>
-  <p style="text-align: center; color: gray;">ご利用中の機能にアクセスできます</p>
+<h1 class="text-2xl font-bold mb-4">👤 マイページ</h1>
+<p class="mb-6 text-gray-600">ようこそ、{{ session['user_id'] }} さん！以下の機能をご利用いただけます。</p>
 
-  <div class="card-grid">
-    <a href="/profile" class="card">📝 プロフィール確認・変更</a>
-    <a href="/history" class="card">📜 利用履歴</a>
-    <a href="/alerts" class="card">🔔 通知一覧</a>
-    <a href="/ranking" class="card">🏆 人気商品ランキング</a>
-    <a href="/profit" class="card">💰 利益計算ツール</a>
-    <a href="/search" class="card">🔍 商品リサーチ</a>
-    <a href="/favorites" class="card">⭐ お気に入り商品</a>
-    <a href="/history/download" class="card">📥 履歴ダウンロード</a>
-    <a href="/advisor" class="card">🤖 AI仕入れアドバイザー</a>
-    <a href="/support" class="card">📩 お問い合わせ・サポート</a>
-    <a href="/settings" class="card">⚙️ 設定</a>
-  </div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+  <!-- 基本情報 -->
+  <a href="/profile" class="card">📝 プロフィール確認・変更</a>
+  <a href="/account" class="card">🧾 アカウント情報</a>
+
+  <!-- 仕入れ関連 -->
+  <a href="/search" class="card">🔍 商品リサーチ</a>
+  <a href="/advisor" class="card">🤖 AI仕入れアドバイザー</a>
+  <a href="/favorites" class="card">⭐ お気に入り商品</a>
+
+  <!-- 分析・利益 -->
+  <a href="/profit" class="card">💰 利益計算ツール</a>
+  <a href="/ranking" class="card">🏆 利益ランキング</a>
+  <a href="/dashboard" class="card">📊 売上・収支ダッシュボード</a>
+  <a href="/history/download" class="card">📥 利益履歴CSV</a>
+
+  <!-- 通知・履歴 -->
+  <a href="/alerts" class="card">🔔 通知一覧</a>
+  <a href="/history" class="card">📜 利用履歴</a>
+
+  <!-- 各種ツール -->
+  <a href="/ocr" class="card">📷 レシートOCR</a>
+  <a href="/stock" class="card">📦 在庫管理ツール</a>
+  <a href="/listing" class="card">🛒 出品補助AI</a>
+  <a href="/auto-pricing" class="card">🔄 自動価格調整</a>
+
+  <!-- データ連携 -->
+  <a href="/import/amazon" class="card">📁 Amazon CSVインポート</a>
+  <a href="/import/rakuten" class="card">🧾 楽天/Yahoo CSVインポート</a>
+  <a href="/import/order-csv" class="card">📦 発注CSV整理ツール</a>
+
+  <!-- 会計・記録 -->
+  <a href="/bookkeeping" class="card">🧾 経費帳簿</a>
+  <a href="/tax-support" class="card">💼 税金試算サポート</a>
+  <a href="/payroll" class="card">💸 給与・外注記録</a>
+
+  <!-- サポート・設定 -->
+  <a href="/support" class="card">📩 お問い合わせ・サポート</a>
+  <a href="/settings" class="card">⚙️ 設定</a>
+  <a href="/logout" class="card">🚪 ログアウト</a>
+
 </div>
 
 <style>
-  .container {
-    max-width: 1000px;
-    margin: 60px auto;
-    padding: 40px;
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  }
-
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    margin-top: 30px;
-  }
-
   .card {
     display: block;
-    padding: 20px;
-    text-align: center;
-    background-color: #f9f9f9;
-    border-radius: 8px;
+    background-color: #f3f4f6;
+    padding: 1rem;
+    border-radius: 0.5rem;
     text-decoration: none;
-    color: #333;
-    font-weight: bold;
-    border: 1px solid #ddd;
-    transition: 0.3s;
+    color: #111827;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: 1px solid #d1d5db;
   }
 
   .card:hover {
-    background-color: #e0f7fa;
-    color: #000;
-    border-color: #00bcd4;
-  }
-
-  @media (max-width: 600px) {
-    .container {
-      margin: 20px;
-      padding: 20px;
-    }
+    background-color: #e5e7eb;
+    transform: scale(1.02);
   }
 </style>
+
 {% endblock %}
