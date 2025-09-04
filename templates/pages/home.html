@@ -1,28 +1,26 @@
-{% extends "base/layout.html" %}
-{% block title %}ホーム | リサーチナビ{% endblock %}
+/* デフォルト（パソコン向け） */
+.form-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+}
 
-{% block content %}
-<div class="container text-center mt-5">
-  <h1 class="mb-2">
-    🔍 <span style="color:#d90429;">リサーチナビ</span>
-  </h1>
-  <p class="mb-4 text-muted">最強のせどり支援ツールへようこそ！</p>
+/* スマホ画面（横幅が600px以下の場合） */
+@media (max-width: 600px) {
+  .form-container {
+    max-width: 90%;
+    padding: 20px;
+  }
 
-  <!-- マスコット画像（hero_main.jpg） -->
-  <div class="mb-4">
-    <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビマスコット" class="img-fluid" style="max-height: 220px;">
-  </div>
+  .form-container h2 {
+    font-size: 20px;
+  }
 
-  <!-- ログイン・登録ボタン -->
-  <div class="d-flex justify-content-center gap-3">
-    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success">新規登録</a>
-  </div>
-
-  <!-- フッター -->
-  <div class="mt-4 text-muted small">
-    <p>制作者：鳳陽合同会社　小島崇彦</p>
-    <p>© 2025 Research Navi. All rights reserved.</p>
-  </div>
-</div>
-{% endblock %}
+  .form-container input,
+  .form-container button {
+    font-size: 16px;
+  }
+}
