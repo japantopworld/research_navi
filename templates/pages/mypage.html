@@ -4,7 +4,9 @@
 
 <div class="min-h-screen pb-12">
   <h1 class="text-2xl font-bold mb-4">👤 マイページ</h1>
-  <p class="mb-6 text-gray-600">ようこそ、{{ session['user_id'] }} さん！以下の機能をご利用いただけます。</p>
+  <p class="mb-6 text-gray-600">
+    ようこそ、{{ session.get('user_id', 'ゲスト') }} さん！以下の機能をご利用いただけます。
+  </p>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     {% set features = [
