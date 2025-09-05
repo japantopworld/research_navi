@@ -1,71 +1,27 @@
 {% extends "base/layout.html" %}
 {% block title %}マイページ | リサーチナビ{% endblock %}
-
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">👤 マイページ</h1>
-<p class="mb-6 text-gray-600">ようこそ、{{ session['user_id'] }} さん！以下の機能をご利用いただけます。</p>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+<div class="min-h-screen pb-12">
+  <h1 class="text-2xl font-bold mb-4">👤 マイページ</h1>
+  <p class="mb-6 text-gray-600">ようこそ、{{ session['user_id'] }} さん！以下の機能をご利用いただけます。</p>
 
-  <!-- 基本情報 -->
-  <a href="/profile" class="card">📝 プロフィール確認・変更</a>
-  <a href="/account" class="card">🧾 アカウント情報</a>
-
-  <!-- 仕入れ関連 -->
-  <a href="/search" class="card">🔍 商品リサーチ</a>
-  <a href="/advisor" class="card">🤖 AI仕入れアドバイザー</a>
-  <a href="/favorites" class="card">⭐ お気に入り商品</a>
-
-  <!-- 分析・利益 -->
-  <a href="/profit" class="card">💰 利益計算ツール</a>
-  <a href="/ranking" class="card">🏆 利益ランキング</a>
-  <a href="/dashboard" class="card">📊 売上・収支ダッシュボード</a>
-  <a href="/history/download" class="card">📥 利益履歴CSV</a>
-
-  <!-- 通知・履歴 -->
-  <a href="/alerts" class="card">🔔 通知一覧</a>
-  <a href="/history" class="card">📜 利用履歴</a>
-
-  <!-- 各種ツール -->
-  <a href="/ocr" class="card">📷 レシートOCR</a>
-  <a href="/stock" class="card">📦 在庫管理ツール</a>
-  <a href="/listing" class="card">🛒 出品補助AI</a>
-  <a href="/auto-pricing" class="card">🔄 自動価格調整</a>
-
-  <!-- データ連携 -->
-  <a href="/import/amazon" class="card">📁 Amazon CSVインポート</a>
-  <a href="/import/rakuten" class="card">🧾 楽天/Yahoo CSVインポート</a>
-  <a href="/import/order-csv" class="card">📦 発注CSV整理ツール</a>
-
-  <!-- 会計・記録 -->
-  <a href="/bookkeeping" class="card">🧾 経費帳簿</a>
-  <a href="/tax-support" class="card">💼 税金試算サポート</a>
-  <a href="/payroll" class="card">💸 給与・外注記録</a>
-
-  <!-- サポート・設定 -->
-  <a href="/support" class="card">📩 お問い合わせ・サポート</a>
-  <a href="/settings" class="card">⚙️ 設定</a>
-  <a href="/logout" class="card">🚪 ログアウト</a>
-
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% set features = [
+      ("お気に入り商品", "⭐", "/favorites"),
+      ("履歴のダウンロード（CSV）", "📄", "/history/download"),
+      ("AI仕入れアドバイザー", "🤖", "/ai-advisor"),
+      ("お問い合わせ・サポート", "📩", "/support"),
+      ("設定", "⚙️", "/settings"),
+      ("ログアウト", "🚪", "/logout")
+    ] %}
+    {% for label, icon, link in features %}
+      <a href="{{ link }}" class="block p-6 bg-blue-100 hover:bg-blue-200 rounded-lg shadow">
+        <div class="text-3xl mb-2">{{ icon }}</div>
+        <div class="font-semibold text-lg">{{ label }}</div>
+      </a>
+    {% endfor %}
+  </div>
 </div>
-
-<style>
-  .card {
-    display: block;
-    background-color: #f3f4f6;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    color: #111827;
-    font-weight: 600;
-    transition: all 0.2s;
-    border: 1px solid #d1d5db;
-  }
-
-  .card:hover {
-    background-color: #e5e7eb;
-    transform: scale(1.02);
-  }
-</style>
 
 {% endblock %}
