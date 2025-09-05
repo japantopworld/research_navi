@@ -1,37 +1,28 @@
-<nav class="nav">
-  <a href="{{ url_for('home') }}">ホーム</a>
-  <a href="{{ url_for('search') }{% if session.get('user_id') == 'KING1192' %}
+{% if session.get('user_id') == 'KING1192' %}
 <!-- 👑 管理者用ナビゲーションバー -->
 <nav style="background-color: #fff5e6; padding: 10px;">
     <strong>👑 管理者モード</strong> |
-    <a href="/">🏠 ホーム</a> |
-    <a href="/search">🔍 検索</a> |
-    <a href="/ranking">📈 ランキング</a> |
-    <a href="/guide">📘 使い方</a> |
-    <a href="/admin/users">👥 ユーザー管理</a> |
-    <a href="/admin/logs">🗂 ログ表示</a> |
-    <a href="/logout" style="float:right;">🚪 ログアウト</a>
+    <a href="{{ url_for('home') }}">🏠 ホーム</a> |
+    <a href="{{ url_for('search') }}">🔍 検索</a> |
+    <a href="{{ url_for('ranking') }}">📈 ランキング</a> |
+    <a href="{{ url_for('guide') }}">📘 使い方</a> |
+    <a href="{{ url_for('admin_bp.manage_users') }}">👥 ユーザー管理</a> |
+    <a href="{{ url_for('admin_bp.view_logs') }}">🗂 ログ表示</a> |
+    <a href="{{ url_for('logout_bp.logout') }}" style="float:right;">🚪 ログアウト</a>
 </nav>
-
 {% else %}
 <!-- ✅ 一般ユーザー用ナビゲーションバー -->
 <nav style="background-color: #f0f0f0; padding: 10px;">
-    <a href="/">🏠 ホーム</a> |
-    <a href="/search">🔍 検索</a> |
-    <a href="/ranking">📈 ランキング</a> |
-    <a href="/guide">📘 使い方</a> |
-    <a href="/logout" style="float:right;">🚪 ログアウト</a>
+    <a href="{{ url_for('home') }}">🏠 ホーム</a> |
+    <a href="{{ url_for('search') }}">🔍 商品検索</a> |
+    <a href="{{ url_for('profit') }}">💰 利益計算</a> |
+    <a href="{{ url_for('history') }}">🕓 履歴</a> |
+    <a href="{{ url_for('ranking') }}">📈 ランキング</a> |
+    <a href="{{ url_for('notifications') }}">🔔 通知</a> |
+    <a href="{{ url_for('ocr') }}">📷 OCR</a> |
+    <a href="{{ url_for('suppliers') }}">🏪 仕入れ先</a> |
+    <a href="{{ url_for('setting') }}">⚙️ 設定</a> |
+    <a href="{{ url_for('guide') }}">📘 使い方</a> |
+    <a href="{{ url_for('logout_bp.logout') }}" style="float:right;">🚪 ログアウト</a>
 </nav>
 {% endif %}
-}">商品検索</a>
-  <a href="{{ url_for('profit') }}">利益計算</a>
-  <a href="{{ url_for('history') }}">履歴</a>
-  <a href="{{ url_for('ranking') }}">ランキング</a>
-  <a href="{{ url_for('notifications') }}">通知</a>
-  <a href="{{ url_for('ocr') }}">OCR</a>
-  <a href="{{ url_for('suppliers') }}">仕入れ先</a>
-  <a href="{{ url_for('setting') }}" class="strong">設定</a>
-　 <a href="/guide">📘 使い方</a> |
-   <a href="/logout" style="float:right;">🚪 ログアウト</a>
-　</nav>
-
