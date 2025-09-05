@@ -2,28 +2,23 @@ from flask import Flask
 from routes.login import login_bp
 from routes.register import register_bp
 from routes.home import home_bp
-from routes.ranking import ranking_bp
-from routes.guide import guide_bp
-from routes.admin import admin_bp
-from routes.health_check import health_bp  # 必ず追加！
+from routes.mypage import mypage_bp
+from routes.health_check import health_check_bp  # ← /healthz 対応
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = "your_secret_key_here"  # セッション用
 
 # Blueprint登録
 app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(home_bp)
-app.register_blueprint(ranking_bp)
-app.register_blueprint(guide_bp)
-app.register_blueprint(admin_bp)
-app.register_blueprint(health_bp)  # ✅ /healthzエンドポイントを追加
+app.register_blueprint(mypage_bp)
+app.register_blueprint(health_check_bp)  # ← ヘルスチェック用
 
-# 明示的な /healthz 定義（Render向け）
-@app.route("/healthz")
-def health_check_direct():
-    return "OK", 200
+# ルートページ（必要なら）
+@app.route("/")
+def index():
+    return "🌐 リサーチナビへようこそ！（トップページ）"
 
-# ローカル起動用（本番では使われない）
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
