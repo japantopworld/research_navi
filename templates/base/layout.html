@@ -1,64 +1,20 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>{% block title %}{% endblock %} | リサーチナビ</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f4;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-    }
-    input, select {
-      width: 100%;
-      padding: 8px;
-      box-sizing: border-box;
-    }
-    .button {
-      width: 100%;
-      padding: 10px;
-      background-color: #4CAF50;
-      border: none;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .button:hover {
-      background-color: #45a049;
-    }
-    h1 {
-      text-align: center;
-    }
-    .flash-message {
-      margin-top: 15px;
-      color: red;
-      text-align: center;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}リサーチナビ{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-  <div class="container">
+<body class="min-h-screen bg-white text-gray-900 overflow-x-hidden">
+
+  {% include "components/navbar.html" %}
+
+  <main class="p-4">
     {% block content %}{% endblock %}
-  </div>
+  </main>
+
+  {% include "components/footer.html" %}
+
 </body>
 </html>
