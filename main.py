@@ -37,5 +37,10 @@ def show_routes():
         output.append(line)
     return "<pre>" + "\n".join(output) + "</pre>"
 
+# ✅ 一時的な直接ルート：Blueprintを使わずに /register を処理
+@app.route('/register')
+def test_direct_register():
+    return "Register route is working (direct)"
+
 if __name__ == '__main__':
     app.run(debug=True)
