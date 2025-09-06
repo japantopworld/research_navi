@@ -5,7 +5,7 @@
 <h1>📝 新規登録フォーム</h1>
 <p style="color: #6b7280">以下の項目をすべて入力してください。</p>
 
-<form method="POST" action="{{ url_for('register_bp.register') }}">
+<form method="POST" action="{{ url_for('auth_bp.register') }}">
   <div class="form-group">
     <label for="username">ユーザー名</label>
     <input type="text" class="form-control" name="username" id="username" required>
@@ -64,7 +64,7 @@
   <br>
 
   <button type="submit" class="btn btn-primary">登録する</button>
-  <a href="{{ url_for('login_bp.login') }}" class="btn btn-secondary">ログインに戻る</a>
+  <a href="{{ url_for('auth_bp.login') }}" class="btn btn-secondary">ログインに戻る</a>
 </form>
 
 {% endblock %}
