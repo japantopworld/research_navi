@@ -26,3 +26,6 @@ def healthz():
 
 if __name__ == '__main__':
     app.run(debug=True)
+@app.route('/test-register')
+def test_register():
+    return "Register route is working"
