@@ -40,3 +40,28 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('auth_bp.login'))
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        new_id = request.form['id']
+        new_pass = request.form['password']
+
+        # 重複チェック
+        if os.path.exists(USERS_CSV_PATH):
+            with open(USERS_CSV_PATH, newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    if row['ID'] == new_id:
+                        return render_template('auth/register.html', error='このIDは既に登録されています')
+
+        # 新規登録
+        with open(USERS_CSV_PATH, 'a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['ID', 'PASS'])
+            if csvfile.tell() == 0:
+                writer.writeheader()
+            writer.writerow({'ID': new_id, 'PASS': new_pass})
+
+        return redirect(url_for('auth_bp.login'))
+
+    return render_template('auth/register.html')
