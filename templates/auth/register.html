@@ -1,70 +1,36 @@
-{% extends "base/layout.html" %}
-{% block title %}新規登録 | リサーチナビ{% endblock %}
-{% block content %}
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        data = {
+            'ID': request.form['user_id'],
+            'PASS': request.form['password'],
+            'USERNAME': request.form.get('username', ''),
+            'FURIGANA': request.form.get('furigana', ''),
+            'BIRTHDAY': request.form.get('birthday', ''),
+            'AGE': request.form.get('age', ''),
+            'PHONE': request.form.get('phone', ''),
+            'MOBILE': request.form.get('mobile', ''),
+            'EMAIL': request.form.get('email', ''),
+            'DEPARTMENT': request.form.get('department', ''),
+            'REFERRER': request.form.get('referrer', '')
+        }
 
-<h1>📝 新規登録フォーム</h1>
-<p style="color: #6b7280">以下の項目をすべて入力してください。</p>
+        # 重複チェック
+        if os.path.exists(USERS_CSV_PATH):
+            with open(USERS_CSV_PATH, newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    if row['ID'] == data['ID']:
+                        return render_template('auth/register.html', error='このIDは既に登録されています')
 
-<form method="POST" action="{{ url_for('auth_bp.register') }}">
-  <div class="form-group">
-    <label for="username">ユーザー名</label>
-    <input type="text" class="form-control" name="username" id="username" required>
-  </div>
+        # 新規登録
+        with open(USERS_CSV_PATH, 'a', newline='', encoding='utf-8') as csvfile:
+            fieldnames = list(data.keys())
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            if csvfile.tell() == 0:
+                writer.writeheader()
+            writer.writerow(data)
 
-  <div class="form-group">
-    <label for="furigana">ふりがな</label>
-    <input type="text" class="form-control" name="furigana" id="furigana">
-  </div>
+        return redirect(url_for('auth_bp.login'))
 
-  <div class="form-group">
-    <label for="birthday">生年月日</label>
-    <input type="date" class="form-control" name="birthday" id="birthday">
-  </div>
-
-  <div class="form-group">
-    <label for="age">年齢</label>
-    <input type="number" class="form-control" name="age" id="age">
-  </div>
-
-  <div class="form-group">
-    <label for="phone">電話番号</label>
-    <input type="tel" class="form-control" name="phone" id="phone">
-  </div>
-
-  <div class="form-group">
-    <label for="mobile">携帯番号</label>
-    <input type="tel" class="form-control" name="mobile" id="mobile">
-  </div>
-
-  <div class="form-group">
-    <label for="email">メールアドレス</label>
-    <input type="email" class="form-control" name="email" id="email">
-  </div>
-
-  <div class="form-group">
-    <label for="department">部署名</label>
-    <input type="text" class="form-control" name="department" id="department">
-  </div>
-
-  <div class="form-group">
-    <label for="referrer">紹介者番号</label>
-    <input type="text" class="form-control" name="referrer" id="referrer">
-  </div>
-
-  <div class="form-group">
-    <label for="user_id">ログインID</label>
-    <input type="text" class="form-control" name="user_id" id="user_id" required>
-  </div>
-
-  <div class="form-group">
-    <label for="password">パスワード</label>
-    <input type="password" class="form-control" name="password" id="password" required>
-  </div>
-
-  <br>
-
-  <button type="submit" class="btn btn-primary">登録する</button>
-  <a href="{{ url_for('auth_bp.login') }}" class="btn btn-secondary">ログインに戻る</a>
-</form>
-
-{% endblock %}
+    return render_template('auth/register.html')
