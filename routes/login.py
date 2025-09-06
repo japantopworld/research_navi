@@ -44,7 +44,7 @@ def logout():
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        new_id = request.form['id']
+        new_id = request.form['user_id']  # ← HTMLフォームに合わせて修正済み
         new_pass = request.form['password']
 
         # 重複チェック
