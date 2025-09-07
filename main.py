@@ -8,3 +8,6 @@ def hello():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     return "<h1>Register route direct from main.py</h1>"
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    return "<h1>Register route direct from main.py</h1>"
