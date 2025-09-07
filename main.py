@@ -38,3 +38,5 @@ def show_routes():
         line = f"{rule.endpoint:30s} {methods:20s} {rule.rule}"
         output.append(line)
     return "<pre>" + "\n".join(output) + "</pre>"
+if __name__ == "__main__":
+    app.run()
