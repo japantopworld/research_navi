@@ -22,12 +22,12 @@ app.register_blueprint(guide_bp)  # ✅ 追加
 def healthz():
     return "OK"
 
-# ✅ テストルート：Flaskが動いているか確認
+# ✅ テストルート（Flaskが動いているか確認）
 @app.route('/test-register')
 def test_register():
     return "Register route is working"
 
-# ✅ ルート一覧表示：Flaskが認識しているURLを確認
+# ✅ ルート一覧表示（Flaskが認識しているURLを確認）
 @app.route('/routes')
 def show_routes():
     output = []
@@ -36,8 +36,3 @@ def show_routes():
         line = f"{rule.endpoint:30s} {methods:20s} {rule.rule}"
         output.append(line)
     return "<pre>" + "\n".join(output) + "</pre>"
-
-# ✅ 一時的な直接ルート：末尾スラッシュ対応
-@app.route('/register', strict_slashes=False)
-def test_direct_register():
-    return "Register route is working (direct)"
