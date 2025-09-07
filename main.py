@@ -6,28 +6,29 @@ from routes.health_check import health_check_bp
 from routes.login import auth_bp
 from routes.guide import guide_bp  # ✅ 追加
 
-app = Flask(__name__)
+# ✅ テンプレートフォルダを明示
+app = Flask(__name__, template_folder='templates')
 app.secret_key = 'your_secret_key'
 
-# Blueprint 登録
+# Blueprint 登録（順番は auth_bp を最後にしてもOK）
 app.register_blueprint(home_bp)
 app.register_blueprint(search_bp)
 app.register_blueprint(ranking_bp)
 app.register_blueprint(health_check_bp)
-app.register_blueprint(auth_bp)
-app.register_blueprint(guide_bp)  # ✅ 追加
+app.register_blueprint(guide_bp)
+app.register_blueprint(auth_bp)  # ✅ 最後に登録
 
 # Render 用ヘルスチェック
 @app.route('/healthz')
 def healthz():
     return "OK"
 
-# ✅ テストルート（Flaskが動いているか確認）
+# テストルート（Flaskが動いているか確認）
 @app.route('/test-register')
 def test_register():
     return "Register route is working"
 
-# ✅ ルート一覧表示（Flaskが認識しているURLを確認）
+# ルート一覧表示（Flaskが認識しているURLを確認）
 @app.route('/routes')
 def show_routes():
     output = []
