@@ -3,14 +3,14 @@ from routes.home import home_bp
 from routes.search import search_bp
 from routes.ranking import ranking_bp
 from routes.health_check import health_check_bp
-from routes.login import auth_bp
-from routes.guide import guide_bp  # ✅ 追加
+from routes.guide import guide_bp
+from routes.login import auth_bp  # ← 最後に登録する
 
 # ✅ テンプレートフォルダを明示
 app = Flask(__name__, template_folder='templates')
 app.secret_key = 'your_secret_key'
 
-# Blueprint 登録（順番は auth_bp を最後にしてもOK）
+# Blueprint 登録（auth_bp を最後に）
 app.register_blueprint(home_bp)
 app.register_blueprint(search_bp)
 app.register_blueprint(ranking_bp)
