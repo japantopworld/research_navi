@@ -1,34 +1,35 @@
-from flask import Flask
-from routes.home import home_bp
-from routes.search import search_bp
-from routes.ranking import ranking_bp
-from routes.health_check import health_check_bp
-from routes.guide import guide_bp
-from routes.login import auth_bp  # ← 最後に登録する
+from flask import Flask, redirect, url_for, session
 
-# ✅ テンプレートフォルダを明示
 app = Flask(__name__, template_folder='templates')
 app.secret_key = 'your_secret_key'
 
-# Blueprint 登録（auth_bp を最後に）
-app.register_blueprint(home_bp)
-app.register_blueprint(search_bp)
-app.register_blueprint(ranking_bp)
-app.register_blueprint(health_check_bp)
-app.register_blueprint(guide_bp)
-app.register_blueprint(auth_bp)  # ✅ 最後に登録
+# ✅ /register を直接定義（Blueprintなし）
+@app.route('/register', methods=['GET', 'POST'])
+def direct_register():
+    return "<h1>Register route direct from main.py</h1>"
 
-# Render 用ヘルスチェック
+# ✅ /login（仮のログインページ）
+@app.route('/login')
+def login():
+    return "<h1>ログインページ（仮）</h1>"
+
+# ✅ /logout（セッション削除）
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+# ✅ Render 用ヘルスチェック
 @app.route('/healthz')
 def healthz():
     return "OK"
 
-# テストルート（Flaskが動いているか確認）
+# ✅ テストルート（Flaskが動いているか確認）
 @app.route('/test-register')
 def test_register():
     return "Register route is working"
 
-# ルート一覧表示（Flaskが認識しているURLを確認）
+# ✅ ルート一覧表示（Flaskが認識しているURLを確認）
 @app.route('/routes')
 def show_routes():
     output = []
