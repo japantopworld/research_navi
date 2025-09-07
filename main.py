@@ -17,7 +17,7 @@ app.register_blueprint(health_check_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(guide_bp)  # ✅ 追加
 
-# Render 用
+# Render 用ヘルスチェック
 @app.route('/healthz')
 def healthz():
     return "OK"
@@ -41,6 +41,3 @@ def show_routes():
 @app.route('/register')
 def test_direct_register():
     return "Register route is working (direct)"
-
-if __name__ == '__main__':
-    app.run(debug=True)
