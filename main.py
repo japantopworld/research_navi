@@ -1,10 +1,10 @@
 from flask import Flask
 from routes.home import home_bp
 from routes.search import search_bp
-from routes.guide import guide_bp
-from routes.login import auth_bp
-from routes.register import register_bp
+from routes.ranking import ranking_bp
 from routes.health_check import health_check_bp
+from routes.guide import guide_bp
+from routes.auth import auth_bp  # ログイン/登録画面など
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -12,12 +12,12 @@ app.secret_key = 'your_secret_key'
 # Blueprint 登録
 app.register_blueprint(home_bp)
 app.register_blueprint(search_bp)
+app.register_blueprint(ranking_bp)
 app.register_blueprint(guide_bp)
-app.register_blueprint(auth_bp)         # ログイン機能
-app.register_blueprint(register_bp)     # 新規登録機能
-app.register_blueprint(health_check_bp) # Renderのヘルスチェック用
+app.register_blueprint(auth_bp)
+app.register_blueprint(health_check_bp)
 
-# Healthcheck用ルート（Render用）
+# Healthcheck（Render 用）
 @app.route('/healthz')
 def healthz():
     return "OK"
