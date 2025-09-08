@@ -5,7 +5,7 @@
   <ul class="navbar-links">
     <li><a href="{{ url_for('search_bp.search') }}">🔍 商品検索</a></li>
     <li><a href="{{ url_for('ranking_bp.ranking') }}">📊 ランキング</a></li>
-    <li><a href="{{ url_for('guide_bp.guide_page') }}">📘 使い方</a></li>
+    <li><a href="{{ url_for('guide_bp.guide') }}">📘 使い方</a></li>
   </ul>
   <ul class="navbar-auth">
     {% if 'user_id' in session %}
