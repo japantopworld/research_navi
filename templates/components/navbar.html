@@ -1,14 +1,15 @@
-<!-- templates/components/navbar.html -->
-
 <nav class="navbar">
-  <ul>
-    <li><a href="{{ url_for('home_bp.mypage') }}">🏠 ホーム</a></li>
-    <li><a href="{{ url_for('search_bp.search') }}">🔍 検索</a></li>
+  <div class="navbar-logo">
+    <a href="{{ url_for('home_bp.mypage') }}">🏠 リサーチナビ</a>
+  </div>
+  <ul class="navbar-links">
+    <li><a href="{{ url_for('search_bp.search') }}">🔍 商品検索</a></li>
     <li><a href="{{ url_for('ranking_bp.ranking') }}">📊 ランキング</a></li>
     <li><a href="{{ url_for('guide_bp.guide_page') }}">📘 使い方</a></li>
-
-    {% if session.get("user_id") %}
-      <li><a href="{{ url_for('auth_bp.logout') }}">🔓 ログアウト</a></li>
+  </ul>
+  <ul class="navbar-auth">
+    {% if 'user_id' in session %}
+      <li><a href="{{ url_for('auth_bp.logout') }}">🚪 ログアウト</a></li>
     {% else %}
       <li><a href="{{ url_for('auth_bp.login') }}">🔑 ログイン</a></li>
       <li><a href="{{ url_for('auth_bp.register') }}">📝 新規登録</a></li>
