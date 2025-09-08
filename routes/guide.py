@@ -1,11 +1,9 @@
 # routes/guide.py
 
 from flask import Blueprint, render_template
-from utils.auth_required import login_required  # ← 認証が必要なら忘れずに
 
-guide_bp = Blueprint('guide_bp', __name__)  # ✅ Blueprint名と一致させる
+guide_bp = Blueprint('guide_bp', __name__)  # Blueprint名を明示
 
-@guide_bp.route("/guide")
-@login_required  # ← 任意：ログイン必須にしたい場合
-def guide():
+@guide_bp.route("/guide", endpoint="guide_page")  # ✅ エンドポイント名を guide_page に統一
+def guide_page():
     return render_template("pages/guide.html")
