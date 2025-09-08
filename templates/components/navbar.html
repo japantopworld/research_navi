@@ -1,45 +1,17 @@
-{% if session.get('user_id') == 'KING1192' %}
-<!-- 👑 管理者用ナビゲーションバー -->
-<nav style="background-color: #fff5e6; padding: 10px;">
-    <strong>👑 管理者モード</strong> |
-    <a href="{{ url_for('home_bp.home') }}">🏠 ホーム</a> |
-    <a href="{{ url_for('search_bp.search') }}">🔍 検索</a> |
-    <a href="{{ url_for('ranking_bp.ranking') }}">📈 ランキング</a> |
-    <a href="{{ url_for('guide_bp.guide') }}">📘 使い方</a> |
-    <a href="{{ url_for('admin_bp.manage_users') }}">👥 ユーザー管理</a> |
-    <a href="{{ url_for('admin_bp.view_logs') }}">🗂 ログ表示</a> |
-    <a href="{{ url_for('auth_bp.logout') }}" style="float:right;">🚪 ログアウト</a>
-</nav>
-{% else %}
-<!-- ✅ 一般ユーザー用ナビゲーションバー -->
-<nav style="background-color: #f0f0f0; padding: 10px;">
-    <a href="{{ url_for('home_bp.home') }}">🏠 ホーム</a> |
-    <a href="{{ url_for('search_bp.search') }}">🔍 検索</a> |
-    <a href="{{ url_for('ranking_bp.ranking') }}">📈 ランキング</a> |
-    <a href="{{ url_for('guide_bp.guide') }}">📘 使い方</a> |
-    <a href="{{ url_for('auth_bp.logout') }}" style="float:right;">🚪 ログアウト</a>
-</nav>
-{% endif %}
-{% if session.get('user_id') == 'KING1192' %}
-<!-- 👑 管理者用ナビゲーションバー -->
-<nav style="background-color: #fff5e6; padding: 10px;">
-    <strong>👑 管理者モード</strong> |
-    <a href="{{ url_for('home_bp.home') }}">🏠 ホーム</a> |
-    <a href="{{ url_for('search_bp.search') }}">🔍 検索</a> |
-    <a href="{{ url_for('ranking_bp.ranking') }}">📈 ランキング</a> |
-    <a href="{{ url_for('guide_bp.guide') }}">📘 使い方</a> |
-    <a href="{{ url_for('admin_bp.manage_users') }}">👥 ユーザー管理</a> |
-    <a href="{{ url_for('admin_bp.view_logs') }}">🗂 ログ表示</a> |
-    <a href="{{ url_for('auth_bp.logout') }}" style="float:right;">🚪 ログアウト</a>
-</nav>
-{% else %}
-<!-- ✅ 一般ユーザー用ナビゲーションバー -->
-<nav style="background-color: #f0f0f0; padding: 10px;">
-    <a href="{{ url_for('home_bp.home') }}">🏠 ホーム</a> |
-    <a href="{{ url_for('search_bp.search') }}">🔍 検索</a> |
-    <a href="{{ url_for('ranking_bp.ranking') }}">📈 ランキング</a> |
-    <a href="{{ url_for('guide_bp.guide') }}">📘 使い方</a> |
-    <a href="{{ url_for('auth_bp.logout') }}" style="float:right;">🚪 ログアウト</a>
-</nav>
-{% endif %}
+<!-- templates/components/navbar.html -->
 
+<nav class="navbar">
+  <ul>
+    <li><a href="{{ url_for('home_bp.mypage') }}">🏠 ホーム</a></li>
+    <li><a href="{{ url_for('search_bp.search') }}">🔍 検索</a></li>
+    <li><a href="{{ url_for('ranking_bp.ranking') }}">📊 ランキング</a></li>
+    <li><a href="{{ url_for('guide_bp.guide_page') }}">📘 使い方</a></li>
+
+    {% if session.get("user_id") %}
+      <li><a href="{{ url_for('auth_bp.logout') }}">🔓 ログアウト</a></li>
+    {% else %}
+      <li><a href="{{ url_for('auth_bp.login') }}">🔑 ログイン</a></li>
+      <li><a href="{{ url_for('auth_bp.register') }}">📝 新規登録</a></li>
+    {% endif %}
+  </ul>
+</nav>
