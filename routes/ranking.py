@@ -1,6 +1,7 @@
 # routes/ranking.py
+
 from flask import Blueprint, render_template
-from utils.auth_required import login_required
+from utils.auth_required import login_required  # ログイン必須装飾
 
 ranking_bp = Blueprint('ranking_bp', __name__)
 
