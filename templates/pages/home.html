@@ -1,94 +1,28 @@
-{% extends "base/layout.html" %}
-{% block title %}リサーチナビ | ホーム{% endblock %}
-{% block content %}
-
+{% extends "base/layout.html" %} {% block title %}リサーチナビ | ホーム{% endblock %} {% block content %}
 <style>
-  /* ====== 見栄えの底上げ（既存構造は維持） ====== */
-  :root{
-    --bg-grad: radial-gradient(800px 300px at 50% -10%, rgba(59,130,246,.12), transparent 70%);
-    --card: #ffffff;
-    --text: #1f2937;
-    --muted:#6b7280;
-    --blue:#3b82f6;
-    --green:#10b981;
-    --ring: 0 10px 30px rgba(59,130,246,.18);
-  }
-  .hero-wrap{
-    background: var(--bg-grad);
-    border-radius: 1.2rem;
-    padding: clamp(24px, 6vw, 56px) clamp(16px, 5vw, 40px);
-    box-shadow: 0 1px 0 rgba(0,0,0,.04) inset;
-    max-width: 980px; margin: 0 auto;
-  }
-  .hero-container {
-    display: flex; flex-direction: column; align-items: center; text-align: center;
-    gap: 1.25rem; color: var(--text);
-  }
-  .hero-title {
-    font-size: clamp(1.9rem, 3.6vw, 2.6rem);
-    line-height: 1.15; margin: 0;
-  }
-  .hero-sub {
-    font-size: clamp(1rem, 2.2vw, 1.2rem);
-    color: var(--muted); margin: .25rem 0 1rem 0;
-  }
-  .hero-media {
-    width: min(320px, 85%); margin: .2rem auto 1rem;
-    border-radius: 16px; overflow: hidden; background: #fff;
-    box-shadow: 0 6px 24px rgba(0,0,0,.08);
-    border: 1px solid rgba(0,0,0,.06);
-  }
-  .hero-media img { display:block; width:100%; height:auto; }
-
-  .hero-buttons {
-    display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
-  }
-  .btn {
-    display: inline-block; text-decoration: none; font-weight: 700;
-    padding: .9rem 1.4rem; border-radius: .7rem; color: #fff;
-    transition: transform .05s ease, opacity .15s ease, box-shadow .2s ease;
-    will-change: transform;
-  }
-  .btn.login { background: var(--blue); box-shadow: var(--ring); }
-  .btn.register { background: var(--green); color: #06331f; }
-  .btn:hover { transform: translateY(-1px); opacity: .97; }
-
-  .footer-text {
-    margin-top: .6rem; font-size: .92rem; color: var(--muted);
-  }
-
-  @media (max-width: 480px) {
-    .btn { padding: .8rem 1.2rem; font-size: 1rem; }
-  }
+  .hero-container { display:flex; flex-direction:column; align-items:center; text-align:center; padding:5vh 2vw; font-size:1.3rem; }
+  .hero-container h1 { font-size:2.2rem; margin-bottom:.5rem; }
+  .hero-container p { font-size:1.2rem; color:#555; margin-bottom:1.5rem; }
+  .hero-container img { max-width:300px; width:80%; height:auto; margin-bottom:1.5rem; border-radius:1rem; box-shadow:0 0 10px rgba(0,0,0,.1); }
+  .hero-buttons { display:flex; gap:1.5rem; justify-content:center; margin-bottom:2rem; }
+  .hero-buttons a { padding:1rem 2rem; font-size:1.2rem; border-radius:.6rem; text-decoration:none; color:#fff; font-weight:bold; }
+  .hero-buttons a.login { background-color:#3b82f6; }
+  .hero-buttons a.register { background-color:#10b981; }
+  .footer-text { margin-top:1.5rem; font-size:.9rem; color:#666; }
+  @media (max-width:480px){ .hero-container{font-size:1.1rem;} .hero-container h1{font-size:1.7rem;} .hero-buttons a{font-size:1rem; padding:.8rem 1.5rem;} .footer-text{font-size:.8rem;} }
 </style>
 
-<div class="hero-wrap">
-  <div class="hero-container">
-    <h1 class="hero-title">🔍 <span style="color:#0f766e;">リサーチナビ</span></h1>
-    <p class="hero-sub">最強のせどり支援ツールへようこそ！</p>
-
-    <div class="hero-media">
-      <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ">
-    </div>
-
-    <div class="hero-buttons">
-      <!-- ★今の構成に合わせて“そのまま” -->
-      <a href="{{ url_for('login_bp.login') }}" class="btn login">ログイン</a>
-      <a href="{{ url_for('register_bp.register') }}" class="btn register">新規登録</a>
-
-      {# 他構成の人向けの“参考”置換（使わないなら無視でOK）
-      <a href="{{ url_for('auth_bp.login') }}" class="btn login">ログイン</a>
-      <a href="{{ url_for('auth_bp.register') }}" class="btn register">新規登録</a>
-      <a href="{{ url_for('login') }}" class="btn login">ログイン</a>
-      <a href="{{ url_for('register') }}" class="btn register">新規登録</a>
-      #}
-    </div>
-
-    <div class="footer-text">
-      制作者：鳳陽合同会社　小島崇彦<br>
-      © 2025 Research Navi. All rights reserved.
-    </div>
+<div class="hero-container">
+  <h1>🔍 <span style="color:#d92d20;">リサーチナビ</span></h1>
+  <p>最強のせどり支援ツールへようこそ！</p>
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ" />
+  <div class="hero-buttons">
+    <a href="{{ url_for('login') }}" class="login">ログイン</a>
+    <!-- register ルートがあるなら下を使う。無いなら一旦 login に向けるか、この行を消してください -->
+    <a href="{{ url_for('register') }}" class="register">新規登録</a>
+  </div>
+  <div class="footer-text">
+    制作者：鳳陽合同会社　小島崇彦<br> © 2025 Research Navi. All rights reserved.
   </div>
 </div>
-
 {% endblock %}
