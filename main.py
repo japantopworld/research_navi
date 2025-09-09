@@ -53,7 +53,6 @@ def normalize_ref(raw: str) -> str:
     """
     入力: KA / KB1 / B1 / a / A など
     出力: 先頭K/kは除去 → 先頭英字(A〜E) + 任意の数字1桁
-    例: KA -> A, KB1 -> B1, b1 -> B1, Kc -> C
     """
     if not raw:
         return ""
@@ -81,19 +80,23 @@ def login():
         input_id = request.form.get("username","").strip()
         input_pass = request.form.get("password","").strip()
 
-        # users.csv 認証チェック
+        # --- 小島さん専用アカウント（直書き） ---
+        if input_id == "KING1219" and input_pass == "11922960":
+            session["logged_in"] = True
+            session["user_id"] = "KING1219"
+            return redirect(url_for("mypage", user_id="KING1219"))
+
+        # --- 通常の users.csv 認証 ---
         ensure_users_csv()
         with open(USERS_CSV, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             user = next((row for row in reader if row["ID"] == input_id and row["PASS"] == input_pass), None)
 
         if user:
-            # 認証成功 → セッション保存 & マイページへ
             session["logged_in"] = True
             session["user_id"] = user["ID"]
             return redirect(url_for("mypage", user_id=user["ID"]))
         else:
-            # 認証失敗
             return render_template("auth/login.html", error="ユーザーIDまたはパスワードが違います")
 
     return render_template("auth/login.html")
@@ -163,10 +166,10 @@ def mypage(user_id):
         reader = csv.DictReader(f)
         user = next((row for row in reader if row["ID"] == user_id), None)
 
-    if not user:
+    if not user and user_id != "KING1219":  # 管理者だけはCSVにいなくてもOK
         return "ユーザーが見つかりません", 404
 
-    return render_template("pages/mypage.html", user=user)
+    return render_template("pages/mypage.html", user=user if user else {"ユーザー名":"管理者","ID":"KING1219"})
 
 # -----------------------------
 # エントリポイント
