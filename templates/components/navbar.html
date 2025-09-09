@@ -1,7 +1,39 @@
-<ul class="nav">
-  <li><a href="/">🏠 ホーム</a></li>
-  <li><a href="/login">🔐 ログイン</a></li>
-  <li><a href="/register">📝 新規登録</a></li>
-  <li><a href="/mypage">👤 マイページ</a></li>
-  <li><a href="/mypage/edit">✏️ プロフィール編集</a></li>
-</ul>
+<nav class="topnav">
+  <div class="nav-buttons">
+    <a href="{{ url_for('index') }}" class="btn">🏠 ホーム</a>
+    <a href="/support" class="btn">💬 サポート</a>
+    <a href="/services" class="btn">📋 サービス一覧</a>
+    <a href="/news" class="btn">📰 お知らせ一覧</a>
+    <a href="/mypage" class="btn">👤 マイページ</a>
+    <a href="/settings" class="btn">⚙️ 各種設定</a>
+  </div>
+</nav>
+
+<style>
+  .topnav {
+    background: #0b1220; /* 紺色背景 */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: .8rem 1rem;
+    text-align: center;
+  }
+  .nav-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .8rem;
+  }
+  .btn {
+    display: inline-block;
+    padding: .6rem 1.2rem;
+    border-radius: .6rem;
+    text-decoration: none;
+    font-weight: bold;
+    background: #3b82f6; /* 青 */
+    color: white;
+    transition: background .2s, transform .1s;
+  }
+  .btn:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+  }
+</style>
