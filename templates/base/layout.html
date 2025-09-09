@@ -9,7 +9,8 @@
       --bg:#0b1220; --fg:#eaf2ff; --muted:#97a3ba;
       --primary:#3b82f6; --card:#0f172a; --border:rgba(255,255,255,.08);
     }
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;}
     .container{max-width:1080px;margin:0 auto;padding:24px 16px;}
     .page-title{font-size:1.6rem;margin:1rem 0;}
     .muted{color:var(--muted);}
@@ -17,7 +18,7 @@
   </style>
 </head>
 <body>
-  {# ★ログイン時だけナビを表示（未ログインでは出さない） #}
+  {# ★ログイン時だけナビ表示（未ログインでは非表示） #}
   {% if session.get('logged_in') %}
     {% include "components/navbar.html" %}
   {% endif %}
