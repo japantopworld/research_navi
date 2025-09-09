@@ -3,96 +3,59 @@
 {% block content %}
 
 <style>
-  /* ====== 基本 ====== */
   :root{
-    --bg:#0b1220;          /* 濃紺 */
-    --fg:#eaf2ff;          /* 文字（薄い水色） */
-    --muted:#97a3ba;
-    --primary:#3b82f6;     /* ボタン青 */
-    --accent:#10b981;      /* ボタン緑 */
-    --card:#111a2d;        /* カード背景 */
-    --border:rgba(255,255,255,0.08);
-    --glow:0 10px 30px rgba(59,130,246,.25);
+    --bg:#0b1220; --fg:#eaf2ff; --muted:#97a3ba; --primary:#3b82f6; --accent:#10b981;
+    --card:#111a2d; --border:rgba(255,255,255,0.08); --glow:0 10px 30px rgba(59,130,246,.25);
   }
   body{ background: var(--bg); color: var(--fg); }
   .container{ max-width: 1080px; margin:0 auto; padding: 4rem 1.25rem; }
 
-  /* ====== HERO ====== */
-  .hero{
-    display:grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items:center;
-  }
-  .hero h1{
-    font-size: clamp(2.0rem, 2.6vw, 3.0rem);
-    line-height: 1.15;
-    margin: 0 0 .75rem 0;
-  }
-  .hero p.lead{
-    color: var(--muted);
-    font-size: 1.05rem;
-    margin: 0 0 1.25rem 0;
-  }
+  .hero{ display:grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items:center; }
+  .hero h1{ font-size: clamp(2.0rem, 2.6vw, 3.0rem); line-height: 1.15; margin: 0 0 .75rem 0; }
+  .hero p.lead{ color: var(--muted); font-size: 1.05rem; margin: 0 0 1.25rem 0; }
+
   .badges{ display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
-  .badge{
-    border:1px solid var(--border); color:#bcd3ff; padding:.35rem .6rem; border-radius:999px; font-size:.85rem;
-    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.00));
-  }
+  .badge{ border:1px solid var(--border); color:#bcd3ff; padding:.35rem .6rem; border-radius:999px; font-size:.85rem;
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.00)); }
+
   .cta{ display:flex; gap:.9rem; flex-wrap: wrap; }
-  .btn{
-    display:inline-block; text-decoration:none; padding:.9rem 1.2rem; border-radius:.7rem; font-weight:700;
-    transition: transform .05s ease, box-shadow .2s ease, opacity .2s;
-  }
+  .btn{ display:inline-block; text-decoration:none; padding:.9rem 1.2rem; border-radius:.7rem; font-weight:700;
+    transition: transform .05s ease, box-shadow .2s ease, opacity .2s; }
   .btn-primary{ background: var(--primary); color:#fff; box-shadow: var(--glow); }
   .btn-accent{ background: var(--accent); color:#06291e; }
   .btn-ghost{ border:1px solid var(--border); color:#cfe0ff; }
   .btn:hover{ transform: translateY(-1px); opacity:.96; }
 
-  .hero-media{
-    position:relative; border-radius:1.1rem; overflow:hidden; border:1px solid var(--border);
-    background: radial-gradient(1200px 400px at 70% 0%, rgba(59,130,246,.25), transparent 70%);
-  }
-  .hero-media img{
-    display:block; width:100%; height:auto;
-  }
+  .hero-media{ position:relative; border-radius:1.1rem; overflow:hidden; border:1px solid var(--border);
+    background: radial-gradient(1200px 400px at 70% 0%, rgba(59,130,246,.25), transparent 70%); }
+  .hero-media img{ display:block; width:100%; height:auto; }
 
-  /* ====== 実績ストリップ ====== */
-  .kpis{
-    display:grid; grid-template-columns: repeat(3,1fr); gap:.9rem; margin: 2.2rem 0 0;
-  }
-  .kpi{
-    border:1px solid var(--border); background: var(--card); border-radius:.9rem; padding: .9rem 1rem; text-align:center;
-  }
+  .kpis{ display:grid; grid-template-columns: repeat(3,1fr); gap:.9rem; margin: 2.2rem 0 0; }
+  .kpi{ border:1px solid var(--border); background: var(--card); border-radius:.9rem; padding: .9rem 1rem; text-align:center; }
   .kpi .num{ font-size:1.5rem; font-weight:800; letter-spacing:.3px; }
   .kpi .cap{ color: var(--muted); font-size:.88rem; }
 
-  /* ====== 機能カード ====== */
   .section{ margin-top: 3.2rem; }
   .section h2{ font-size:1.6rem; margin:0 0 1rem 0; }
   .grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:1rem; }
-  .card{
-    border:1px solid var(--border); background: linear-gradient(180deg, #0e1627, #0b1423 60%); border-radius:1rem; padding:1.1rem;
-  }
+  .card{ border:1px solid var(--border); background: linear-gradient(180deg, #0e1627, #0b1423 60%); border-radius:1rem; padding:1.1rem; }
   .card h3{ margin:.2rem 0 .4rem 0; font-size:1.05rem; }
   .card p{ color: var(--muted); font-size:.92rem; margin:0; }
   .chip-row{ display:flex; gap:.4rem; flex-wrap:wrap; margin:.6rem 0 .2rem }
   .chip{ font-size:.75rem; border:1px solid var(--border); border-radius:999px; padding:.2rem .5rem; color:#cfe0ff; }
 
-  /* ====== ステップ ====== */
   .steps{ display:grid; grid-template-columns: repeat(3,1fr); gap:1rem; }
   .step{ border:1px dashed var(--border); background: #0b1423; border-radius:1rem; padding:1rem; }
   .step .idx{ font-weight:800; color:#9cc7ff; font-size:.9rem; }
   .step h4{ margin:.25rem 0 .4rem 0; }
   .step p{ color: var(--muted); font-size:.92rem; margin:0; }
 
-  /* ====== CTA帯 ====== */
-  .cta-band{
-    margin-top: 3rem; border:1px solid var(--border); background: radial-gradient(600px 200px at 10% 0%, rgba(16,185,129,.12), transparent 70%), #0b1423;
-    border-radius:1rem; padding:1.2rem;
-    display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
-  }
+  .cta-band{ margin-top: 3rem; border:1px solid var(--border); background:
+      radial-gradient(600px 200px at 10% 0%, rgba(16,185,129,.12), transparent 70%), #0b1423;
+    border-radius:1rem; padding:1.2rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
   .cta-band p{ margin:0; color:#cfe0ff; }
   .cta-band small{ color: var(--muted); display:block; }
 
-  /* ====== レスポンシブ ====== */
   @media (max-width: 960px){
     .hero{ grid-template-columns: 1fr; }
     .kpis{ grid-template-columns: 1fr; }
@@ -103,7 +66,6 @@
 
 <div class="container">
 
-  <!-- Hero -->
   <section class="hero">
     <div>
       <div class="badges">
@@ -115,11 +77,10 @@
       <h1>🔍 <span style="color:#cfe0ff">リサーチナビ</span> — 最短で「利益の出る」意思決定へ。</h1>
       <p class="lead">メルカリ／Amazon／楽天など横断検索、AIによる商品名推定、相場取得、利益計算、通知。<br/>スマホ＆PCの両対応で、仕入れ〜販売までを一気通貫。</p>
       <div class="cta">
-        <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">ログイン</a>
-        <a href="{{ url_for('register_bp.register') }}" class="btn btn-accent">無料で始める</a>
-        <!-- すぐに確認したい導線（存在しないならコメントアウトしてOK）
-        <a href="{{ url_for('mypage_bp.mypage') }}" class="btn btn-ghost">マイページ</a>
-        -->
+        <a href="{{ url_for('auth_bp.login') }}" class="btn btn-primary">ログイン</a>
+        <a href="{{ url_for('auth_bp.register') }}" class="btn btn-accent">無料で始める</a>
+        {# 例：mypage がある場合だけ使う #}
+        {# <a href="{{ url_for('mypage_bp.mypage') }}" class="btn btn-ghost">マイページ</a> #}
       </div>
 
       <div class="kpis">
@@ -143,7 +104,6 @@
     </div>
   </section>
 
-  <!-- 機能カード -->
   <section class="section">
     <h2>主な機能</h2>
     <div class="grid">
@@ -171,7 +131,6 @@
     </div>
   </section>
 
-  <!-- はじめての方へ：3ステップ -->
   <section class="section">
     <h2>はじめての方へ（3ステップ）</h2>
     <div class="steps">
@@ -193,14 +152,13 @@
     </div>
   </section>
 
-  <!-- 最後のCTA帯 -->
   <section class="cta-band">
     <p>
       いますぐ “利益の見える化” を体験しよう。<small>無料プランは基本機能がそのまま使えます。</small>
     </p>
     <div class="cta">
-      <a href="{{ url_for('register_bp.register') }}" class="btn btn-accent">無料で始める</a>
-      <a href="{{ url_for('login_bp.login') }}" class="btn btn-ghost">アカウントをお持ちの方</a>
+      <a href="{{ url_for('auth_bp.register') }}" class="btn btn-accent">無料で始める</a>
+      <a href="{{ url_for('auth_bp.login') }}" class="btn btn-ghost">アカウントをお持ちの方</a>
     </div>
   </section>
 
