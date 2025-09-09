@@ -20,7 +20,7 @@ def login():
         # TODO: 本番実装ではID/パスワードの検証を行う
         session["logged_in"] = True
         return redirect(url_for("index"))
-    return render_template("auth/login.html")
+    return render_template("auth/login.html")  # ← ない場合はプレースホルダを作成してください
 
 # -------- 新規登録（見た目用。auth/register.html を使用）--------
 @app.route("/register", methods=["GET", "POST"])
@@ -28,13 +28,42 @@ def register():
     if request.method == "POST":
         # TODO: 本番実装ではユーザー作成処理を行い、成功時にログイン or ログインページへ
         return redirect(url_for("login"))
-    return render_template("auth/register.html")
+    return render_template("auth/register.html")  # ← ない場合はプレースホルダを作成してください
 
 # -------- ログアウト --------
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("index"))
+
+# --------- ここからはナビ用（存在しないと url_for で 500 になるためプレースホルダー） ---------
+@app.route("/support")
+def support():
+    # 後でテンプレに差し替えOK（まず 200 を返す）
+    return Response("サポート（プレースホルダー）", status=200, mimetype="text/plain")
+
+@app.route("/services")
+def services():
+    return Response("サービス一覧（プレースホルダー）", status=200, mimetype="text/plain")
+
+@app.route("/news")
+def news():
+    return Response("お知らせ一覧（プレースホルダー）", status=200, mimetype="text/plain")
+
+@app.route("/mypage")
+def mypage():
+    return Response("マイページ（プレースホルダー）", status=200, mimetype="text/plain")
+
+@app.route("/settings")
+def settings():
+    return Response("各種設定（プレースホルダー）", status=200, mimetype="text/plain")
+# --------- プレースホルダーここまで ---------
+
+# （任意）デバッグ用：現在のルートを確認したい場合のみ有効化
+# @app.route("/__routes")
+# def __routes():
+#     lines = [f"{r.endpoint} -> {r}" for r in app.url_map.iter_rules()]
+#     return Response("\n".join(lines), mimetype="text/plain")
 
 if __name__ == "__main__":
     # Render では Proc/起動コマンドで waitress を使う想定
