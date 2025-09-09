@@ -13,7 +13,47 @@
 <style>
   .topnav {
     position: sticky; top: 0; z-index: 100;
-    background: #fff; /* 背景は白でスッキリ */
+    background: #fff; /* 背景は白 */
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    padding: .8rem 1rem;
+  }
+  .nav-buttons {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem;
+  }
+  .btn {
+    display: inline-block; padding: .6rem 1.1rem; border-radius: .6rem;
+    text-decoration: none; font-weight: 700;
+    background: #dc2626;  /* 真っ赤 */
+    color: #ffeb3b;       /* 黄色文字 */
+    transition: transform .08s ease, opacity .2s ease;
+  }
+  .btn:hover { transform: translateY(-2px); opacity: .9; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid #dc2626;
+    color: #dc2626;
+  }
+  .btn-ghost:hover {
+    background: #dc2626;
+    color: #ffeb3b;
+  }
+</style>
+<nav class="topnav">
+  <div class="nav-buttons">
+    <a href="{{ url_for('index') }}" class="btn">🏠 ホーム</a>
+    <a href="{{ url_for('support') }}" class="btn">💬 サポート</a>
+    <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
+    <a href="{{ url_for('news') }}" class="btn">📰 お知らせ一覧</a>
+    <a href="{{ url_for('mypage') }}" class="btn">👤 マイページ</a>
+    <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
+  </div>
+</nav>
+
+<style>
+  .topnav {
+    position: sticky; top: 0; z-index: 100;
+    background: #fff; /* 背景は白 */
     border-bottom: 1px solid rgba(0,0,0,.08);
     padding: .8rem 1rem;
   }
