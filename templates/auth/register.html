@@ -1,1 +1,153 @@
-<h1>登録ページテスト</h1>
+{% extends "base/layout.html" %}
+{% block title %}新規登録 | リサーチナビ{% endblock %}
+{% block content %}
+
+<style>
+  .register-wrap{max-width:640px;margin:6vh auto;padding:2rem;background:#fff;border-radius:1rem;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+  .register-wrap h1{text-align:center;font-size:1.8rem;margin-bottom:1rem;color:#dc2626}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.25rem}
+  .grid-1{display:block;margin-top:1rem}
+  .form-item label{display:block;font-size:.9rem;color:#374151;margin-bottom:.35rem}
+  .form-item input,.form-item select{width:100%;padding:.75rem;border-radius:.5rem;border:1px solid #d1d5db;font-size:1rem}
+  .hint{font-size:.8rem;color:#6b7280;margin-top:.25rem}
+  .btn-row{text-align:center;margin-top:1.2rem}
+  .btn-primary{padding:.9rem 1.2rem;border:none;border-radius:.6rem;font-weight:bold;background:#dc2626;color:#ffeb3b;cursor:pointer}
+  .btn-primary:hover{opacity:.9}
+  .footer-links{text-align:center;margin-top:.8rem;font-size:.9rem}
+  .errors{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.8rem 1rem;border-radius:.6rem;margin-bottom:1rem}
+</style>
+
+<div class="register-wrap">
+  <h1>新規登録</h1>
+
+  {% if errors %}
+    <div class="errors">
+      <ul style="margin:0;padding-left:1rem;">
+        {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" id="registerForm">
+    <div class="grid-2">
+      <div class="form-item">
+        <label for="name">氏名</label>
+        <input id="name" name="name" value="{{ form.name or '' }}" required>
+      </div>
+      <div class="form-item">
+        <label for="kana">ふりがな</label>
+        <input id="kana" name="kana" value="{{ form.kana or '' }}" required>
+      </div>
+
+      <div class="form-item">
+        <label for="birth">生年月日</label>
+        <input id="birth" name="birth" type="date" value="{{ form.birth or '' }}" required>
+        <div class="hint">MMDD を生成します（ID の一部に使用）</div>
+      </div>
+      <div class="form-item">
+        <label for="branch">枝（A〜E）</label>
+        <select id="branch" name="branch">
+          {% for b in ["A","B","C","D","E"] %}
+            <option value="{{ b }}" {% if form.branch==b %}selected{% endif %}>{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-item">
+        <label for="phone">電話番号（任意）</label>
+        <input id="phone" name="phone" value="{{ form.phone or '' }}">
+      </div>
+      <div class="form-item">
+        <label for="mobile">携帯番号（任意）</label>
+        <input id="mobile" name="mobile" value="{{ form.mobile or '' }}">
+      </div>
+
+      <div class="form-item">
+        <label for="email">メールアドレス（任意）</label>
+        <input id="email" name="email" type="email" value="{{ form.email or '' }}">
+      </div>
+      <div class="form-item">
+        <label for="dept">部署（任意）</label>
+        <select id="dept" name="dept">
+          {% set depts = ["", "経理", "バイヤー", "販売員", "物流", "合統括", "総合"] %}
+          {% for d in depts %}
+            <option value="{{ d }}" {% if form.dept==d %}selected{% endif %}>{{ d if d else "未設定" }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 紹介者NO：自由入力（KA / KB1）→ 保存時は K を除去して正規化 -->
+      <div class="form-item">
+        <label for="ref_raw">紹介者NO（入力例：KA / KB1）</label>
+        <input id="ref_raw" name="ref_raw" value="{{ form.ref_raw or '' }}" placeholder="KA / KB1 など" required>
+        <div class="hint">保存時は先頭の K を自動除去 → A / B1 などに正規化</div>
+      </div>
+
+      <!-- 正規化後の表示（readonly） -->
+      <div class="form-item">
+        <label for="ref_no">紹介者NO（正規化後）</label>
+        <input id="ref_no" name="ref_no" value="{{ form.ref_no or '' }}" readonly style="background:#f9fafb;">
+        <div class="hint">例：入力 KB1 → 正規化 B1</div>
+      </div>
+
+      <div class="form-item">
+        <label for="user_id">ユーザーID（自動生成）</label>
+        <input id="user_id" name="user_id" value="{{ form.user_id or '' }}" readonly style="background:#f9fafb;">
+        <div class="hint">形式：〈紹介者NO(正規化後)〉＋〈MMDD〉＋〈枝〉（例：B10521A）</div>
+      </div>
+    </div>
+
+    <div class="grid-1">
+      <div class="form-item">
+        <label for="password">パスワード</label>
+        <input id="password" name="password" type="password" required>
+      </div>
+      <div class="form-item">
+        <label for="password2">パスワード（確認）</label>
+        <input id="password2" name="password2" type="password" required>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" class="btn-primary">登録する</button>
+    </div>
+
+    <div class="footer-links">
+      すでにアカウントをお持ちの方は <a href="{{ url_for('login') }}">ログイン</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  function pad2(n){ return n.toString().padStart(2,'0'); }
+  function getMMDD(){
+    const v=document.getElementById('birth').value;
+    if(!v) return "";
+    const d=new Date(v); if(isNaN(d)) return "";
+    return pad2(d.getMonth()+1)+pad2(d.getDate());
+  }
+  function normalizeRef(raw){
+    if(!raw) return "";
+    let s=raw.trim().toUpperCase();
+    if(s.startsWith("K")) s=s.slice(1);
+    const m=s.match(/^([A-E])([0-9])?$/);
+    if(!m) return "";
+    return (m[1] + (m[2] || ""));
+  }
+  function updateAuto(){
+    const mmdd=getMMDD();
+    const branch=document.getElementById('branch').value||'A';
+    const refRaw=document.getElementById('ref_raw').value||'';
+    const refNorm=normalizeRef(refRaw);
+    document.getElementById('ref_no').value = refNorm;
+    document.getElementById('user_id').value = (refNorm && mmdd && branch) ? `${refNorm}${mmdd}${branch}` : "";
+  }
+  ["birth","branch","ref_raw"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('change', updateAuto);
+    if(el) el.addEventListener('input', updateAuto);
+  });
+  updateAuto();
+</script>
+
+{% endblock %}
