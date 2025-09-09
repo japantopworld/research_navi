@@ -1,39 +1,33 @@
 <nav class="topnav">
   <div class="nav-buttons">
     <a href="{{ url_for('index') }}" class="btn">🏠 ホーム</a>
-    <a href="/support" class="btn">💬 サポート</a>
-    <a href="/services" class="btn">📋 サービス一覧</a>
-    <a href="/news" class="btn">📰 お知らせ一覧</a>
-    <a href="/mypage" class="btn">👤 マイページ</a>
-    <a href="/settings" class="btn">⚙️ 各種設定</a>
+    <a href="{{ url_for('support') }}" class="btn">💬 サポート</a>
+    <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
+    <a href="{{ url_for('news') }}" class="btn">📰 お知らせ一覧</a>
+    <a href="{{ url_for('mypage') }}" class="btn">👤 マイページ</a>
+    <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
   </div>
 </nav>
 
 <style>
-  .topnav {
-    background: #0b1220; /* 紺色背景 */
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding: .8rem 1rem;
-    text-align: center;
+  .topnav{
+    position:sticky; top:0; z-index:100;
+    background:#0b1220cc; backdrop-filter: blur(6px);
+    border-bottom:1px solid rgba(255,255,255,.08);
+    padding:.8rem 1rem;
   }
-  .nav-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: .8rem;
+  .nav-buttons{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:.8rem;
   }
-  .btn {
-    display: inline-block;
-    padding: .6rem 1.2rem;
-    border-radius: .6rem;
-    text-decoration: none;
-    font-weight: bold;
-    background: #3b82f6; /* 青 */
-    color: white;
-    transition: background .2s, transform .1s;
+  .btn{
+    display:inline-block; padding:.6rem 1.1rem; border-radius:.6rem; text-decoration:none;
+    font-weight:700; background:#3b82f6; color:#fff;
+    transition:transform .08s ease, opacity .2s ease;
   }
-  .btn:hover {
-    background: #2563eb;
-    transform: translateY(-2px);
+  .btn:hover{ transform:translateY(-2px); opacity:.96; }
+  .btn-ghost{
+    background:transparent; border:1px solid rgba(255,255,255,.15); color:#cfe0ff;
   }
+  .btn-ghost:hover{ background:rgba(255,255,255,.06); }
 </style>
