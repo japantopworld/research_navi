@@ -73,7 +73,9 @@ def normalize_ref(raw: str) -> str:
 def index():
     return render_template("pages/home.html")
 
+# /login と /login/ の両方に対応
 @app.route("/login", methods=["GET", "POST"])
+@app.route("/login/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         # 仮ログイン処理（本格認証は後で）
@@ -81,7 +83,9 @@ def login():
         return redirect(url_for("index"))
     return render_template("auth/login.html")
 
+# /register と /register/ の両方に対応
 @app.route("/register", methods=["GET", "POST"])
+@app.route("/register/", methods=["GET", "POST"])
 def register():
     ensure_users_csv()
 
