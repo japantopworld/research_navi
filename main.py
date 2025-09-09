@@ -1,37 +1,70 @@
-# main.py
-import os
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, session, redirect, url_for, request
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
-app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.secret_key = "change-this-secret"  # 本番は環境変数で
 
-# 1) Health check（Render用）
+# --------- 共通: ログイン要求ヘルパ ---------
+def require_login():
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+    return None
+
+# --------- Health check (Render) ---------
 @app.route("/healthz")
 def healthz():
-    return Response("ok", status=200, mimetype="text/plain")
+    return Response("OK", status=200, mimetype="text/plain")
 
-# 2) auth_bp（/login, /logout, /register）
-try:
-    from routes.auth import auth_bp   # ← あなたが貼ってくれた auth_bp のファイル
-    app.register_blueprint(auth_bp)   # ← url_prefix は付けない
-except Exception as e:
-    print(f"[WARN] auth_bp register failed: {e}")
-
-# 3) トップページ（templates/pages/home.html を表示）
+# --------- ホーム（未ログイン時の最初の画面） ---------
 @app.route("/")
 def index():
+    # 未ログイン向けのヒーロー画面（ナビはlayout側で非表示）
     return render_template("pages/home.html")
 
-# 4) 404/500（テンプレ無い時も落ちない）
-@app.errorhandler(404)
-def not_found(e):
-    return Response("404 Not Found", status=404)
+# --------- ログイン（見た目用の簡易版） ---------
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        # 本番はID/PASSチェックを入れる。ここは見た目確認のため即ログイン扱い。
+        session["logged_in"] = True
+        return redirect(url_for("mypage"))
+    return render_template("pages/login.html")
 
-@app.errorhandler(500)
-def server_error(e):
-    return Response("500 Internal Server Error", status=500)
+# --------- ログアウト ---------
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
+
+# --------- ここから保護ページ（ログイン後のみ表示） ---------
+@app.route("/support")
+def support():
+    guard = require_login()
+    if guard: return guard
+    return render_template("pages/support.html")
+
+@app.route("/services")
+def services():
+    guard = require_login()
+    if guard: return guard
+    return render_template("pages/services.html")
+
+@app.route("/news")
+def news():
+    guard = require_login()
+    if guard: return guard
+    return render_template("pages/news.html")
+
+@app.route("/mypage")
+def mypage():
+    guard = require_login()
+    if guard: return guard
+    return render_template("pages/mypage.html")
+
+@app.route("/settings")
+def settings():
+    guard = require_login()
+    if guard: return guard
+    return render_template("pages/settings.html")
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(debug=True)
