@@ -1,70 +1,39 @@
 from flask import Flask, render_template, Response, session, redirect, url_for, request
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.secret_key = "change-this-secret"  # 本番は環境変数で
+app.secret_key = "change-this-secret"  # 本番は環境変数にすることを推奨
 
-# --------- 共通: ログイン要求ヘルパ ---------
-def require_login():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
-    return None
-
-# --------- Health check (Render) ---------
+# Render用ヘルスチェック
 @app.route("/healthz")
 def healthz():
     return Response("OK", status=200, mimetype="text/plain")
 
-# --------- ホーム（未ログイン時の最初の画面） ---------
+# ホーム
 @app.route("/")
 def index():
-    # 未ログイン向けのヒーロー画面（ナビはlayout側で非表示）
     return render_template("pages/home.html")
 
-# --------- ログイン（見た目用の簡易版） ---------
+# ログイン（プレースホルダー）
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        # 本番はID/PASSチェックを入れる。ここは見た目確認のため即ログイン扱い。
         session["logged_in"] = True
-        return redirect(url_for("mypage"))
-    return render_template("pages/login.html")
+        return redirect(url_for("index"))
+    return render_template("auth/login.html")  # ← auth フォルダに login.html がある前提
 
-# --------- ログアウト ---------
+# 新規登録（auth/register.html を利用）
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        # TODO: ユーザー登録処理を追加予定
+        return redirect(url_for("login"))
+    return render_template("auth/register.html")
+
+# ログアウト
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("index"))
-
-# --------- ここから保護ページ（ログイン後のみ表示） ---------
-@app.route("/support")
-def support():
-    guard = require_login()
-    if guard: return guard
-    return render_template("pages/support.html")
-
-@app.route("/services")
-def services():
-    guard = require_login()
-    if guard: return guard
-    return render_template("pages/services.html")
-
-@app.route("/news")
-def news():
-    guard = require_login()
-    if guard: return guard
-    return render_template("pages/news.html")
-
-@app.route("/mypage")
-def mypage():
-    guard = require_login()
-    if guard: return guard
-    return render_template("pages/mypage.html")
-
-@app.route("/settings")
-def settings():
-    guard = require_login()
-    if guard: return guard
-    return render_template("pages/settings.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
