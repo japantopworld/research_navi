@@ -134,7 +134,8 @@ def register():
             ])
         return redirect(url_for("login"))
 
-    return render_template("auth/register.html")
+    # GETアクセス時は form を空dictで渡す
+    return render_template("auth/register.html", form={})
 
 # -----------------------------
 # エントリポイント
