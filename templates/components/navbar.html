@@ -11,23 +11,30 @@
 </nav>
 
 <style>
-  .topnav{
-    position:sticky; top:0; z-index:100;
-    background:#0b1220cc; backdrop-filter: blur(6px);
-    border-bottom:1px solid rgba(255,255,255,.08);
-    padding:.8rem 1rem;
+  .topnav {
+    position: sticky; top: 0; z-index: 100;
+    background: #fff; /* 背景は白でスッキリ */
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    padding: .8rem 1rem;
   }
-  .nav-buttons{
-    display:flex; flex-wrap:wrap; justify-content:center; gap:.8rem;
+  .nav-buttons {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem;
   }
-  .btn{
-    display:inline-block; padding:.6rem 1.1rem; border-radius:.6rem; text-decoration:none;
-    font-weight:700; background:#3b82f6; color:#fff;
-    transition:transform .08s ease, opacity .2s ease;
+  .btn {
+    display: inline-block; padding: .6rem 1.1rem; border-radius: .6rem;
+    text-decoration: none; font-weight: 700;
+    background: #dc2626;  /* 真っ赤 */
+    color: #ffeb3b;       /* 黄色文字 */
+    transition: transform .08s ease, opacity .2s ease;
   }
-  .btn:hover{ transform:translateY(-2px); opacity:.96; }
-  .btn-ghost{
-    background:transparent; border:1px solid rgba(255,255,255,.15); color:#cfe0ff;
+  .btn:hover { transform: translateY(-2px); opacity: .9; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid #dc2626;
+    color: #dc2626;
   }
-  .btn-ghost:hover{ background:rgba(255,255,255,.06); }
+  .btn-ghost:hover {
+    background: #dc2626;
+    color: #ffeb3b;
+  }
 </style>
