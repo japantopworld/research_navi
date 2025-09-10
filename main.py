@@ -166,10 +166,23 @@ def mypage(user_id):
         reader = csv.DictReader(f)
         user = next((row for row in reader if row["ID"] == user_id), None)
 
-    if not user and user_id != "KING1219":  # 管理者だけはCSVにいなくてもOK
+    # 管理者（KING1219）はCSVに無くてもOK＋氏名は「小島崇彦」に固定
+    if not user and user_id == "KING1219":
+        user = {
+            "ユーザー名": "小島崇彦",
+            "ID": "KING1219",
+            "メールアドレス": "",
+            "部署": "",
+            "紹介者NO": "",
+        }
+
+    if not user:
         return "ユーザーが見つかりません", 404
 
-    return render_template("pages/mypage.html", user=user if user else {"ユーザー名":"管理者","ID":"KING1219"})
+    # 表示名（CSVの「ユーザー名」、無ければID）
+    display_name = user.get("ユーザー名") or user.get("ID") or user_id
+
+    return render_template("pages/mypage.html", user=user, display_name=display_name)
 
 # -----------------------------
 # エントリポイント
