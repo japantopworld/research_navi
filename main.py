@@ -1,6 +1,6 @@
 import os, csv, re
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 
 # -----------------------------
 # Flask アプリ定義
@@ -69,7 +69,6 @@ def normalize_ref(raw: str) -> str:
 def index():
     return render_template("pages/home.html")
 
-# /login と /login/ の両方に対応
 @app.route("/login", methods=["GET", "POST"])
 @app.route("/login/", methods=["GET", "POST"])
 def login():
@@ -77,13 +76,13 @@ def login():
         input_id = request.form.get("username","").strip()
         input_pass = request.form.get("password","").strip()
 
-        # --- 管理者アカウント（直書き） ---
+        # 管理者アカウント
         if input_id == "KING1219" and input_pass == "11922960":
             session["logged_in"] = True
             session["user_id"] = "KING1219"
             return redirect(url_for("mypage", user_id="KING1219"))
 
-        # --- 通常の users.csv 認証 ---
+        # 通常ユーザー
         ensure_users_csv()
         with open(USERS_CSV, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -98,12 +97,10 @@ def login():
 
     return render_template("auth/login.html")
 
-# /register と /register/ の両方に対応
 @app.route("/register", methods=["GET", "POST"])
 @app.route("/register/", methods=["GET", "POST"])
 def register():
     ensure_users_csv()
-
     if request.method == "POST":
         name = request.form.get("name","").strip()
         kana = request.form.get("kana","").strip()
@@ -113,10 +110,8 @@ def register():
         mobile = request.form.get("mobile","").strip()
         email = request.form.get("email","").strip()
         dept = request.form.get("dept","").strip()
-
         ref_raw = request.form.get("ref_raw","").strip()
         ref_norm = normalize_ref(ref_raw)
-
         password = request.form.get("password","")
         password2 = request.form.get("password2","")
 
@@ -151,7 +146,6 @@ def register():
 
     return render_template("auth/register.html", form={})
 
-# マイページルート
 @app.route("/mypage/<user_id>")
 def mypage(user_id):
     if not session.get("logged_in") or session.get("user_id") != user_id:
@@ -162,7 +156,6 @@ def mypage(user_id):
         reader = csv.DictReader(f)
         user = next((row for row in reader if row["ID"] == user_id), None)
 
-    # 管理者（KING1219）はCSVに無くてもOK＋氏名は「小島崇彦」に固定
     if not user and user_id == "KING1219":
         user = {
             "ユーザー名": "小島崇彦",
@@ -178,16 +171,13 @@ def mypage(user_id):
     display_name = user.get("ユーザー名") or user.get("ID") or user_id
     return render_template("pages/mypage.html", user=user, display_name=display_name)
 
-# プロフィール編集ルート
 @app.route("/mypage_edit/<user_id>", methods=["GET", "POST"])
 def mypage_edit(user_id):
     if not session.get("logged_in") or session.get("user_id") != user_id:
         return redirect(url_for("login"))
 
     ensure_users_csv()
-    users = []
-    target_user = None
-
+    users, target_user = [], None
     with open(USERS_CSV, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -195,7 +185,6 @@ def mypage_edit(user_id):
             if row["ID"] == user_id:
                 target_user = row
 
-    # 👇 管理者（KING1219）はCSVに無くてもOK
     if not target_user and user_id == "KING1219":
         target_user = {
             "ユーザー名": "小島崇彦",
@@ -232,44 +221,35 @@ def mypage_edit(user_id):
                 else:
                     writer.writerow(u)
 
+        flash("プロフィールを保存しました。", "success")
         return redirect(url_for("mypage", user_id=user_id))
 
     return render_template("pages/mypage_edit.html", user=target_user)
 
-# ログアウト
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# -----------------------------
-# ナビバー用の追加ルート
-# -----------------------------
 @app.route("/support")
 def support():
     return render_template("pages/support.html")
 
 @app.route("/services")
 def services():
-    return render_template("pages/suppliers.html")  # サービス一覧 = suppliers.html
+    return render_template("pages/suppliers.html")
 
 @app.route("/news")
 def news():
-    return render_template("pages/guide.html")  # 仮で guide.html を当てる
+    return render_template("pages/guide.html")
 
 @app.route("/settings")
 def settings():
     return render_template("pages/setting.html")
 
-# -----------------------------
-# ヘルスチェック
-# -----------------------------
 @app.route("/healthz")
 def healthz():
     return "ok", 200
 
-# -----------------------------
-# エントリポイント
-# -----------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
