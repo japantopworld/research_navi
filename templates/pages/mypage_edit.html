@@ -1,28 +1,91 @@
 {% extends "base/layout.html" %}
-{% block title %}マイページ編集{% endblock %}
-
+{% block title %}プロフィール編集 | リサーチナビ{% endblock %}
 {% block content %}
-<h1>🛠️ マイページ編集（管理者専用）</h1>
 
-<form method="post">
-  <input type="hidden" name="login_id" value="{{ user_info.login_id }}">
+<style>
+  .edit-wrap {
+    max-width: 600px;
+    margin: 8vh auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 6px 24px rgba(0,0,0,.08);
+  }
+  .edit-wrap h1 {
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #dc2626;
+  }
+  .edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .edit-form label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+  }
+  .edit-form input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    font-size: 1rem;
+  }
+  .btn-save {
+    margin-top: 1rem;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 0.6rem;
+    font-weight: bold;
+    background: #dc2626;   /* 赤 */
+    color: #ffeb3b;        /* 黄 */
+    cursor: pointer;
+  }
+  .btn-save:hover {
+    opacity: 0.9;
+  }
+</style>
 
-  <table>
-    <tr><th>ユーザー名</th><td><input type="text" name="username" value="{{ user_info.username }}"></td></tr>
-    <tr><th>ふりがな</th><td><input type="text" name="kana" value="{{ user_info.kana }}"></td></tr>
-    <tr><th>生年月日</th><td><input type="date" name="birthday" value="{{ user_info.birthday }}"></td></tr>
-    <tr><th>年齢</th><td><input type="number" name="age" value="{{ user_info.age }}"></td></tr>
-    <tr><th>電話番号</th><td><input type="text" name="tel" value="{{ user_info.tel }}"></td></tr>
-    <tr><th>携帯番号</th><td><input type="text" name="mobile" value="{{ user_info.mobile }}"></td></tr>
-    <tr><th>メールアドレス</th><td><input type="email" name="email" value="{{ user_info.email }}"></td></tr>
-    <tr><th>部署</th><td><input type="text" name="department" value="{{ user_info.department }}"></td></tr>
-    <tr><th>紹介者NO</th><td><input type="text" name="intro_code" value="{{ user_info.intro_code }}"></td></tr>
-  </table>
+<div class="edit-wrap">
+  <h1>プロフィール編集</h1>
+  <form method="post" class="edit-form">
+    <div>
+      <label for="name">名前</label>
+      <input type="text" id="name" name="name" value="{{ user['ユーザー名'] }}" required>
+    </div>
+    <div>
+      <label for="kana">ふりがな</label>
+      <input type="text" id="kana" name="kana" value="{{ user['ふりがな'] }}">
+    </div>
+    <div>
+      <label for="email">メールアドレス</label>
+      <input type="email" id="email" name="email" value="{{ user['メールアドレス'] }}">
+    </div>
+    <div>
+      <label for="dept">部署</label>
+      <input type="text" id="dept" name="dept" value="{{ user['部署'] }}">
+    </div>
+    <div>
+      <label for="phone">電話番号</label>
+      <input type="text" id="phone" name="phone" value="{{ user['電話番号'] }}">
+    </div>
+    <div>
+      <label for="mobile">携帯番号</label>
+      <input type="text" id="mobile" name="mobile" value="{{ user['携帯番号'] }}">
+    </div>
+    <div>
+      <label for="ref_no">紹介者NO</label>
+      <input type="text" id="ref_no" name="ref_no" value="{{ user['紹介者NO'] }}">
+    </div>
+    <div>
+      <label for="password">パスワード変更（空欄なら変更なし）</label>
+      <input type="password" id="password" name="password">
+    </div>
+    <button type="submit" class="btn-save">保存する</button>
+  </form>
+</div>
 
-  <p style="margin-top: 20px;">
-    <button type="submit">💾 更新する</button>
-    <a href="{{ url_for('mypage_bp.mypage') }}">← 戻る</a>
-  </p>
-</form>
 {% endblock %}
-
