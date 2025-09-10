@@ -248,6 +248,13 @@ def settings():
     return render_template("pages/setting.html")
 
 # -----------------------------
+# ヘルスチェック
+# -----------------------------
+@app.route("/healthz")
+def healthz():
+    return "ok", 200
+
+# -----------------------------
 # エントリポイント
 # -----------------------------
 if __name__ == "__main__":
