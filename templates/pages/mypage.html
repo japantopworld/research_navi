@@ -5,11 +5,12 @@
 <!-- ▼ ナビバー -->
 <nav class="topnav">
   <div class="nav-buttons">
-    <a href="{{ url_for('index') }}" class="btn">🏠 ホーム</a>
+    <!-- 👇 ホームをログイン中のユーザー専用マイページに変更 -->
+    <a href="{{ url_for('mypage', user_id=session.get('user_id')) }}" class="btn">🏠 ホーム</a>
     <a href="{{ url_for('support') }}" class="btn">💬 サポート</a>
     <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
     <a href="{{ url_for('news') }}" class="btn">📰 お知らせ一覧</a>
-    <!-- 👇 修正ポイント：常にプロフィール編集へ -->
+    <!-- 👇 マイページはプロフィール編集に直行 -->
     <a href="{{ url_for('mypage_edit', user_id=session.get('user_id')) }}" class="btn">👤 マイページ</a>
     <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
     <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
