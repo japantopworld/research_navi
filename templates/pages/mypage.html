@@ -2,28 +2,41 @@
 {% block title %}マイページ | リサーチナビ{% endblock %}
 {% block content %}
 
-<div class="min-h-screen pb-12">
-  <h1 class="text-2xl font-bold mb-4">👤 マイページ</h1>
-  <p class="mb-6 text-gray-600">
-    ようこそ、{{ session.get('user_id', 'ゲスト') }} さん！以下の機能をご利用いただけます。
-  </p>
+<style>
+  .mypage-card {
+    max-width: 600px;
+    margin: 10vh auto;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,.1);
+    padding: 2rem;
+    text-align: center;
+  }
+  .mypage-card h1 {
+    font-size: 2rem;
+    color: #dc2626;
+    margin-bottom: 1.5rem;
+  }
+  .mypage-info { width: 100%; border-collapse: collapse; margin: 0 auto; }
+  .mypage-info th, .mypage-info td { border-bottom: 1px solid #e5e7eb; padding: .6rem .8rem; font-size: 1rem; }
+  .mypage-info th { color: #6b7280; width: 35%; text-align: right; }
+  .mypage-info td { text-align: left; }
+  .btn-logout { display:inline-block; margin-top:2rem; padding:.8rem 1.5rem; background:#dc2626; color:#ffeb3b; border:none; border-radius:.6rem; font-weight:bold; cursor:pointer; text-decoration:none; }
+  .btn-logout:hover { opacity:.9; }
+</style>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {% set features = [
-      ("お気に入り商品", "⭐", "/favorites"),
-      ("履歴のダウンロード（CSV）", "📄", "/history/download"),
-      ("AI仕入れアドバイザー", "🤖", "/ai-advisor"),
-      ("お問い合わせ・サポート", "📩", "/support"),
-      ("設定", "⚙️", "/settings"),
-      ("ログアウト", "🚪", "/logout")
-    ] %}
-    {% for label, icon, link in features %}
-      <a href="{{ link }}" class="block p-6 bg-blue-100 hover:bg-blue-200 rounded-lg shadow">
-        <div class="text-3xl mb-2">{{ icon }}</div>
-        <div class="font-semibold text-lg">{{ label }}</div>
-      </a>
-    {% endfor %}
-  </div>
+<div class="mypage-card">
+  <!-- ★ ここを氏名表示に変更（display_name を使う） -->
+  <h1>ようこそ {{ display_name }} さん</h1>
+
+  <table class="mypage-info">
+    <tr><th>ID</th><td>{{ user["ID"] }}</td></tr>
+    <tr><th>メール</th><td>{{ user["メールアドレス"] or "未登録" }}</td></tr>
+    <tr><th>部署</th><td>{{ user["部署"] or "未設定" }}</td></tr>
+    <tr><th>紹介者NO</th><td>{{ user["紹介者NO"] or "-" }}</td></tr>
+  </table>
+
+  <a href="{{ url_for('login') }}" class="btn-logout">ログアウト</a>
 </div>
 
 {% endblock %}
