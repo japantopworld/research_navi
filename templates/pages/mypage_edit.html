@@ -34,23 +34,44 @@
     border: 1px solid #d1d5db;
     font-size: 1rem;
   }
-  .btn-save {
+  .btn-save, .btn-back {
     margin-top: 1rem;
     padding: 0.9rem;
     border: none;
     border-radius: 0.6rem;
     font-weight: bold;
-    background: #dc2626;   /* 赤 */
-    color: #ffeb3b;        /* 黄 */
     cursor: pointer;
   }
-  .btn-save:hover {
-    opacity: 0.9;
+  .btn-save {
+    background: #dc2626; color: #ffeb3b;
+  }
+  .btn-save:hover { opacity: 0.9; }
+  .btn-back {
+    background: transparent; border: 1px solid #dc2626; color: #dc2626;
+  }
+  .btn-back:hover { background: #dc2626; color: #ffeb3b; }
+  .flash {
+    margin-bottom: 1rem;
+    padding: .8rem;
+    border-radius: .5rem;
+    font-size: .9rem;
+    background: #d1fae5;
+    color: #065f46;
   }
 </style>
 
 <div class="edit-wrap">
   <h1>プロフィール編集</h1>
+
+  <!-- フラッシュメッセージ -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="flash">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
   <form method="post" class="edit-form">
     <div>
       <label for="name">名前</label>
@@ -85,6 +106,11 @@
       <input type="password" id="password" name="password">
     </div>
     <button type="submit" class="btn-save">保存する</button>
+  </form>
+
+  <!-- 戻るボタン -->
+  <form action="{{ url_for('mypage', user_id=user['ID']) }}" method="get">
+    <button type="submit" class="btn-back">👈 マイページに戻る</button>
   </form>
 </div>
 
