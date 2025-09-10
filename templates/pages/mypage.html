@@ -2,10 +2,49 @@
 {% block title %}マイページ | リサーチナビ{% endblock %}
 {% block content %}
 
+<!-- ▼ ナビバー（ログイン後用） -->
+<nav class="topnav">
+  <div class="nav-buttons">
+    <a href="{{ url_for('index') }}" class="btn">🏠 ホーム</a>
+    <a href="{{ url_for('support') }}" class="btn">💬 サポート</a>
+    <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
+    <a href="{{ url_for('news') }}" class="btn">📰 お知らせ一覧</a>
+    <a href="{{ url_for('mypage', user_id=session.get('user_id')) }}" class="btn">👤 マイページ</a>
+    <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
+  </div>
+</nav>
+
 <style>
+  .topnav {
+    position: sticky; top: 0; z-index: 100;
+    background: #fff;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    padding: .8rem 1rem;
+  }
+  .nav-buttons {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem;
+  }
+  .btn {
+    display: inline-block; padding: .6rem 1.1rem; border-radius: .6rem;
+    text-decoration: none; font-weight: 700;
+    background: #dc2626;
+    color: #ffeb3b;
+    transition: transform .08s ease, opacity .2s ease;
+  }
+  .btn:hover { transform: translateY(-2px); opacity: .9; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid #dc2626;
+    color: #dc2626;
+  }
+  .btn-ghost:hover {
+    background: #dc2626;
+    color: #ffeb3b;
+  }
   .mypage-card {
     max-width: 600px;
-    margin: 10vh auto;
+    margin: 20vh auto;
     background: #fff;
     border-radius: 1rem;
     box-shadow: 0 6px 20px rgba(0,0,0,.1);
@@ -17,26 +56,10 @@
     color: #dc2626;
     margin-bottom: 1.5rem;
   }
-  .mypage-info { width: 100%; border-collapse: collapse; margin: 0 auto; }
-  .mypage-info th, .mypage-info td { border-bottom: 1px solid #e5e7eb; padding: .6rem .8rem; font-size: 1rem; }
-  .mypage-info th { color: #6b7280; width: 35%; text-align: right; }
-  .mypage-info td { text-align: left; }
-  .btn-logout { display:inline-block; margin-top:2rem; padding:.8rem 1.5rem; background:#dc2626; color:#ffeb3b; border:none; border-radius:.6rem; font-weight:bold; cursor:pointer; text-decoration:none; }
-  .btn-logout:hover { opacity:.9; }
 </style>
 
 <div class="mypage-card">
-  <!-- ★ ここを氏名表示に変更（display_name を使う） -->
   <h1>ようこそ {{ display_name }} さん</h1>
-
-  <table class="mypage-info">
-    <tr><th>ID</th><td>{{ user["ID"] }}</td></tr>
-    <tr><th>メール</th><td>{{ user["メールアドレス"] or "未登録" }}</td></tr>
-    <tr><th>部署</th><td>{{ user["部署"] or "未設定" }}</td></tr>
-    <tr><th>紹介者NO</th><td>{{ user["紹介者NO"] or "-" }}</td></tr>
-  </table>
-
-  <a href="{{ url_for('login') }}" class="btn-logout">ログアウト</a>
 </div>
 
 {% endblock %}
