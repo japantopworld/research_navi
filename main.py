@@ -178,6 +178,50 @@ def mypage(user_id):
     display_name = user.get("ユーザー名") or user.get("ID") or user_id
     return render_template("pages/mypage.html", user=user, display_name=display_name)
 
+# プロフィール編集ルート
+@app.route("/mypage_edit/<user_id>", methods=["GET", "POST"])
+def mypage_edit(user_id):
+    if not session.get("logged_in") or session.get("user_id") != user_id:
+        return redirect(url_for("login"))
+
+    ensure_users_csv()
+    users = []
+    target_user = None
+
+    with open(USERS_CSV, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            users.append(row)
+            if row["ID"] == user_id:
+                target_user = row
+
+    if not target_user:
+        return "ユーザーが見つかりません", 404
+
+    if request.method == "POST":
+        target_user["ユーザー名"] = request.form.get("name", target_user["ユーザー名"])
+        target_user["ふりがな"] = request.form.get("kana", target_user["ふりがな"])
+        target_user["メールアドレス"] = request.form.get("email", target_user["メールアドレス"])
+        target_user["部署"] = request.form.get("dept", target_user["部署"])
+        target_user["電話番号"] = request.form.get("phone", target_user["電話番号"])
+        target_user["携帯番号"] = request.form.get("mobile", target_user["携帯番号"])
+        target_user["紹介者NO"] = request.form.get("ref_no", target_user["紹介者NO"])
+        if request.form.get("password"):
+            target_user["PASS"] = request.form.get("password")
+
+        with open(USERS_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=target_user.keys())
+            writer.writeheader()
+            for u in users:
+                if u["ID"] == user_id:
+                    writer.writerow(target_user)
+                else:
+                    writer.writerow(u)
+
+        return redirect(url_for("mypage", user_id=user_id))
+
+    return render_template("pages/mypage_edit.html", user=target_user)
+
 # ログアウト
 @app.route("/logout")
 def logout():
