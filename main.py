@@ -149,7 +149,6 @@ def register():
             ])
         return redirect(url_for("login"))
 
-    # GETアクセス時は form を空dictで渡す
     return render_template("auth/register.html", form={})
 
 # マイページルート
@@ -176,9 +175,7 @@ def mypage(user_id):
     if not user:
         return "ユーザーが見つかりません", 404
 
-    # 表示名（CSVの「ユーザー名」、無ければID）
     display_name = user.get("ユーザー名") or user.get("ID") or user_id
-
     return render_template("pages/mypage.html", user=user, display_name=display_name)
 
 # ログアウト
@@ -186,6 +183,25 @@ def mypage(user_id):
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+# -----------------------------
+# ナビバー用の追加ルート
+# -----------------------------
+@app.route("/support")
+def support():
+    return render_template("pages/support.html")
+
+@app.route("/services")
+def services():
+    return render_template("pages/suppliers.html")  # サービス一覧 = suppliers.html
+
+@app.route("/news")
+def news():
+    return render_template("pages/guide.html")  # 仮で guide.html を当てる
+
+@app.route("/settings")
+def settings():
+    return render_template("pages/setting.html")
 
 # -----------------------------
 # エントリポイント
