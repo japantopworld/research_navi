@@ -3,10 +3,10 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 
 # -----------------------------
-# Flask アプリ定義
+# Flask app 定義
 # -----------------------------
 app = Flask(__name__)
-app.secret_key = "change-me"  # セッション用（必要なら安全なキーに変更）
+app.secret_key = "change-me"  # セッション用(本番は安全なキーに変更)
 
 # -----------------------------
 # データ関連
@@ -50,7 +50,7 @@ def mmdd_from_birth(birth_ymd: str) -> str:
         return ""
 
 def normalize_ref(raw: str) -> str:
-    """紹介者NOの正規化: KA, KB1 など → A, B1"""
+    """紹介者NOの正規化: KA, KB1 → A, B1"""
     if not raw:
         return ""
     s = raw.strip().upper()
@@ -79,7 +79,7 @@ def login():
         input_id = request.form.get("username","").strip()
         input_pass = request.form.get("password","").strip()
 
-        # 管理者アカウント
+        # 管理者
         if input_id == "KING1219" and input_pass == "11922960":
             session["logged_in"] = True
             session["user_id"] = "KING1219"
@@ -127,7 +127,7 @@ def register():
         if not birth: errors.append("生年月日は必須です。")
         if not mmdd: errors.append("生年月日からMMDDが生成できません。")
         if branch not in list("ABCDE"): errors.append("枝は A〜E を選択してください。")
-        if not ref_norm: errors.append("紹介者NOの形式が不正です（例: KA, KB1）。")
+        if not ref_norm: errors.append("紹介者NOの形式が不正です。")
         if not user_id: errors.append("ユーザーIDの生成に失敗しました。")
         if user_id and id_exists(user_id): errors.append("このユーザーIDはすでに登録されています。")
         if not password or len(password) < 6: errors.append("パスワードは6文字以上で入力してください。")
@@ -174,61 +174,6 @@ def mypage(user_id):
     display_name = user.get("ユーザー名") or user.get("ID") or user_id
     return render_template("pages/mypage.html", user=user, display_name=display_name)
 
-@app.route("/mypage_edit/<user_id>", methods=["GET", "POST"])
-def mypage_edit(user_id):
-    if not session.get("logged_in") or session.get("user_id") != user_id:
-        return redirect(url_for("login"))
-
-    ensure_users_csv()
-    users, target_user = [], None
-    with open(USERS_CSV, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            users.append(row)
-            if row["ID"] == user_id:
-                target_user = row
-
-    if not target_user and user_id == "KING1219":
-        target_user = {
-            "ユーザー名": "小島崇彦",
-            "ふりがな": "",
-            "メールアドレス": "",
-            "部署": "",
-            "電話番号": "",
-            "携帯番号": "",
-            "紹介者NO": "",
-            "ID": "KING1219",
-            "PASS": "11922960"
-        }
-
-    if not target_user:
-        return "ユーザーが見つかりません", 404
-
-    if request.method == "POST":
-        target_user["ユーザー名"] = request.form.get("name", target_user["ユーザー名"])
-        target_user["ふりがな"] = request.form.get("kana", target_user["ふりがな"])
-        target_user["メールアドレス"] = request.form.get("email", target_user["メールアドレス"])
-        target_user["部署"] = request.form.get("dept", target_user["部署"])
-        target_user["電話番号"] = request.form.get("phone", target_user["電話番号"])
-        target_user["携帯番号"] = request.form.get("mobile", target_user["携帯番号"])
-        target_user["紹介者NO"] = request.form.get("ref_no", target_user["紹介者NO"])
-        if request.form.get("password"):
-            target_user["PASS"] = request.form.get("password")
-
-        with open(USERS_CSV, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=target_user.keys())
-            writer.writeheader()
-            for u in users:
-                if u["ID"] == user_id:
-                    writer.writerow(target_user)
-                else:
-                    writer.writerow(u)
-
-        flash("プロフィールを保存しました。", "success")
-        return redirect(url_for("mypage", user_id=user_id))
-
-    return render_template("pages/mypage_edit.html", user=target_user)
-
 @app.route("/logout")
 def logout():
     session.clear()
@@ -246,7 +191,6 @@ def services():
 def news():
     return render_template("pages/guide.html")
 
-# 👇 追加（型は崩さずに）
 @app.route("/guide")
 def guide():
     return render_template("pages/guide.html")
@@ -257,7 +201,11 @@ def settings():
 
 @app.route("/healthz")
 def healthz():
-    return "ok", 200
+    return "OK", 200
 
+# -----------------------------
+# Render 環境対応
+# -----------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port, debug=True)
