@@ -10,7 +10,6 @@
     当サービスをご利用になる前に、必ず本規約をお読みください。
   </p>
 
-  <!-- 第1章 -->
   <section>
     <h2>第1条（適用）</h2>
     <p>
@@ -72,3 +71,79 @@
     </p>
   </section>
 
+  <section>
+    <h2>第7条（免責事項）</h2>
+    <p>
+      当サービスは、ユーザー間または第三者とのトラブルについて一切の責任を負いません。<br>
+      また、当サービスの利用により生じたいかなる損害についても責任を負わないものとします。
+    </p>
+  </section>
+
+  <section>
+    <h2>第8条（個人情報の取扱い）</h2>
+    <p>
+      当サービスは、個人情報を別途定める
+      <a href="{{ url_for('privacy') }}">プライバシーポリシー</a>に基づき適切に取り扱います。
+    </p>
+  </section>
+
+  <section>
+    <h2>第9条（準拠法・管轄裁判所）</h2>
+    <p>
+      本規約は日本法を準拠法とし、本サービスに関する一切の紛争は、和歌山地方裁判所を第一審の専属的合意管轄とします。
+    </p>
+  </section>
+
+  <div class="footer-note">
+    <p>制定日：2025年9月12日</p>
+    <p>リサーチナビ運営</p>
+  </div>
+</div>
+
+<style>
+  .terms-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    line-height: 1.8;
+  }
+  .terms-container h1 {
+    text-align: center;
+    color: #dc2626;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .subtitle {
+    text-align: center;
+    color: #555;
+    margin-bottom: 2rem;
+  }
+  section {
+    margin-bottom: 2rem;
+  }
+  section h2 {
+    font-size: 1.2rem;
+    color: #dc2626;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid #dc2626;
+    padding-left: 0.5rem;
+  }
+  ul {
+    padding-left: 1.2rem;
+  }
+  ul li {
+    margin-bottom: 0.5rem;
+  }
+  .footer-note {
+    text-align: right;
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 2rem;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+  }
+</style>
+{% endblock %}
