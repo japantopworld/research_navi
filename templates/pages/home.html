@@ -1,52 +1,28 @@
 {% extends "base/layout.html" %}
-{% block title %}リサーチナビ | ホーム{% endblock %}
+{% block title %}ホーム | リサーチナビ{% endblock %}
 {% block content %}
 
-<style>
-  .hero-container {
-    display: flex; flex-direction: column; align-items: center;
-    text-align: center; padding: 5vh 2vw; font-size: 1.3rem;
-  }
-  .hero-container h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
-  .hero-container p { font-size: 1.2rem; color: #555; margin-bottom: 1.5rem; }
-  .hero-container img {
-    max-width: 300px; width: 80%; height: auto;
-    margin-bottom: 1.5rem; border-radius: 1rem;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  .hero-buttons {
-    display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 2rem;
-  }
-  .hero-buttons a {
-    padding: 1rem 2rem; font-size: 1.2rem; border-radius: 0.6rem;
-    text-decoration: none; font-weight: bold;
-    background-color: #dc2626;  /* 真っ赤 */
-    color: #ffeb3b;             /* 黄色文字 */
-  }
-  .hero-buttons a:hover { opacity: 0.9; }
-  .footer-text { margin-top: 1.5rem; font-size: 0.9rem; color: #666; }
-  @media screen and (max-width: 480px) {
-    .hero-container { font-size: 1.1rem; }
-    .hero-container h1 { font-size: 1.7rem; }
-    .hero-buttons a { font-size: 1rem; padding: 0.8rem 1.5rem; }
-    .footer-text { font-size: 0.8rem; }
-  }
-</style>
-
-<div class="hero-container">
-  <h1>🔍 <span style="color:#d92d20;">リサーチナビ</span></h1>
-  <p>最強のせどり支援ツールへようこそ！</p>
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ" />
-
-  <div class="hero-buttons">
-    <a href="{{ url_for('login') }}" class="login">ログイン</a>
-    <a href="{{ url_for('register') }}" class="register">新規登録</a>
+<nav class="topnav">
+  <div class="nav-buttons">
+    <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
+    <a href="{{ url_for('support') }}" class="btn">💬 サポート</a>
+    <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
+    <a href="{{ url_for('news') }}" class="btn">📰 お知らせ</a>
+    {% if session.get('logged_in') %}
+      <a href="{{ url_for('mypage', user_id=session.get('user_id')) }}" class="btn">👤 マイページ</a>
+      <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="btn">🔑 ログイン</a>
+      <a href="{{ url_for('register') }}" class="btn">📝 新規登録</a>
+    {% endif %}
   </div>
+</nav>
 
-  <div class="footer-text">
-    制作者：鳳陽合同会社　小島崇彦<br>
-    © 2025 Research Navi. All rights reserved.
-  </div>
-</div>
+<section style="padding:2rem; text-align:center;">
+  <h1>🚀 ようこそ リサーチナビへ！</h1>
+  <p>メルカリ・Amazon・楽天・Yahooなどの検索や利益計算をサポートします。</p>
+  <p>左上のメニューから各機能をお使いください。</p>
+</section>
 
 {% endblock %}
