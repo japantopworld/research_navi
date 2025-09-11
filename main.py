@@ -189,27 +189,47 @@ def logout():
     session.clear()
     return redirect(url_for("home"))
 
-# サポート
+# -----------------------------
+# サポート関連ページ
+# -----------------------------
+@app.route("/guide")
+def guide():
+    return render_template("support/guide.html")
+
+@app.route("/terms")
+def terms():
+    return render_template("support/terms.html")
+
+@app.route("/privacy")
+def privacy():
+    return render_template("support/privacy.html")
+
+@app.route("/report")
+def report():
+    return render_template("support/report.html")
+
 @app.route("/support")
 def support():
-    return render_template("pages/support.html")
+    return render_template("support/support.html")
 
-# サービス一覧
+# -----------------------------
+# その他ページ
+# -----------------------------
 @app.route("/services")
 def services():
     return render_template("pages/suppliers.html")
 
-# お知らせ
 @app.route("/news")
 def news():
     return render_template("pages/guide.html")
 
-# 設定
 @app.route("/settings")
 def settings():
     return render_template("pages/setting.html")
 
+# -----------------------------
 # Health check
+# -----------------------------
 @app.route("/healthz")
 def healthz():
     return "OK", 200
