@@ -3,10 +3,10 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 
 # -----------------------------
-# Flask アプリ定義
+# Flask app 定義
 # -----------------------------
 app = Flask(__name__)
-app.secret_key = "change-me"  # セッション用（必要なら安全なキーに変更）
+app.secret_key = "change-me"  # セッション用（本番は安全なキーに変更）
 
 # -----------------------------
 # データ関連
@@ -50,7 +50,7 @@ def mmdd_from_birth(birth_ymd: str) -> str:
         return ""
 
 def normalize_ref(raw: str) -> str:
-    """紹介者NOの正規化: KA, KB1 など → A, B1"""
+    """紹介者NOの正規化: KA, KB1 → A, B1"""
     if not raw:
         return ""
     s = raw.strip().upper()
@@ -79,7 +79,7 @@ def login():
         input_id = request.form.get("username","").strip()
         input_pass = request.form.get("password","").strip()
 
-        # 管理者アカウント
+        # 管理者
         if input_id == "KING1219" and input_pass == "11922960":
             session["logged_in"] = True
             session["user_id"] = "KING1219"
@@ -127,7 +127,7 @@ def register():
         if not birth: errors.append("生年月日は必須です。")
         if not mmdd: errors.append("生年月日からMMDDが生成できません。")
         if branch not in list("ABCDE"): errors.append("枝は A〜E を選択してください。")
-        if not ref_norm: errors.append("紹介者NOの形式が不正です（例: KA, KB1）。")
+        if not ref_norm: errors.append("紹介者NOの形式が不正です。")
         if not user_id: errors.append("ユーザーIDの生成に失敗しました。")
         if user_id and id_exists(user_id): errors.append("このユーザーIDはすでに登録されています。")
         if not password or len(password) < 6: errors.append("パスワードは6文字以上で入力してください。")
