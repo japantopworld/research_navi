@@ -246,6 +246,11 @@ def services():
 def news():
     return render_template("pages/guide.html")
 
+# 👇 追加（型は崩さずに）
+@app.route("/guide")
+def guide():
+    return render_template("pages/guide.html")
+
 @app.route("/settings")
 def settings():
     return render_template("pages/setting.html")
