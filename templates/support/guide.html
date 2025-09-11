@@ -1,1 +1,127 @@
+{% extends "base/layout.html" %}
+{% block title %}使い方ガイド | リサーチナビ{% endblock %}
+
+{% block content %}
+<div class="guide-container">
+  <h1>📘 使い方ガイド</h1>
+  <p class="subtitle">
+    このページでは、リサーチナビの使い方を分かりやすく解説します。<br>
+    初心者の方は、まず下記の手順動画と説明書をご覧ください。
+  </p>
+
+  <!-- 動画チュートリアル -->
+  <section class="video-section">
+    <h2>🎥 スタートアップチュートリアル</h2>
+    <p>初回設定から基本操作までを約3分の動画で解説しています。</p>
+    <div class="video-frame">
+      <iframe width="560" height="315"
+        src="https://www.youtube.com/embed/your_video_id"
+        title="YouTube video player"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </section>
+
+  <!-- 基本操作ガイド -->
+  <section class="steps-section">
+    <h2>📝 基本操作ガイド</h2>
+    <ol>
+      <li><strong>ログイン</strong>：登録済みIDとパスワードでログインしてください。</li>
+      <li><strong>商品検索</strong>：ホーム画面からメルカリ・Amazonなどを同時検索可能です。</li>
+      <li><strong>利益計算</strong>：仕入れ価格・販売価格を入力すると自動で利益を計算します。</li>
+      <li><strong>履歴確認</strong>：過去の検索や計算結果を履歴一覧で確認できます。</li>
+      <li><strong>ランキング</strong>：人気商品や利益率の高い商品をランキング表示します。</li>
+      <li><strong>通知設定</strong>：利益商品を自動で通知する設定が可能です。</li>
+    </ol>
+  </section>
+
+  <!-- 関連ページへのボタン -->
+  <section class="link-section">
+    <h2>🔗 関連サポートページ</h2>
+    <div class="button-group">
+      <a href="{{ url_for('terms') }}" class="btn">📜 利用規約</a>
+      <a href="{{ url_for('privacy') }}" class="btn">🔒 プライバシーポリシー</a>
+      <a href="{{ url_for('report') }}" class="btn btn-danger">⚠️ 違反通報フォーム</a>
+      <a href="{{ url_for('support') }}" class="btn btn-success">💬 お問い合わせ</a>
+    </div>
+  </section>
+</div>
+
+<style>
+  .guide-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  }
+
+  .guide-container h1 {
+    text-align: center;
+    color: #dc2626;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #555;
+    margin-bottom: 2rem;
+  }
+
+  .video-section {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .video-frame {
+    margin-top: 1rem;
+  }
+
+  .steps-section ol {
+    padding-left: 1.2rem;
+    line-height: 1.8;
+  }
+  .steps-section li {
+    margin-bottom: 0.8rem;
+  }
+
+  .link-section {
+    text-align: center;
+    margin-top: 2rem;
+  }
+  .button-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.6rem 1.4rem;
+    background: #dc2626;
+    color: #ffeb3b;
+    font-weight: bold;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: transform .1s ease, opacity .2s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+  }
+
+  .btn-danger {
+    background: #b91c1c;
+  }
+
+  .btn-success {
+    background: #16a34a;
+  }
+</style>
+{% endblock %}
 
