@@ -67,7 +67,10 @@ def normalize_ref(raw: str) -> str:
 # -----------------------------
 @app.route("/")
 def index():
-    return render_template("pages/home.html")
+    # ログイン済みならマイページへ、未ログインならログイン画面へ
+    if session.get("logged_in") and session.get("user_id"):
+        return redirect(url_for("mypage", user_id=session.get("user_id")))
+    return redirect(url_for("login"))
 
 @app.route("/login", methods=["GET", "POST"])
 @app.route("/login/", methods=["GET", "POST"])
