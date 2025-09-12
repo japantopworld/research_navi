@@ -8,7 +8,7 @@
 <body>
 
   <!-- ▼ ナビバー（ログイン後のみ表示） ▼ -->
-  {% if session.get("logged_in") %}
+  {% if session.get('logged_in') %}
   <nav class="topnav">
     <div class="nav-buttons">
       <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
