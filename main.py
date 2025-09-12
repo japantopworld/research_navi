@@ -28,6 +28,7 @@ def ensure_users_csv():
             ])
 
 def calc_age(birth_ymd: str) -> str:
+    """生年月日から年齢計算"""
     try:
         b = datetime.strptime(birth_ymd, "%Y-%m-%d").date()
         t = datetime.now().date()
@@ -71,7 +72,18 @@ def normalize_ref(raw: str) -> str:
 # =========================================================
 
 # -----------------------------
-# サポート関連ページ（優先して上に記載）
+# ホーム画面
+# -----------------------------
+@app.route("/home")
+def home():
+    return render_template("pages/home.html")
+
+@app.route("/")
+def index():
+    return redirect(url_for("home"))
+
+# -----------------------------
+# サポート関連ページ
 # -----------------------------
 @app.route("/guide", endpoint="guide")
 def page_guide():
@@ -93,19 +105,6 @@ def page_report():
 def page_support():
     return render_template("support/support.html")
 
-
-# -----------------------------
-# ホーム画面
-# -----------------------------
-@app.route("/home")
-def home():
-    return render_template("pages/home.html")
-
-# "/" はホームへリダイレクト
-@app.route("/")
-def index():
-    return redirect(url_for("home"))
-
 # -----------------------------
 # ログイン
 # -----------------------------
@@ -116,146 +115,4 @@ def login():
         input_pass = request.form.get("password", "").strip()
 
         # 管理者ログイン
-        if input_id == "KING1219" and input_pass == "11922960":
-            session["logged_in"] = True
-            session["user_id"] = "KING1219"
-            return redirect(url_for("mypage", user_id="KING1219"))
-
-        # 通常ユーザー
-        ensure_users_csv()
-        with open(USERS_CSV, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            user = next((row for row in reader if row["ID"] == input_id and row["PASS"] == input_pass), None)
-
-        if user:
-            session["logged_in"] = True
-            session["user_id"] = user["ID"]
-            return redirect(url_for("mypage", user_id=user["ID"]))
-        else:
-            return render_template("auth/login.html", error="ユーザーIDまたはパスワードが違います")
-
-    return render_template("auth/login.html")
-
-# -----------------------------
-# 新規登録
-# -----------------------------
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    ensure_users_csv()
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        kana = request.form.get("kana", "").strip()
-        birth = request.form.get("birth", "").strip()
-        branch = request.form.get("branch", "A").strip()
-        phone = request.form.get("phone", "").strip()
-        mobile = request.form.get("mobile", "").strip()
-        email = request.form.get("email", "").strip()
-        dept = request.form.get("dept", "").strip()
-
-        ref_raw = request.form.get("ref_raw", "").strip()
-        ref_norm = normalize_ref(ref_raw)
-
-        password = request.form.get("password", "")
-        password2 = request.form.get("password2", "")
-
-        mmdd = mmdd_from_birth(birth)
-        user_id = f"{ref_norm}{mmdd}{branch}" if ref_norm and mmdd and branch else ""
-
-        errors = []
-        if not name: errors.append("氏名は必須です。")
-        if not kana: errors.append("ふりがなは必須です。")
-        if not birth: errors.append("生年月日は必須です。")
-        if not mmdd: errors.append("生年月日からMMDDが生成できません。")
-        if branch not in list("ABCDE"): errors.append("枝は A〜E を選択してください。")
-        if not ref_norm: errors.append("紹介者NOの形式が不正です。")
-        if not user_id: errors.append("ユーザーIDの生成に失敗しました。")
-        if user_id and id_exists(user_id): errors.append("このユーザーIDはすでに登録されています。")
-        if not password or len(password) < 6: errors.append("パスワードは6文字以上で入力してください。")
-        if password != password2: errors.append("確認用パスワードが一致しません。")
-
-        if errors:
-            form = dict(request.form)
-            form["ref_no"] = ref_norm
-            form["user_id"] = user_id
-            return render_template("auth/register.html", errors=errors, form=form)
-
-        age = calc_age(birth)
-        with open(USERS_CSV, "a", newline="", encoding="utf-8") as f:
-            csv.writer(f).writerow([
-                name, kana, birth, age, phone, mobile,
-                email, dept, ref_norm, user_id, password
-            ])
-        return redirect(url_for("login"))
-
-    return render_template("auth/register.html", form={})
-
-# -----------------------------
-# マイページ
-# -----------------------------
-@app.route("/mypage/<user_id>")
-def mypage(user_id):
-    if not session.get("logged_in") or session.get("user_id") != user_id:
-        return redirect(url_for("login"))
-
-    ensure_users_csv()
-    with open(USERS_CSV, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        user = next((row for row in reader if row["ID"] == user_id), None)
-
-    if not user and user_id == "KING1219":
-        user = {
-            "ユーザー名": "小島崇彦",
-            "ID": "KING1219",
-            "メールアドレス": "",
-            "部署": "",
-            "紹介者NO": "",
-        }
-
-    if not user:
-        return "ユーザーが見つかりません", 404
-
-    display_name = user.get("ユーザー名") or user.get("ID") or user_id
-    return render_template("pages/mypage.html", user=user, display_name=display_name)
-
-# -----------------------------
-# ログアウト
-# -----------------------------
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("home"))
-
-# -----------------------------
-# サービス一覧
-# -----------------------------
-@app.route("/services")
-def services():
-    return render_template("pages/suppliers.html")
-
-# -----------------------------
-# お知らせ
-# -----------------------------
-@app.route("/news")
-def news():
-    return render_template("pages/guide.html")
-
-# -----------------------------
-# 設定
-# -----------------------------
-@app.route("/settings")
-def settings():
-    return render_template("pages/setting.html")
-
-# -----------------------------
-# Health Check
-# -----------------------------
-@app.route("/healthz")
-def healthz():
-    return "OK", 200
-
-# =========================================================
-# アプリ起動
-# =========================================================
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+        if input_id == "KING121_
