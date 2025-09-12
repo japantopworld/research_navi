@@ -66,10 +66,12 @@ def normalize_ref(raw: str) -> str:
 # ルート定義
 # -----------------------------
 
-# ホーム画面（/ と /home 両方で表示）
+# ホーム画面（ログイン判定付き）
 @app.route("/")
 @app.route("/home")
 def home():
+    if session.get("logged_in"):
+        return redirect(url_for("mypage", user_id=session.get("user_id")))
     return render_template("pages/home.html")
 
 # ログイン
