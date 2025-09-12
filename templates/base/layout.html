@@ -7,12 +7,13 @@
 </head>
 <body>
 
+  {# ▼ ログイン後のみナビバーを表示 #}
   {% if session.get('logged_in') %}
-  <!-- ▼ ログイン後にだけ表示するナビバー ▼ -->
   <nav class="topnav">
     <div class="nav-buttons">
       <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
 
+      <!-- ▼ サポート ドロップダウン ▼ -->
       <div class="dropdown">
         <button class="btn dropdown-toggle">💬 サポート</button>
         <div class="dropdown-menu">
@@ -23,6 +24,7 @@
           <a href="{{ url_for('support') }}">💬 お問い合わせ</a>
         </div>
       </div>
+      <!-- ▲ サポート ドロップダウン ▲ -->
 
       <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
       <a href="{{ url_for('news') }}" class="btn">📰 お知らせ一覧</a>
@@ -32,7 +34,7 @@
     </div>
   </nav>
   {% endif %}
-  <!-- ▲ ログイン後にだけ表示するナビバー ▲ -->
+  {# ▲ ログイン後のみナビバーを表示 #}
 
   <!-- ページごとのコンテンツ -->
   {% block content %}{% endblock %}
