@@ -1,119 +1,37 @@
 {% extends "base/layout.html" %}
-{% block title %}マイページ{% endblock %}
-
+{% block title %}リサーチナビ | マイページ{% endblock %}
 {% block content %}
-<nav class="topnav">
-  <div class="nav-buttons">
-    <a href="/mypage/{{ user['ID'] }}" class="btn">👤 マイページ</a>
-    <a href="{{ url_for('support') }}" class="btn">💬 サポート</a>
-    <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
-    <a href="{{ url_for('news') }}" class="btn">📰 お知らせ一覧</a>
-    <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
-    <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
-  </div>
-</nav>
+
+<style>
+  .mypage-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.8rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    font-size: 1.1rem;
+  }
+  .mypage-container h2 {
+    margin-bottom: 1rem;
+    color: #dc2626;
+  }
+  .mypage-info {
+    line-height: 1.8;
+  }
+  .mypage-info strong {
+    color: #333;
+  }
+</style>
 
 <div class="mypage-container">
-  <div class="card">
-    <h2>ようこそ {{ display_name }} さん</h2>
-    <p>こちらから各機能にアクセスできます。</p>
-  </div>
-
-  <div class="grid">
-    <a href="/search" class="card-link">
-      <div class="card">
-        <h3>🔍 商品検索</h3>
-        <p>メルカリ・Amazon・楽天・Yahooなど同時検索（画像AI推定対応）</p>
-      </div>
-    </a>
-
-    <a href="/profit" class="card-link">
-      <div class="card">
-        <h3>💰 利益計算</h3>
-        <p>売価・仕入・手数料入力で即計算（ROI・損益分岐点など）</p>
-      </div>
-    </a>
-
-    <a href="/history" class="card-link">
-      <div class="card">
-        <h3>📜 履歴一覧</h3>
-        <p>過去検索や利益計算の保存一覧（CSV出力・絞り込みあり）</p>
-      </div>
-    </a>
-
-    <a href="/ranking" class="card-link">
-      <div class="card">
-        <h3>🏆 ランキング</h3>
-        <p>トレンド・回転率・ROI・利益・リスク順など切替表示</p>
-      </div>
-    </a>
-
-    <a href="/alerts" class="card-link">
-      <div class="card">
-        <h3>🚨 アラート一覧</h3>
-        <p>利益商品通知履歴（利益〇円以上など設定可）</p>
-      </div>
-    </a>
+  <h2>👤 {{ display_name }} さんのマイページ</h2>
+  <div class="mypage-info">
+    <p><strong>ID:</strong> {{ user["ID"] }}</p>
+    <p><strong>メールアドレス:</strong> {{ user["メールアドレス"] or "未登録" }}</p>
+    <p><strong>部署:</strong> {{ user["部署"] or "未設定" }}</p>
+    <p><strong>紹介者NO:</strong> {{ user["紹介者NO"] or "なし" }}</p>
   </div>
 </div>
 
-<style>
-/* --- ナビバー --- */
-.topnav {
-  position: sticky; top: 0; z-index: 100;
-  background: #fff;
-  border-bottom: 1px solid rgba(0,0,0,.08);
-  padding: .8rem 1rem;
-}
-.nav-buttons {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem;
-}
-.btn {
-  display: inline-block; padding: .6rem 1.1rem; border-radius: .6rem;
-  text-decoration: none; font-weight: 700;
-  background: #dc2626;  /* 赤 */
-  color: #ffeb3b;       /* 黄色文字 */
-  transition: transform .08s ease, opacity .2s ease;
-}
-.btn:hover { transform: translateY(-2px); opacity: .9; }
-.btn-ghost {
-  background: transparent;
-  border: 1px solid #dc2626;
-  color: #dc2626;
-}
-.btn-ghost:hover {
-  background: #dc2626;
-  color: #ffeb3b;
-}
-
-/* --- マイページカード --- */
-.mypage-container {
-  max-width: 1000px;
-  margin: 2rem auto;
-  padding: 1rem;
-}
-.card {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: .8rem;
-  padding: 1.2rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,.05);
-  transition: transform .1s ease, box-shadow .2s ease;
-}
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 10px rgba(0,0,0,.1);
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-}
-.card-link {
-  text-decoration: none;
-  color: inherit;
-}
-</style>
 {% endblock %}
