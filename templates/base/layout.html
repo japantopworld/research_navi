@@ -6,7 +6,9 @@
   <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
-  <!-- ナビバー -->
+
+  {% if session.get("logged_in") %}
+  <!-- ▼ ナビバー（ログイン時のみ表示） -->
   <nav class="topnav">
     <div class="nav-buttons">
       <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
@@ -26,11 +28,12 @@
 
       <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
       <a href="{{ url_for('news') }}" class="btn">📰 お知らせ一覧</a>
-      <a href="{% if session.get('user_id') %}{{ url_for('mypage', user_id=session.get('user_id')) }}{% else %}{{ url_for('login') }}{% endif %}" class="btn">👤 マイページ</a>
+      <a href="{{ url_for('mypage', user_id=session.get('user_id','')) }}" class="btn">👤 マイページ</a>
       <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
       <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
     </div>
   </nav>
+  {% endif %}
 
   <!-- ページごとのコンテンツ -->
   {% block content %}{% endblock %}
