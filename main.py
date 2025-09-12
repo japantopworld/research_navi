@@ -1,6 +1,6 @@
 import os, csv, re
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session
 
 # -----------------------------
 # Flask app 定義
@@ -66,19 +66,14 @@ def normalize_ref(raw: str) -> str:
 # ルート定義
 # -----------------------------
 
-# ホーム画面
+# "/" と "/home" の両方でホーム画面を表示
+@app.route("/")
 @app.route("/home")
 def home():
     return render_template("pages/home.html")
 
-# "/" はホームへリダイレクト
-@app.route("/")
-def index():
-    return redirect(url_for("home"))
-
 # ログイン
 @app.route("/login", methods=["GET", "POST"])
-@app.route("/login/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         input_id = request.form.get("username","").strip()
@@ -107,7 +102,6 @@ def login():
 
 # 登録
 @app.route("/register", methods=["GET", "POST"])
-@app.route("/register/", methods=["GET", "POST"])
 def register():
     ensure_users_csv()
     if request.method == "POST":
