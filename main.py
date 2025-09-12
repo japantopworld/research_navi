@@ -66,7 +66,7 @@ def normalize_ref(raw: str) -> str:
 # ルート定義
 # -----------------------------
 
-# "/" と "/home" の両方でホーム画面を表示
+# ホーム画面（/ と /home 両方で表示）
 @app.route("/")
 @app.route("/home")
 def home():
