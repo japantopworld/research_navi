@@ -6,8 +6,9 @@
   <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
-  <!-- ▼ ナビバー（ログイン後のみ表示） -->
-  {% if session.get("logged_in") %}
+
+  <!-- ▼ ログイン済みの時だけナビバーを表示 -->
+  {% if session.get('logged_in') %}
   <nav class="topnav">
     <div class="nav-buttons">
       <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
@@ -33,8 +34,9 @@
     </div>
   </nav>
   {% endif %}
+  <!-- ▲ ログイン済みの時だけナビバーを表示 -->
 
-  <!-- ▼ ページごとのコンテンツ ▼ -->
+  <!-- ページごとのコンテンツ -->
   {% block content %}{% endblock %}
 
   <style>
