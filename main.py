@@ -66,13 +66,15 @@ def normalize_ref(raw: str) -> str:
 # ルート定義
 # -----------------------------
 
-# "/" は常にホーム（未ログイン画面）
+# ホーム画面（/ と /home 両方対応）
 @app.route("/")
-def index():
+@app.route("/home")
+def home():
     return render_template("pages/home.html")
 
 # ログイン
 @app.route("/login", methods=["GET", "POST"])
+@app.route("/login/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         input_id = request.form.get("username","").strip()
@@ -101,6 +103,7 @@ def login():
 
 # 登録
 @app.route("/register", methods=["GET", "POST"])
+@app.route("/register/", methods=["GET", "POST"])
 def register():
     ensure_users_csv()
     if request.method == "POST":
@@ -180,7 +183,7 @@ def mypage(user_id):
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for("index"))
+    return redirect(url_for("home"))
 
 # -----------------------------
 # サポート関連ページ
