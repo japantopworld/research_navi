@@ -4,39 +4,76 @@
 
 <style>
   .hero-container {
-    display: flex; flex-direction: column; align-items: center;
-    text-align: center; padding: 5vh 2vw; font-size: 1.3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 5vh 2vw;
+    font-size: 1.3rem;
   }
-  .hero-container h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
-  .hero-container p { font-size: 1.2rem; color: #555; margin-bottom: 1.5rem; }
+  .hero-container h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+  }
+  .hero-container p {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 1.5rem;
+  }
   .hero-container img {
-    max-width: 300px; width: 80%; height: auto;
-    margin-bottom: 1.5rem; border-radius: 1rem;
+    max-width: 300px;
+    width: 80%;
+    height: auto;
+    margin-bottom: 1.5rem;
+    border-radius: 1rem;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
   }
   .hero-buttons {
-    display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 2rem;
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-bottom: 2rem;
   }
   .hero-buttons a {
-    padding: 1rem 2rem; font-size: 1.2rem; border-radius: 0.6rem;
-    text-decoration: none; font-weight: bold;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: bold;
     background-color: #dc2626;  /* 真っ赤 */
     color: #ffeb3b;             /* 黄色文字 */
   }
-  .hero-buttons a:hover { opacity: 0.9; }
-  .footer-text { margin-top: 1.5rem; font-size: 0.9rem; color: #666; }
+  .hero-buttons a:hover {
+    opacity: 0.9;
+  }
+  .footer-text {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #666;
+  }
   @media screen and (max-width: 480px) {
-    .hero-container { font-size: 1.1rem; }
-    .hero-container h1 { font-size: 1.7rem; }
-    .hero-buttons a { font-size: 1rem; padding: 0.8rem 1.5rem; }
-    .footer-text { font-size: 0.8rem; }
+    .hero-container {
+      font-size: 1.1rem;
+    }
+    .hero-container h1 {
+      font-size: 1.7rem;
+    }
+    .hero-buttons a {
+      font-size: 1rem;
+      padding: 0.8rem 1.5rem;
+    }
+    .footer-text {
+      font-size: 0.8rem;
+    }
   }
 </style>
 
 <div class="hero-container">
   <h1>🔍 <span style="color:#d92d20;">リサーチナビ</span></h1>
   <p>最強のせどり支援ツールへようこそ！</p>
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ" />
+
+  <!-- 画像がある場合は static/img/hero_main.jpg に配置 -->
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ">
 
   <div class="hero-buttons">
     <a href="{{ url_for('login') }}" class="login">ログイン</a>
