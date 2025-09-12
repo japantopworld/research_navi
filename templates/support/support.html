@@ -1,12 +1,72 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>サポート</title>
-</head>
-<body>
-  <h1>💬 サポート（お問い合わせページ）</h1>
-  <p>このページはサポートのテスト表示です。</p>
-</body>
-</html>
+{% extends "base/layout.html" %}
+{% block title %}リサーチナビ | お問い合わせ{% endblock %}
+{% block content %}
 
+<style>
+  .support-container {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.8rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.08);
+    font-size: 1rem;
+  }
+  .support-container h2 {
+    margin-bottom: 1rem;
+    color: #dc2626;
+    font-size: 1.5rem;
+  }
+  .support-form label {
+    display: block;
+    margin-top: 1rem;
+    font-weight: bold;
+  }
+  .support-form input,
+  .support-form textarea {
+    width: 100%;
+    padding: 0.6rem;
+    margin-top: 0.3rem;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+  }
+  .support-form textarea {
+    min-height: 150px;
+  }
+  .support-form button {
+    margin-top: 1.5rem;
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 0.6rem;
+    background: #dc2626;
+    color: #ffeb3b;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .support-form button:hover {
+    opacity: 0.9;
+  }
+</style>
+
+<div class="support-container">
+  <h2>💬 お問い合わせフォーム</h2>
+  <form method="POST" action="/support" class="support-form">
+    <label for="name">お名前</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="email">メールアドレス</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="subject">件名</label>
+    <input type="text" id="subject" name="subject" required>
+
+    <label for="message">内容</label>
+    <textarea id="message" name="message" required></textarea>
+
+    <button type="submit">送信する</button>
+  </form>
+</div>
+
+{% endblock %}
