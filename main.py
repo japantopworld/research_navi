@@ -66,13 +66,15 @@ def normalize_ref(raw: str) -> str:
 # ルート定義
 # -----------------------------
 
-# ホーム画面（ログイン判定付き）
+# "/" はログイン状態で分岐
 @app.route("/")
-@app.route("/home")
-def home():
+def index():
     if session.get("logged_in"):
+        # ログイン済 → マイページ
         return redirect(url_for("mypage", user_id=session.get("user_id")))
-    return render_template("pages/home.html")
+    else:
+        # 未ログイン → ホーム画面
+        return render_template("pages/home.html")
 
 # ログイン
 @app.route("/login", methods=["GET", "POST"])
@@ -102,7 +104,7 @@ def login():
 
     return render_template("auth/login.html")
 
-# 登録
+# 新規登録
 @app.route("/register", methods=["GET", "POST"])
 def register():
     ensure_users_csv()
@@ -183,7 +185,7 @@ def mypage(user_id):
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for("home"))
+    return redirect(url_for("index"))
 
 # -----------------------------
 # サポート関連ページ
