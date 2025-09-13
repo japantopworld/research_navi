@@ -13,7 +13,7 @@ app.secret_key = "change-me"  # セッション用(本番は安全なキーに�
 # -----------------------------
 DATA_DIR = os.path.join("research_navi", "data")
 USERS_CSV = os.path.join(DATA_DIR, "users.csv")
-SUPPORT_CSV = os.path.join(DATA_DIR, "support.csv")  # 📌 サポート用メールCSV
+SUPPORT_CSV = os.path.join(DATA_DIR, "support.csv")
 
 def ensure_users_csv():
     """users.csv が存在しなければ作成"""
@@ -73,17 +73,35 @@ def normalize_ref(raw: str) -> str:
     alpha, digit = m.group(1), (m.group(2) or "")
     return f"{alpha}{digit}"
 
+def get_unread_count(user_id: str) -> int:
+    """support.csv から未読件数を数える"""
+    ensure_support_csv()
+    if not user_id:
+        return 0
+    count = 0
+    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row["宛先"] == user_id and row["ステータス"] == "未読":
+                count += 1
+    return count
+
+# -----------------------------
+# context_processor (全テンプレートに未読件数を注入)
+# -----------------------------
+@app.context_processor
+def inject_unread_count():
+    user_id = session.get("user_id")
+    unread = get_unread_count(user_id) if session.get("logged_in") else 0
+    return dict(unread_count=unread)
+
 # -----------------------------
 # ルート定義
 # -----------------------------
-
-# ホーム画面（/ と /home 両方対応）
 @app.route("/")
 @app.route("/home")
 def home():
     return render_template("pages/home.html")
 
-# ログイン
 @app.route("/login", methods=["GET", "POST"])
 @app.route("/login/", methods=["GET", "POST"])
 def login():
@@ -112,7 +130,6 @@ def login():
 
     return render_template("auth/login.html")
 
-# 登録
 @app.route("/register", methods=["GET", "POST"])
 @app.route("/register/", methods=["GET", "POST"])
 def register():
@@ -164,7 +181,6 @@ def register():
 
     return render_template("auth/register.html", form={})
 
-# マイページ
 @app.route("/mypage/<user_id>")
 def mypage(user_id):
     if not session.get("logged_in") or session.get("user_id") != user_id:
@@ -190,7 +206,6 @@ def mypage(user_id):
     display_name = user.get("ユーザー名") or user.get("ID") or user_id
     return render_template("pages/mypage.html", user=user, display_name=display_name)
 
-# ログアウト
 @app.route("/logout")
 def logout():
     session.clear()
@@ -228,9 +243,7 @@ def services():
 
 @app.route("/news")
 def news():
-    """📌 ここで今後 support.csv の未読を読み込んで表示に使う予定"""
-    ensure_support_csv()
-    return render_template("pages/news.html")
+    return render_template("pages/guide.html")
 
 @app.route("/settings")
 def settings():
