@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 # Flask app 定義
 # -----------------------------
 app = Flask(__name__)
-app.secret_key = "change-me"  # セッション用(本番は安全なキーに変更)
+app.secret_key = "change-me"  # 本番は安全なキーに変更
 
 # -----------------------------
 # データ関連
@@ -73,26 +73,20 @@ def normalize_ref(raw: str) -> str:
     alpha, digit = m.group(1), (m.group(2) or "")
     return f"{alpha}{digit}"
 
-def get_unread_count(user_id: str) -> int:
-    """support.csv から未読件数を数える"""
-    ensure_support_csv()
-    if not user_id:
-        return 0
-    count = 0
-    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            if row["宛先"] == user_id and row["ステータス"] == "未読":
-                count += 1
-    return count
-
 # -----------------------------
-# context_processor (全テンプレートに未読件数を注入)
+# コンテキストプロセッサ（未読件数）
 # -----------------------------
 @app.context_processor
 def inject_unread_count():
-    user_id = session.get("user_id")
-    unread = get_unread_count(user_id) if session.get("logged_in") else 0
-    return dict(unread_count=unread)
+    unread_count = 0
+    if session.get("logged_in"):
+        ensure_support_csv()
+        user_id = session.get("user_id")
+        with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                if row.get("宛先") == user_id and row.get("ステータス") == "未読":
+                    unread_count += 1
+    return dict(unread_count=unread_count)
 
 # -----------------------------
 # ルート定義
