@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 # Flask app 定義
 # -----------------------------
 app = Flask(__name__)
-app.secret_key = "change-me"  # 本番は安全なキーに変更
+app.secret_key = "change-me"  # セッション用(本番は安全なキーに変更)
 
 # -----------------------------
 # データ関連
@@ -16,7 +16,6 @@ USERS_CSV = os.path.join(DATA_DIR, "users.csv")
 SUPPORT_CSV = os.path.join(DATA_DIR, "support.csv")
 
 def ensure_users_csv():
-    """users.csv が存在しなければ作成"""
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(USERS_CSV):
         with open(USERS_CSV, "w", newline="", encoding="utf-8") as f:
@@ -27,14 +26,11 @@ def ensure_users_csv():
             ])
 
 def ensure_support_csv():
-    """support.csv が存在しなければ作成"""
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(SUPPORT_CSV):
         with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow([
-                "ID","送信者","宛先","件名","本文","添付","ステータス","送信日時"
-            ])
+            writer.writerow(["ID","送信者","宛先","件名","本文","添付","ステータス","送信日時"])
 
 def calc_age(birth_ymd: str) -> str:
     try:
@@ -61,7 +57,6 @@ def mmdd_from_birth(birth_ymd: str) -> str:
         return ""
 
 def normalize_ref(raw: str) -> str:
-    """紹介者NOの正規化: KA, KB1 → A, B1"""
     if not raw:
         return ""
     s = raw.strip().upper()
@@ -73,20 +68,12 @@ def normalize_ref(raw: str) -> str:
     alpha, digit = m.group(1), (m.group(2) or "")
     return f"{alpha}{digit}"
 
-# -----------------------------
-# コンテキストプロセッサ（未読件数）
-# -----------------------------
-@app.context_processor
-def inject_unread_count():
-    unread_count = 0
-    if session.get("logged_in"):
-        ensure_support_csv()
-        user_id = session.get("user_id")
-        with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                if row.get("宛先") == user_id and row.get("ステータス") == "未読":
-                    unread_count += 1
-    return dict(unread_count=unread_count)
+def count_unread(user_id: str) -> int:
+    """未読件数を support.csv から取得"""
+    ensure_support_csv()
+    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        return sum(1 for row in reader if row["宛先"] == user_id and row["ステータス"] == "未読")
 
 # -----------------------------
 # ルート定義
@@ -229,15 +216,27 @@ def support():
     return render_template("support/support.html")
 
 # -----------------------------
+# メールボックス（お知らせ一覧）
+# -----------------------------
+@app.route("/news")
+def news():
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+
+    user_id = session.get("user_id")
+    ensure_support_csv()
+    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        messages = [row for row in reader if row["宛先"] == user_id]
+
+    return render_template("pages/news.html", user_id=user_id, messages=messages)
+
+# -----------------------------
 # その他ページ
 # -----------------------------
 @app.route("/services")
 def services():
     return render_template("pages/suppliers.html")
-
-@app.route("/news")
-def news():
-    return render_template("pages/guide.html")
 
 @app.route("/settings")
 def settings():
