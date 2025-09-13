@@ -1,0 +1,28 @@
+{% extends "base/layout.html" %}
+{% block title %}📥 メールボックス{% endblock %}
+{% block content %}
+
+<h2>📥 {{ user_id }} さんのメールボックス</h2>
+
+<table class="inbox">
+  <tr>
+    <th>送信者</th><th>件名</th><th>日時</th><th>状態</th>
+  </tr>
+  {% for m in messages %}
+    <tr class="{{ 'unread' if m['ステータス']=='未読' else 'read' }}">
+      <td>{{ m["送信者"] }}</td>
+      <td>{{ m["件名"] }}</td>
+      <td>{{ m["送信日時"] }}</td>
+      <td>{{ m["ステータス"] }}</td>
+    </tr>
+  {% endfor %}
+</table>
+
+<style>
+  .inbox { width:100%; border-collapse: collapse; margin-top:1rem; }
+  .inbox th, .inbox td { border:1px solid #ddd; padding:8px; }
+  .inbox .unread { background:#fff; color:#dc2626; font-weight:700; }
+  .inbox .read { background:#f3f4f6; color:#555; }
+</style>
+
+{% endblock %}
