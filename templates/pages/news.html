@@ -16,9 +16,8 @@
     <tr class="{{ 'unread' if m['ステータス']=='未読' else 'read' }}">
       <td>{{ m["送信者"] }}</td>
       <td>
-        <a href="#"
-           onclick="alert('件名: {{ m['件名'] }}\n本文: {{ m['本文'] }}')">
-           {{ m["件名"] }}
+        <a href="{{ url_for('news_detail', msg_id=m['ID']) }}">
+          {{ m["件名"] }}
         </a>
       </td>
       <td>{{ m["送信日時"] }}</td>
@@ -57,7 +56,6 @@
   .inbox a {
     color: inherit;
     text-decoration: underline;
-    cursor: pointer;
   }
 </style>
 
