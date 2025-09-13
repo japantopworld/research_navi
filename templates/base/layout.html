@@ -27,7 +27,15 @@
       <!-- ▲ サポート ドロップダウン ▲ -->
 
       <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
-      <a href="{{ url_for('news') }}" class="btn">📰 お知らせ一覧</a>
+
+      <!-- 📰 お知らせ一覧（未読件数付き） -->
+      <a href="{{ url_for('news') }}" class="btn">
+        📰 お知らせ一覧
+        {% if unread_count and unread_count > 0 %}
+          <span class="badge">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+
       <a href="{{ url_for('mypage', user_id=session.get('user_id','')) }}" class="btn">👤 マイページ</a>
       <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
       <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
@@ -100,6 +108,19 @@
       color: #dc2626;
     }
     .dropdown:hover .dropdown-menu { display: block; }
+
+    /* 未読バッジ */
+    .badge {
+      display: inline-block;
+      margin-left: 0.4rem;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.8rem;
+      font-weight: bold;
+      border-radius: 0.8rem;
+      background: #fff;   /* 白背景 */
+      color: #dc2626;     /* 赤文字 */
+      border: 1px solid #dc2626;
+    }
   </style>
 </body>
 </html>
