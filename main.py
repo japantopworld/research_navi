@@ -68,16 +68,10 @@ def normalize_ref(raw: str) -> str:
     alpha, digit = m.group(1), (m.group(2) or "")
     return f"{alpha}{digit}"
 
-def count_unread(user_id: str) -> int:
-    """未読件数を support.csv から取得"""
-    ensure_support_csv()
-    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        return sum(1 for row in reader if row["宛先"] == user_id and row["ステータス"] == "未読")
-
 # -----------------------------
 # ルート定義
 # -----------------------------
+
 @app.route("/")
 @app.route("/home")
 def home():
@@ -90,13 +84,11 @@ def login():
         input_id = request.form.get("username","").strip()
         input_pass = request.form.get("password","").strip()
 
-        # 管理者
         if input_id == "KING1219" and input_pass == "11922960":
             session["logged_in"] = True
             session["user_id"] = "KING1219"
             return redirect(url_for("mypage", user_id="KING1219"))
 
-        # 通常ユーザー
         ensure_users_csv()
         with open(USERS_CSV, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -193,6 +185,56 @@ def logout():
     return redirect(url_for("home"))
 
 # -----------------------------
+# お知らせ（メールボックス）
+# -----------------------------
+@app.route("/news")
+def news():
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+
+    ensure_support_csv()
+    user_id = session.get("user_id")
+    messages = []
+    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row["宛先"] == user_id:
+                messages.append(row)
+
+    messages.sort(key=lambda m: m["送信日時"], reverse=True)
+    return render_template("pages/news.html", messages=messages, user_id=user_id)
+
+@app.route("/news/<msg_id>")
+def news_detail(msg_id):
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+
+    ensure_support_csv()
+    messages = []
+    msg = None
+    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+        reader = list(csv.DictReader(f))
+        for row in reader:
+            if row["ID"] == msg_id:
+                msg = row
+                break
+
+    if not msg:
+        return "メッセージが見つかりません", 404
+
+    # 既読に更新
+    if msg["ステータス"] == "未読":
+        for r in reader:
+            if r["ID"] == msg_id:
+                r["ステータス"] = "既読"
+        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=reader[0].keys())
+            writer.writeheader()
+            writer.writerows(reader)
+        msg["ステータス"] = "既読"
+
+    return render_template("pages/news_detail.html", msg=msg)
+
+# -----------------------------
 # サポート関連ページ
 # -----------------------------
 @app.route("/guide")
@@ -216,22 +258,6 @@ def support():
     return render_template("support/support.html")
 
 # -----------------------------
-# メールボックス（お知らせ一覧）
-# -----------------------------
-@app.route("/news")
-def news():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
-
-    user_id = session.get("user_id")
-    ensure_support_csv()
-    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        messages = [row for row in reader if row["宛先"] == user_id]
-
-    return render_template("pages/news.html", user_id=user_id, messages=messages)
-
-# -----------------------------
 # その他ページ
 # -----------------------------
 @app.route("/services")
@@ -249,9 +275,6 @@ def settings():
 def healthz():
     return "OK", 200
 
-# -----------------------------
-# Render 環境対応
-# -----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port, debug=True)
