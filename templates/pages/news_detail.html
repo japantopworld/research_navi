@@ -2,61 +2,28 @@
 {% block title %}📩 メッセージ詳細{% endblock %}
 {% block content %}
 
-<div class="detail-container">
-  <h2>📩 メッセージ詳細</h2>
+<div class="msg-detail">
+  <h2>📩 {{ message["件名"] }}</h2>
+  <p><strong>送信者:</strong> {{ message["送信者"] }}</p>
+  <p><strong>宛先:</strong> {{ message["宛先"] }}</p>
+  <p><strong>日時:</strong> {{ message["送信日時"] }}</p>
+  <p><strong>本文:</strong></p>
+  <div class="msg-body">{{ message["本文"] | safe }}</div>
 
-  <div class="detail-box">
-    <p><strong>送信者:</strong> {{ msg["送信者"] }}</p>
-    <p><strong>宛先:</strong> {{ msg["宛先"] }}</p>
-    <p><strong>件名:</strong> {{ msg["件名"] }}</p>
-    <p><strong>送信日時:</strong> {{ msg["送信日時"] }}</p>
-    <p><strong>状態:</strong> {{ msg["ステータス"] }}</p>
-    <hr>
-    <p style="white-space: pre-wrap;">{{ msg["本文"] }}</p>
+  {% if message["添付"] %}
+  <p><strong>添付:</strong>
+    <a href="{{ url_for('static', filename='uploads/' ~ message['添付']) }}" target="_blank">{{ message["添付"] }}</a>
+  </p>
+  {% endif %}
 
-    {% if msg["添付"] %}
-      <hr>
-      <p><strong>添付ファイル:</strong></p>
-      <a href="{{ url_for('static', filename='uploads/' ~ msg['添付']) }}" target="_blank">
-        📎 {{ msg["添付"] }}
-      </a>
-    {% endif %}
-  </div>
-
-  <div class="back-link">
-    <a href="{{ url_for('news') }}" class="btn">← メールボックスに戻る</a>
-  </div>
+  <a href="{{ url_for('news') }}" class="btn">⬅ 戻る</a>
 </div>
 
 <style>
-  .detail-container {
-    max-width: 700px;
-    margin: 2rem auto;
-    padding: 1.5rem;
-    background: #fff;
-    border-radius: 0.8rem;
-    box-shadow: 0 0 8px rgba(0,0,0,0.1);
-  }
-  .detail-box p {
-    margin: 0.5rem 0;
-    font-size: 1rem;
-    color: #333;
-  }
-  .back-link {
-    margin-top: 1.5rem;
-    text-align: right;
-  }
-  .back-link .btn {
-    background: #dc2626;
-    color: #ffeb3b;
-    text-decoration: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 0.5rem;
-    font-weight: bold;
-  }
-  .back-link .btn:hover {
-    opacity: 0.9;
-  }
+  .msg-detail { max-width: 700px; margin: 2rem auto; padding: 2rem; background: #fff;
+                border-radius: .8rem; box-shadow: 0 0 10px rgba(0,0,0,.1); }
+  .msg-detail h2 { margin-bottom: 1rem; color:#dc2626; }
+  .msg-body { white-space: pre-wrap; border:1px solid #ddd; padding:1rem; background:#f9fafb; margin-bottom:1rem; }
 </style>
 
 {% endblock %}
