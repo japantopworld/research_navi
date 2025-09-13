@@ -4,25 +4,61 @@
 
 <h2>📥 {{ user_id }} さんのメールボックス</h2>
 
+{% if messages %}
 <table class="inbox">
   <tr>
-    <th>送信者</th><th>件名</th><th>日時</th><th>状態</th>
+    <th>送信者</th>
+    <th>件名</th>
+    <th>日時</th>
+    <th>状態</th>
   </tr>
   {% for m in messages %}
     <tr class="{{ 'unread' if m['ステータス']=='未読' else 'read' }}">
       <td>{{ m["送信者"] }}</td>
-      <td>{{ m["件名"] }}</td>
+      <td>
+        <a href="#"
+           onclick="alert('件名: {{ m['件名'] }}\n本文: {{ m['本文'] }}')">
+           {{ m["件名"] }}
+        </a>
+      </td>
       <td>{{ m["送信日時"] }}</td>
       <td>{{ m["ステータス"] }}</td>
     </tr>
   {% endfor %}
 </table>
+{% else %}
+<p>📭 メッセージはまだありません。</p>
+{% endif %}
 
 <style>
-  .inbox { width:100%; border-collapse: collapse; margin-top:1rem; }
-  .inbox th, .inbox td { border:1px solid #ddd; padding:8px; }
-  .inbox .unread { background:#fff; color:#dc2626; font-weight:700; }
-  .inbox .read { background:#f3f4f6; color:#555; }
+  .inbox {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+  }
+  .inbox th, .inbox td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  .inbox th {
+    background: #f9fafb;
+  }
+  .inbox .unread {
+    background: #fff;
+    color: #dc2626;
+    font-weight: 700;
+  }
+  .inbox .read {
+    background: #f3f4f6;
+    color: #555;
+  }
+  .inbox a {
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
 </style>
 
 {% endblock %}
