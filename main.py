@@ -26,16 +26,6 @@ def ensure_users_csv():
                 "メールアドレス","部署","紹介者NO","ID","PASS"
             ])
 
-def ensure_support_csv():
-    """support.csv が存在しなければ作成"""
-    os.makedirs(DATA_DIR, exist_ok=True)
-    if not os.path.exists(SUPPORT_CSV):
-        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                "ID","送信者","宛先","件名","本文","添付","ステータス","送信日時"
-            ])
-
 def calc_age(birth_ymd: str) -> str:
     try:
         b = datetime.strptime(birth_ymd, "%Y-%m-%d").date()
@@ -77,7 +67,6 @@ def normalize_ref(raw: str) -> str:
 # ルート定義
 # -----------------------------
 
-# ホーム画面
 @app.route("/")
 @app.route("/home")
 def home():
@@ -90,13 +79,11 @@ def login():
         input_id = request.form.get("username","").strip()
         input_pass = request.form.get("password","").strip()
 
-        # 管理者
         if input_id == "KING1219" and input_pass == "11922960":
             session["logged_in"] = True
             session["user_id"] = "KING1219"
             return redirect(url_for("mypage", user_id="KING1219"))
 
-        # 通常ユーザー
         ensure_users_csv()
         with open(USERS_CSV, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -111,7 +98,7 @@ def login():
 
     return render_template("auth/login.html")
 
-# 新規登録
+# 登録
 @app.route("/register", methods=["GET", "POST"])
 def register():
     ensure_users_csv()
@@ -174,13 +161,7 @@ def mypage(user_id):
         user = next((row for row in reader if row["ID"] == user_id), None)
 
     if not user and user_id == "KING1219":
-        user = {
-            "ユーザー名": "小島崇彦",
-            "ID": "KING1219",
-            "メールアドレス": "",
-            "部署": "",
-            "紹介者NO": "",
-        }
+        user = {"ユーザー名": "小島崇彦","ID": "KING1219","メールアドレス": "","部署": "","紹介者NO": ""}
 
     if not user:
         return "ユーザーが見つかりません", 404
@@ -195,99 +176,83 @@ def logout():
     return redirect(url_for("home"))
 
 # -----------------------------
-# メールボックス（お知らせ一覧）
+# お知らせ（メールボックス）
 # -----------------------------
-@app.route("/news", methods=["GET"])
+@app.route("/news")
 def news():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
 
-    user_id = session["user_id"]
-    ensure_support_csv()
-
-    tab = request.args.get("tab", "inbox")  # inbox/sent/compose
+    user_id = session.get("user_id")
     messages = []
+    if os.path.exists(SUPPORT_CSV):
+        with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row["宛先"] == user_id:
+                    messages.append(row)
 
-    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if tab == "inbox" and row["宛先"] == user_id:
-                messages.append(row)
-            elif tab == "sent" and row["送信者"] == user_id:
-                messages.append(row)
+    return render_template("pages/news.html", messages=messages, user_id=user_id)
 
-    return render_template("pages/news.html", tab=tab, messages=messages, user_id=user_id)
-
-@app.route("/send_message", methods=["POST"])
-def send_message():
+@app.route("/news/<int:msg_id>")
+def news_detail(msg_id):
     if not session.get("logged_in"):
         return redirect(url_for("login"))
 
-    ensure_support_csv()
-    sender = session["user_id"]
-    receiver = request.form.get("receiver", "").strip()
-    subject = request.form.get("subject", "").strip()
-    body = request.form.get("body", "").strip()
-    attach_file = request.files.get("attachment")
+    if not os.path.exists(SUPPORT_CSV):
+        return "メッセージが存在しません", 404
 
-    attach_name = ""
-    if attach_file and attach_file.filename:
-        upload_dir = os.path.join("research_navi", "static", "uploads")
-        os.makedirs(upload_dir, exist_ok=True)
-        filepath = os.path.join(upload_dir, attach_file.filename)
-        attach_file.save(filepath)
-        attach_name = attach_file.filename
+    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        messages = list(reader)
 
-    with open(SUPPORT_CSV, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow([None, sender, receiver, subject, body, attach_name, "未読", datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
+    if msg_id < 0 or msg_id >= len(messages):
+        return "メッセージが存在しません", 404
 
-    return redirect(url_for("news", tab="sent"))
+    message = messages[msg_id]
+
+    if message["ステータス"] == "未読":
+        messages[msg_id]["ステータス"] = "既読"
+        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=messages[0].keys())
+            writer.writeheader()
+            writer.writerows(messages)
+
+    return render_template("pages/news_detail.html", message=message, msg_id=msg_id)
 
 # -----------------------------
 # サポート関連ページ
 # -----------------------------
 @app.route("/guide")
-def guide():
-    return render_template("support/guide.html")
+def guide(): return render_template("support/guide.html")
 
 @app.route("/terms")
-def terms():
-    return render_template("support/terms.html")
+def terms(): return render_template("support/terms.html")
 
 @app.route("/privacy")
-def privacy():
-    return render_template("support/privacy.html")
+def privacy(): return render_template("support/privacy.html")
 
 @app.route("/report")
-def report():
-    return render_template("support/report.html")
+def report(): return render_template("support/report.html")
 
 @app.route("/support")
-def support():
-    return render_template("support/support.html")
+def support(): return render_template("support/support.html")
 
 # -----------------------------
 # その他ページ
 # -----------------------------
 @app.route("/services")
-def services():
-    return render_template("pages/suppliers.html")
+def services(): return render_template("pages/suppliers.html")
 
 @app.route("/settings")
-def settings():
-    return render_template("pages/setting.html")
+def settings(): return render_template("pages/setting.html")
 
 # -----------------------------
 # Health check
 # -----------------------------
 @app.route("/healthz")
-def healthz():
-    return "OK", 200
+def healthz(): return "OK", 200
 
-# -----------------------------
-# Render 環境対応
-# -----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port, debug=True)
