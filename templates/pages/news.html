@@ -2,31 +2,100 @@
 {% block title %}📥 メールボックス{% endblock %}
 {% block content %}
 
-<h2 style="text-align:center;">📥 {{ user_id }} さんの受信ボックス</h2>
+<h2 style="text-align:center;">📬 {{ user_id }} さんのメールボックス</h2>
 
-<table class="inbox">
-  <tr>
-    <th>送信者</th><th>件名</th><th>日時</th><th>状態</th>
-  </tr>
-  {% for m in messages %}
-    <tr class="{{ 'unread' if m['ステータス']=='未読' else 'read' }}">
-      <td>{{ m["送信者"] }}</td>
-      <td>
-        <a href="{{ url_for('news_detail', msg_id=loop.index0) }}">
-          {{ m["件名"] }}
-        </a>
-      </td>
-      <td>{{ m["送信日時"] }}</td>
-      <td>{{ m["ステータス"] }}</td>
+<!-- タブボタン -->
+<div class="tabs">
+  <a href="{{ url_for('news', tab='inbox') }}" class="tab {% if tab=='inbox' %}active{% endif %}">📥 受信</a>
+  <a href="{{ url_for('news', tab='sent') }}" class="tab {% if tab=='sent' %}active{% endif %}">📤 送信</a>
+  <a href="{{ url_for('news', tab='compose') }}" class="tab {% if tab=='compose' %}active{% endif %}">✍ 新規</a>
+</div>
+
+<!-- ▼ 受信 / 送信 共通リスト -->
+{% if tab in ['inbox','sent'] %}
+  <table class="inbox">
+    <tr>
+      <th>送信者</th><th>宛先</th><th>件名</th><th>日時</th><th>状態</th>
     </tr>
-  {% endfor %}
-</table>
+    {% for m in messages %}
+      <tr class="{{ 'unread' if m['ステータス']=='未読' else 'read' }}">
+        <td>{{ m["送信者"] }}</td>
+        <td>{{ m["宛先"] }}</td>
+        <td>
+          <a href="{{ url_for('news_detail', msg_id=loop.index0) }}">
+            {{ m["件名"] }}
+          </a>
+        </td>
+        <td>{{ m["送信日時"] }}</td>
+        <td>{{ m["ステータス"] }}</td>
+      </tr>
+    {% endfor %}
+    {% if messages|length == 0 %}
+      <tr><td colspan="5" style="text-align:center;">メッセージはありません</td></tr>
+    {% endif %}
+  </table>
+{% endif %}
+
+<!-- ▼ 新規作成フォーム -->
+{% if tab == 'compose' %}
+  <form method="POST" class="compose-form">
+    <label>宛先ID:</label>
+    <input type="text" name="to" required>
+    <label>件名:</label>
+    <input type="text" name="subject" required>
+    <label>本文:</label>
+    <textarea name="body" rows="6" required></textarea>
+    <button type="submit">📨 送信</button>
+  </form>
+{% endif %}
 
 <style>
-  .inbox { width:80%; margin:1rem auto; border-collapse: collapse; }
+  h2 { margin: 1rem 0; }
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .tab {
+    padding: .6rem 1.2rem;
+    border-radius: .6rem;
+    text-decoration: none;
+    font-weight: bold;
+    background: #f3f4f6;
+    color: #333;
+  }
+  .tab.active {
+    background: #dc2626;
+    color: #ffeb3b;
+  }
+  .inbox { width:90%; margin:0 auto; border-collapse: collapse; }
   .inbox th, .inbox td { border:1px solid #ddd; padding:8px; text-align:center; }
   .inbox .unread { background:#fff; color:#dc2626; font-weight:700; }
-  .inbox .read { background:#f3f4f6; color:#555; }
+  .inbox .read { background:#f9fafb; color:#555; }
+  .inbox a { color:inherit; text-decoration:underline; }
+  .compose-form {
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+    width: 70%;
+    margin: 1rem auto;
+  }
+  .compose-form input, .compose-form textarea {
+    padding: .6rem;
+    border-radius: .4rem;
+    border:1px solid #ddd;
+  }
+  .compose-form button {
+    padding: .6rem;
+    border:none;
+    border-radius:.6rem;
+    background:#dc2626;
+    color:#ffeb3b;
+    font-weight:bold;
+    cursor:pointer;
+  }
+  .compose-form button:hover { opacity:.9; }
 </style>
 
 {% endblock %}
