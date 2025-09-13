@@ -1,57 +1,60 @@
 {% extends "base/layout.html" %}
-{% block title %}📧 メッセージ詳細{% endblock %}
+{% block title %}📩 メッセージ詳細{% endblock %}
 {% block content %}
 
-<div class="message-detail">
-  <h2>📧 メッセージ詳細</h2>
+<div class="detail-container">
+  <h2>📩 メッセージ詳細</h2>
 
-  <p><strong>送信者:</strong> {{ msg["送信者"] }}</p>
-  <p><strong>宛先:</strong> {{ msg["宛先"] }}</p>
-  <p><strong>件名:</strong> {{ msg["件名"] }}</p>
-  <p><strong>送信日時:</strong> {{ msg["送信日時"] }}</p>
-  <hr>
-  <p><strong>本文:</strong></p>
-  <div class="body">{{ msg["本文"] | nl2br }}</div>
+  <div class="detail-box">
+    <p><strong>送信者:</strong> {{ msg["送信者"] }}</p>
+    <p><strong>宛先:</strong> {{ msg["宛先"] }}</p>
+    <p><strong>件名:</strong> {{ msg["件名"] }}</p>
+    <p><strong>送信日時:</strong> {{ msg["送信日時"] }}</p>
+    <p><strong>状態:</strong> {{ msg["ステータス"] }}</p>
+    <hr>
+    <p style="white-space: pre-wrap;">{{ msg["本文"] }}</p>
 
-  {% if msg["添付"] %}
-    <p><strong>添付ファイル:</strong>
+    {% if msg["添付"] %}
+      <hr>
+      <p><strong>添付ファイル:</strong></p>
       <a href="{{ url_for('static', filename='uploads/' ~ msg['添付']) }}" target="_blank">
-        {{ msg["添付"] }}
+        📎 {{ msg["添付"] }}
       </a>
-    </p>
-  {% endif %}
+    {% endif %}
+  </div>
 
-  <p><a href="{{ url_for('news') }}" class="btn">← メール一覧に戻る</a></p>
+  <div class="back-link">
+    <a href="{{ url_for('news') }}" class="btn">← メールボックスに戻る</a>
+  </div>
 </div>
 
 <style>
-  .message-detail {
+  .detail-container {
     max-width: 700px;
     margin: 2rem auto;
     padding: 1.5rem;
     background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    line-height: 1.6;
+    border-radius: 0.8rem;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
   }
-  .message-detail .body {
-    white-space: pre-wrap;
-    background: #f9fafb;
-    padding: 1rem;
-    border-radius: 6px;
-    margin-top: .5rem;
+  .detail-box p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+    color: #333;
   }
-  .btn {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: .6rem 1.2rem;
-    border-radius: .6rem;
+  .back-link {
+    margin-top: 1.5rem;
+    text-align: right;
+  }
+  .back-link .btn {
     background: #dc2626;
     color: #ffeb3b;
     text-decoration: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
     font-weight: bold;
   }
-  .btn:hover {
+  .back-link .btn:hover {
     opacity: 0.9;
   }
 </style>
