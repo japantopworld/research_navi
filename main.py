@@ -13,6 +13,7 @@ app.secret_key = "change-me"  # セッション用(本番は安全なキーに�
 # -----------------------------
 DATA_DIR = os.path.join("research_navi", "data")
 USERS_CSV = os.path.join(DATA_DIR, "users.csv")
+SUPPORT_CSV = os.path.join(DATA_DIR, "support.csv")  # 📌 サポート用メールCSV
 
 def ensure_users_csv():
     """users.csv が存在しなければ作成"""
@@ -23,6 +24,16 @@ def ensure_users_csv():
             writer.writerow([
                 "ユーザー名","ふりがな","生年月日","年齢","電話番号","携帯番号",
                 "メールアドレス","部署","紹介者NO","ID","PASS"
+            ])
+
+def ensure_support_csv():
+    """support.csv が存在しなければ作成"""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    if not os.path.exists(SUPPORT_CSV):
+        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                "ID","送信者","宛先","件名","本文","添付","ステータス","送信日時"
             ])
 
 def calc_age(birth_ymd: str) -> str:
@@ -217,7 +228,9 @@ def services():
 
 @app.route("/news")
 def news():
-    return render_template("pages/guide.html")
+    """📌 ここで今後 support.csv の未読を読み込んで表示に使う予定"""
+    ensure_support_csv()
+    return render_template("pages/news.html")
 
 @app.route("/settings")
 def settings():
