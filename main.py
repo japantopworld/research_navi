@@ -12,11 +12,11 @@ app.secret_key = "change-me"  # セッション用(本番は安全なキーに�
 # データ関連
 # -----------------------------
 DATA_DIR = os.path.join("research_navi", "data")
-UPLOAD_DIR = os.path.join("research_navi", "uploads")
 USERS_CSV = os.path.join(DATA_DIR, "users.csv")
 SUPPORT_CSV = os.path.join(DATA_DIR, "support.csv")
 
 def ensure_users_csv():
+    """users.csv が存在しなければ作成"""
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(USERS_CSV):
         with open(USERS_CSV, "w", newline="", encoding="utf-8") as f:
@@ -27,6 +27,7 @@ def ensure_users_csv():
             ])
 
 def ensure_support_csv():
+    """support.csv が存在しなければ作成"""
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(SUPPORT_CSV):
         with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
@@ -60,6 +61,7 @@ def mmdd_from_birth(birth_ymd: str) -> str:
         return ""
 
 def normalize_ref(raw: str) -> str:
+    """紹介者NOの正規化: KA, KB1 → A, B1"""
     if not raw:
         return ""
     s = raw.strip().upper()
@@ -75,6 +77,7 @@ def normalize_ref(raw: str) -> str:
 # ルート定義
 # -----------------------------
 
+# ホーム画面
 @app.route("/")
 @app.route("/home")
 def home():
@@ -82,17 +85,18 @@ def home():
 
 # ログイン
 @app.route("/login", methods=["GET", "POST"])
-@app.route("/login/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         input_id = request.form.get("username","").strip()
         input_pass = request.form.get("password","").strip()
 
+        # 管理者
         if input_id == "KING1219" and input_pass == "11922960":
             session["logged_in"] = True
             session["user_id"] = "KING1219"
             return redirect(url_for("mypage", user_id="KING1219"))
 
+        # 通常ユーザー
         ensure_users_csv()
         with open(USERS_CSV, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -107,9 +111,8 @@ def login():
 
     return render_template("auth/login.html")
 
-# 登録
+# 新規登録
 @app.route("/register", methods=["GET", "POST"])
-@app.route("/register/", methods=["GET", "POST"])
 def register():
     ensure_users_csv()
     if request.method == "POST":
@@ -192,9 +195,9 @@ def logout():
     return redirect(url_for("home"))
 
 # -----------------------------
-# メールボックス機能
+# メールボックス（お知らせ一覧）
 # -----------------------------
-@app.route("/news")
+@app.route("/news", methods=["GET"])
 def news():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
@@ -202,46 +205,44 @@ def news():
     user_id = session["user_id"]
     ensure_support_csv()
 
-    inbox, sent = [], []
+    tab = request.args.get("tab", "inbox")  # inbox/sent/compose
+    messages = []
+
     with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            if row["宛先"] == user_id:
-                inbox.append(row)
-            elif row["送信者"] == user_id:
-                sent.append(row)
+            if tab == "inbox" and row["宛先"] == user_id:
+                messages.append(row)
+            elif tab == "sent" and row["送信者"] == user_id:
+                messages.append(row)
 
-    return render_template("pages/news.html", user_id=user_id, inbox=inbox, sent=sent)
+    return render_template("pages/news.html", tab=tab, messages=messages, user_id=user_id)
 
 @app.route("/send_message", methods=["POST"])
 def send_message():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
 
-    sender = session["user_id"]
-    receiver = request.form.get("receiver","").strip()
-    subject = request.form.get("subject","").strip()
-    body = request.form.get("body","").strip()
-    file = request.files.get("attachment")
-
-    # 添付ファイル保存
-    attachment_path = ""
-    if file and file.filename:
-        os.makedirs(UPLOAD_DIR, exist_ok=True)
-        safe_name = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
-        save_path = os.path.join(UPLOAD_DIR, safe_name)
-        file.save(save_path)
-        attachment_path = safe_name
-
     ensure_support_csv()
+    sender = session["user_id"]
+    receiver = request.form.get("receiver", "").strip()
+    subject = request.form.get("subject", "").strip()
+    body = request.form.get("body", "").strip()
+    attach_file = request.files.get("attachment")
+
+    attach_name = ""
+    if attach_file and attach_file.filename:
+        upload_dir = os.path.join("research_navi", "static", "uploads")
+        os.makedirs(upload_dir, exist_ok=True)
+        filepath = os.path.join(upload_dir, attach_file.filename)
+        attach_file.save(filepath)
+        attach_name = attach_file.filename
+
     with open(SUPPORT_CSV, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            "", sender, receiver, subject, body,
-            attachment_path, "未読", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ])
+        writer.writerow([None, sender, receiver, subject, body, attach_name, "未読", datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
 
-    return redirect(url_for("news"))
+    return redirect(url_for("news", tab="sent"))
 
 # -----------------------------
 # サポート関連ページ
