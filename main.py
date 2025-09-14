@@ -16,6 +16,7 @@ USERS_CSV = os.path.join(DATA_DIR, "users.csv")
 SUPPORT_CSV = os.path.join(DATA_DIR, "support.csv")
 
 def ensure_users_csv():
+    """users.csv が存在しなければ作成"""
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(USERS_CSV):
         with open(USERS_CSV, "w", newline="", encoding="utf-8") as f:
@@ -23,6 +24,16 @@ def ensure_users_csv():
             writer.writerow([
                 "ユーザー名","ふりがな","生年月日","年齢","電話番号","携帯番号",
                 "メールアドレス","部署","紹介者NO","ID","PASS"
+            ])
+
+def ensure_support_csv():
+    """support.csv が存在しなければ作成"""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    if not os.path.exists(SUPPORT_CSV):
+        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                "ID","送信者","宛先","件名","本文","添付","ステータス","送信日時"
             ])
 
 def calc_age(birth_ymd: str) -> str:
@@ -50,6 +61,7 @@ def mmdd_from_birth(birth_ymd: str) -> str:
         return ""
 
 def normalize_ref(raw: str) -> str:
+    """紹介者NOの正規化: KA, KB1 → A, B1"""
     if not raw:
         return ""
     s = raw.strip().upper()
@@ -64,12 +76,15 @@ def normalize_ref(raw: str) -> str:
 # -----------------------------
 # ルート定義
 # -----------------------------
+
 @app.route("/")
 @app.route("/home")
 def home():
     return render_template("pages/home.html")
 
-# ログイン
+# -----------------------------
+# ログイン / 登録 / マイページ
+# -----------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -95,7 +110,6 @@ def login():
 
     return render_template("auth/login.html")
 
-# 登録
 @app.route("/register", methods=["GET", "POST"])
 def register():
     ensure_users_csv()
@@ -146,7 +160,6 @@ def register():
 
     return render_template("auth/register.html", form={})
 
-# マイページ
 @app.route("/mypage/<user_id>")
 def mypage(user_id):
     if not session.get("logged_in") or session.get("user_id") != user_id:
@@ -158,7 +171,13 @@ def mypage(user_id):
         user = next((row for row in reader if row["ID"] == user_id), None)
 
     if not user and user_id == "KING1219":
-        user = {"ユーザー名": "小島崇彦", "ID": "KING1219", "メールアドレス": "", "部署": "", "紹介者NO": ""}
+        user = {
+            "ユーザー名": "小島崇彦",
+            "ID": "KING1219",
+            "メールアドレス": "",
+            "部署": "",
+            "紹介者NO": "",
+        }
 
     if not user:
         return "ユーザーが見つかりません", 404
@@ -166,7 +185,6 @@ def mypage(user_id):
     display_name = user.get("ユーザー名") or user.get("ID") or user_id
     return render_template("pages/mypage.html", user=user, display_name=display_name)
 
-# ログアウト
 @app.route("/logout")
 def logout():
     session.clear()
@@ -183,15 +201,18 @@ def news():
     user_id = session.get("user_id")
     tab = request.args.get("tab", "inbox")
 
-    all_messages = []
-    if os.path.exists(SUPPORT_CSV):
-        with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-            all_messages = list(csv.DictReader(f))
+    ensure_support_csv()
+    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        all_messages = list(reader)
 
-    inbox = [m for m in all_messages if m["宛先"] == user_id]
-    sent = [m for m in all_messages if m["送信者"] == user_id]
+    messages = []
+    if tab == "inbox":
+        messages = [m for m in all_messages if m["宛先"] == user_id]
+    elif tab == "sent":
+        messages = [m for m in all_messages if m["送信者"] == user_id]
 
-    # 新規送信
+    # 新規送信処理
     if request.method == "POST" and tab == "compose":
         to = request.form.get("to", "").strip()
         subject = request.form.get("subject", "").strip()
@@ -209,67 +230,56 @@ def news():
             "送信日時": now
         }
 
-        file_exists = os.path.exists(SUPPORT_CSV)
         with open(SUPPORT_CSV, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=new_msg.keys())
-            if not file_exists:
+            if os.stat(SUPPORT_CSV).st_size == 0:
                 writer.writeheader()
             writer.writerow(new_msg)
 
         return redirect(url_for("news", tab="sent"))
 
-    return render_template("pages/news.html", tab=tab, inbox=inbox, sent=sent, user_id=user_id)
+    # 一括既読処理
+    if request.method == "POST" and tab == "inbox":
+        selected_ids = request.form.getlist("msg_ids")
+        updated = False
+        for m in all_messages:
+            if m["ID"] in selected_ids and m["宛先"] == user_id:
+                m["ステータス"] = "既読"
+                updated = True
+        if updated:
+            with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=all_messages[0].keys())
+                writer.writeheader()
+                writer.writerows(all_messages)
+        return redirect(url_for("news", tab="inbox"))
 
-# メッセージ詳細（件名クリックで既読）
-@app.route("/news/<int:msg_id>")
+    return render_template("pages/news.html", tab=tab, messages=messages, user_id=user_id)
+
+@app.route("/news/<msg_id>")
 def news_detail(msg_id):
     if not session.get("logged_in"):
         return redirect(url_for("login"))
 
-    if not os.path.exists(SUPPORT_CSV):
-        return "メッセージが存在しません", 404
-
+    ensure_support_csv()
     with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-        messages = list(csv.DictReader(f))
+        reader = csv.DictReader(f)
+        messages = list(reader)
 
-    if msg_id < 0 or msg_id >= len(messages):
+    message = next((m for m in messages if m["ID"] == str(msg_id)), None)
+    if not message:
         return "メッセージが存在しません", 404
 
-    message = messages[msg_id]
-
+    # 既読処理
     if message["ステータス"] == "未読" and message["宛先"] == session.get("user_id"):
-        messages[msg_id]["ステータス"] = "既読"
+        for m in messages:
+            if m["ID"] == str(msg_id):
+                m["ステータス"] = "既読"
         with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=messages[0].keys())
             writer.writeheader()
             writer.writerows(messages)
 
-    return render_template("pages/news_detail.html", message=message, msg_id=msg_id)
-
-# 一括既読
-@app.route("/news/mark_read", methods=["POST"])
-def mark_read():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
-
-    ids = request.form.getlist("msg_ids")
-    if not os.path.exists(SUPPORT_CSV):
-        return redirect(url_for("news", tab="inbox"))
-
-    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-        messages = list(csv.DictReader(f))
-
-    for idx in map(int, ids):
-        if 0 <= idx < len(messages):
-            messages[idx]["ステータス"] = "既読"
-
-    if messages:
-        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=messages[0].keys())
-            writer.writeheader()
-            writer.writerows(messages)
-
-    return redirect(url_for("news", tab="inbox"))
+    return render_template("pages/news_detail.html", message=message)
 
 # -----------------------------
 # その他ページ
@@ -306,6 +316,9 @@ def settings():
 def healthz():
     return "OK", 200
 
+# -----------------------------
+# Render 環境対応
+# -----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port, debug=True)
