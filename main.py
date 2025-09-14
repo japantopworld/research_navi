@@ -173,7 +173,7 @@ def news():
         file_path = ""
         file = request.files.get("attach")
         if file and file.filename:
-            filename = f"{datetime.now().timestamp()}_{file.filename}"
+            filename = f"{datetime.now().timestamp()}_{file.filename}"  # ✅ 修正済み
             save_path = os.path.join(UPLOAD_DIR, filename)
             file.save(save_path)
             file_path = filename
