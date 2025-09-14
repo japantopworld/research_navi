@@ -1,39 +1,48 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 
-# Blueprint を login_bp で定義
-login_bp = Blueprint("login_bp", __name__, url_prefix="/login")
+# Blueprint を定義
+auth_bp = Blueprint("auth_bp", __name__)
 
-# 管理者アカウント（直書き）
+# 管理者アカウント
 ADMIN_ID = "KING1219"
 ADMIN_PASS = "11922960"
 
-# ログインページ
-@login_bp.route("/", methods=["GET", "POST"])
+
+# -----------------------------
+# ログイン
+# -----------------------------
+@auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":
         user_id = request.form.get("user_id")
         password = request.form.get("password")
 
-        # 管理者ログイン判定
         if user_id == ADMIN_ID and password == ADMIN_PASS:
-            session["user"] = "admin"
+            session["logged_in"] = True
+            session["user_id"] = user_id
             return redirect(url_for("home"))
+        else:
+            error = "ID またはパスワードが間違っています"
 
-        # TODO: 将来的に CSV / DB のユーザー認証を追加可能
-        error = "IDまたはパスワードが違います"
+    return render_template("pages/login.html", error=error)
 
-    # login.html が templates/auth/login.html にある前提
-    return render_template("auth/login.html", error=error)
 
+# -----------------------------
 # ログアウト
-@login_bp.route("/logout")
+# -----------------------------
+@auth_bp.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for("home"))
+    return redirect(url_for("auth_bp.login"))
 
-# 新規登録ページ（仮実装）
-@login_bp.route("/register", methods=["GET", "POST"])
+
+# -----------------------------
+# 新規登録
+# -----------------------------
+@auth_bp.route("/register", methods=["GET", "POST"])
 def register():
-    # templates/auth/register.html を表示する前提
-    return render_template("auth/register.html")
+    if request.method == "POST":
+        # 本来はユーザー登録処理をするが、今はログインへリダイレクト
+        return redirect(url_for("auth_bp.login"))
+    return render_template("pages/register.html")
