@@ -1,35 +1,31 @@
 {% extends "base/layout.html" %}
-{% block title %}📩 メッセージ詳細{% endblock %}
+{% block title %}📧 メッセージ詳細{% endblock %}
 {% block content %}
 
-<div class="detail-container">
-  <h2>📩 メッセージ詳細</h2>
+<h2 style="text-align:center;">📧 メッセージ詳細</h2>
 
+<div class="detail-box">
   <p><strong>送信者:</strong> {{ message["送信者"] }}</p>
   <p><strong>宛先:</strong> {{ message["宛先"] }}</p>
   <p><strong>件名:</strong> {{ message["件名"] }}</p>
-  <p><strong>本文:</strong></p>
-  <div class="body-box">{{ message["本文"]|safe }}</div>
+  <p><strong>本文:</strong><br>{{ message["本文"]|safe }}</p>
   <p><strong>送信日時:</strong> {{ message["送信日時"] }}</p>
   <p><strong>状態:</strong> {{ message["ステータス"] }}</p>
-
   {% if message["添付"] %}
-    <p><strong>添付ファイル:</strong>
-      <a href="{{ url_for('download_file', filename=message['添付']) }}">{{ message["添付"] }}</a>
-    </p>
+  <p><strong>添付:</strong> <a href="{{ url_for('uploaded_file', filename=message['添付']) }}" target="_blank">📎 ダウンロード</a></p>
   {% endif %}
+</div>
 
-  <div class="back-btn">
-    <a href="{{ url_for('news', tab='inbox') }}">⬅ 戻る</a>
-  </div>
+<div class="actions">
+  <a href="{{ url_for('news', tab='inbox') }}" class="btn">📥 受信一覧に戻る</a>
+  <a href="{{ url_for('news', tab='sent') }}" class="btn">📤 送信一覧に戻る</a>
+  <a href="{{ url_for('news', tab='compose') }}?reply_to={{ message['送信者'] }}&subject=Re: {{ message['件名'] }}" class="btn">↩️ 返信</a>
 </div>
 
 <style>
-  .detail-container { max-width:700px; margin:2rem auto; padding:1.5rem; background:#fff; border-radius:.6rem; box-shadow:0 2px 6px rgba(0,0,0,.1); }
-  .body-box { padding:1rem; border:1px solid #ddd; border-radius:.4rem; background:#f9fafb; margin-bottom:1rem; white-space: pre-wrap; }
-  .back-btn { text-align:right; margin-top:1rem; }
-  .back-btn a { padding:.6rem 1.2rem; background:#dc2626; color:#ffeb3b; border-radius:.6rem; text-decoration:none; font-weight:bold; }
-  .back-btn a:hover { opacity:.9; }
+  .detail-box { width:70%; margin:1rem auto; border:1px solid #ddd; padding:1rem; border-radius:.6rem; background:#f9fafb; }
+  .actions { text-align:center; margin-top:1rem; }
+  .btn { margin:0 .5rem; padding:.6rem 1rem; background:#dc2626; color:#ffeb3b; border-radius:.6rem; text-decoration:none; font-weight:bold; }
 </style>
 
 {% endblock %}
