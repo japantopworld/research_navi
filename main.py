@@ -32,11 +32,71 @@ def ensure_users_csv():
             ])
 
 # -----------------------------
-# ホーム（トップページ）
+# ホーム
 # -----------------------------
 @app.route("/")
 def home():
     return render_template("pages/home.html")
+
+# -----------------------------
+# ログイン
+# -----------------------------
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    ensure_users_csv()
+    if request.method == "POST":
+        user_id = request.form.get("user_id")
+        password = request.form.get("password")
+
+        with open(USERS_CSV, newline="", encoding="utf-8") as f:
+            users = list(csv.DictReader(f))
+
+        for u in users:
+            if u["ID"] == user_id and u["PASS"] == password:
+                session["logged_in"] = True
+                session["user_id"] = user_id
+                return redirect(url_for("news"))
+
+        return render_template("auth/login.html", error="ログイン失敗")
+
+    return render_template("auth/login.html")
+
+# -----------------------------
+# 新規登録
+# -----------------------------
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    ensure_users_csv()
+    if request.method == "POST":
+        form = request.form.to_dict()
+        password = form.get("password")
+        password2 = form.get("password2")
+
+        errors = []
+        if password != password2:
+            errors.append("パスワードが一致しません")
+
+        # ユーザーIDを自動生成
+        birth = form.get("birth", "")
+        mmdd = birth[5:7] + birth[8:10] if birth else ""
+        branch = form.get("branch", "A")
+        ref_raw = form.get("ref_raw", "")
+        ref_no = ref_raw[1:] if ref_raw.startswith("K") else ref_raw
+        user_id = f"{ref_no}{mmdd}{branch}"
+
+        if not errors:
+            with open(USERS_CSV, "a", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    form.get("name"), form.get("kana"), form.get("birth"), "",
+                    form.get("phone"), form.get("mobile"), form.get("email"),
+                    form.get("dept"), ref_no, user_id, password
+                ])
+            return redirect(url_for("login"))
+
+        return render_template("auth/register.html", errors=errors, form=form)
+
+    return render_template("auth/register.html", form={})
 
 # -----------------------------
 # メールボックス
@@ -50,11 +110,9 @@ def news():
     tab = request.args.get("tab", "inbox")
     query = request.args.get("q", "").strip()
 
-    # 返信用パラメータ
     reply_to = request.args.get("reply_to", "")
     reply_subject = request.args.get("subject", "")
 
-    # メッセージ一覧読み込み
     messages = []
     if os.path.exists(SUPPORT_CSV):
         with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
@@ -92,8 +150,7 @@ def news():
                 writer.writeheader()
                 writer.writerows(messages)
         else:
-            if os.path.exists(SUPPORT_CSV):
-                os.remove(SUPPORT_CSV)  # 全削除されたらファイル削除
+            os.remove(SUPPORT_CSV)
         return redirect(url_for("news", tab=tab))
 
     # ✉ 新規送信
@@ -103,7 +160,6 @@ def news():
         body = request.form.get("body", "").strip()
         now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-        # 添付
         file_path = ""
         file = request.files.get("attach")
         if file and file.filename:
@@ -112,7 +168,6 @@ def news():
             file.save(save_path)
             file_path = filename
 
-        # 宛先が部署指定の場合 @部署名
         recipients = []
         if to.startswith("@"):
             dept = to[1:]
@@ -123,10 +178,9 @@ def news():
         else:
             recipients = [to]
 
-        # 各宛先に送信
         for r in recipients:
             new_msg = {
-                "ID": str(uuid.uuid4()),  # ユニークID
+                "ID": str(uuid.uuid4()),
                 "送信者": user_id,
                 "宛先": r,
                 "件名": subject,
@@ -143,7 +197,6 @@ def news():
 
         return redirect(url_for("news", tab="sent"))
 
-    # 未読件数
     unread_count = len([m for m in inbox if m["ステータス"] == "未読"])
 
     return render_template("pages/news.html",
@@ -170,7 +223,6 @@ def news_detail(msg_id):
     if not msg:
         return "メッセージが存在しません", 404
 
-    # 既読処理
     if msg["ステータス"] == "未読" and msg["宛先"] == session["user_id"]:
         msg["ステータス"] = "既読"
         with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
@@ -181,8 +233,15 @@ def news_detail(msg_id):
     return render_template("pages/news_detail.html", message=msg)
 
 # -----------------------------
-# 添付ファイル配信
+# 添付ファイル
 # -----------------------------
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_DIR, filename)
+
+# -----------------------------
+# /healthz (Render 用)
+# -----------------------------
+@app.route("/healthz")
+def healthz():
+    return "ok", 200
