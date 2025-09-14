@@ -1,34 +1,18 @@
-from flask import Blueprint, render_template
-
-# Blueprint 定義
-static_pages_bp = Blueprint("static_pages", __name__)
-
-# 使い方ガイド
-@static_pages_bp.route("/guide")
-def guide():
-    return render_template("pages/guide.html")
-
-# 利用規約
-@static_pages_bp.route("/terms")
-def terms():
-    return render_template("pages/terms.html")
-
-# プライバシーポリシー
-@static_pages_bp.route("/privacy")
-def privacy():
-    return render_template("pages/privacy.html")
-
-# よくある質問（FAQ）
-@static_pages_bp.route("/faq")
-def faq():
-    return render_template("pages/faq.html")
-
-# お問い合わせフォーム
-@static_pages_bp.route("/contact")
+@static_pages_bp.route("/contact", methods=["GET"])
 def contact():
     return render_template("pages/contact.html")
 
-# サポート（まとめページ）
-@static_pages_bp.route("/support")
-def support():
-    return render_template("pages/support.html")
+@static_pages_bp.route("/send_contact", methods=["POST"])
+def send_contact():
+    # フォームデータ取得
+    from flask import request, flash, redirect, url_for
+    name = request.form.get("name")
+    email = request.form.get("email")
+    subject = request.form.get("subject")
+    message = request.form.get("message")
+
+    # TODO: メール送信処理を実装（SMTP or API）
+    print(f"[CONTACT] {name} ({email}) 件名:{subject} 内容:{message}")
+
+    flash("お問い合わせを受け付けました。担当者よりご連絡いたします。", "success")
+    return redirect(url_for("static_pages.contact"))
