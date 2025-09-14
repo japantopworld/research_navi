@@ -43,6 +43,6 @@ def logout():
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        # 本来はユーザー登録処理をするが、今はログインへリダイレクト
+        # 今は仮でログインにリダイレクト
         return redirect(url_for("auth_bp.login"))
     return render_template("pages/register.html")
