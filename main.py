@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from routes.login import auth_bp
-from routes.news import news_bp   # ← お知らせ用 Blueprint
+from routes.news import news_bp
+from routes.static_pages import static_pages_bp   # ← 追加
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -8,6 +9,7 @@ app.secret_key = "your_secret_key"
 # Blueprint 登録
 app.register_blueprint(auth_bp)
 app.register_blueprint(news_bp)
+app.register_blueprint(static_pages_bp)   # ← 追加
 
 # ホーム
 @app.route("/")
