@@ -14,7 +14,12 @@
   <p><strong>状態:</strong> {{ message["ステータス"] }}</p>
 
   <div class="back-btn">
-    <a href="{{ url_for('news', tab='inbox') }}">⬅ 戻る</a>
+    {# 戻るボタン（受信タブ or 送信タブ） #}
+    {% if message["宛先"] == session.get("user_id") %}
+      <a href="{{ url_for('news', tab='inbox') }}">⬅ 受信に戻る</a>
+    {% else %}
+      <a href="{{ url_for('news', tab='sent') }}">⬅ 送信に戻る</a>
+    {% endif %}
   </div>
 </div>
 
