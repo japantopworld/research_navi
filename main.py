@@ -32,6 +32,13 @@ def ensure_users_csv():
             ])
 
 # -----------------------------
+# ルート: ホーム -> ログインへ
+# -----------------------------
+@app.route("/")
+def home():
+    return redirect(url_for("login"))
+
+# -----------------------------
 # 新規登録
 # -----------------------------
 @app.route("/register", methods=["GET", "POST"])
@@ -120,9 +127,11 @@ def news():
     tab = request.args.get("tab", "inbox")
     query = request.args.get("q", "").strip()
 
+    # 返信用パラメータ
     reply_to = request.args.get("reply_to", "")
     reply_subject = request.args.get("subject", "")
 
+    # メッセージ一覧
     messages = []
     if os.path.exists(SUPPORT_CSV):
         with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
@@ -140,14 +149,15 @@ def news():
 
     # ✅ 一括既読
     if request.method == "POST" and request.form.get("action") == "mark_read":
-        ids = request.form.getlist("msg_ids")
-        for m in messages:
-            if m["ID"] in ids and m["宛先"] == user_id:
-                m["ステータス"] = "既読"
-        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=messages[0].keys())
-            writer.writeheader()
-            writer.writerows(messages)
+        if messages:
+            ids = request.form.getlist("msg_ids")
+            for m in messages:
+                if m["ID"] in ids and m["宛先"] == user_id:
+                    m["ステータス"] = "既読"
+            with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=messages[0].keys())
+                writer.writeheader()
+                writer.writerows(messages)
         return redirect(url_for("news", tab="inbox"))
 
     # 🗑️ 削除
@@ -160,7 +170,8 @@ def news():
                 writer.writeheader()
                 writer.writerows(messages)
         else:
-            os.remove(SUPPORT_CSV)
+            if os.path.exists(SUPPORT_CSV):
+                os.remove(SUPPORT_CSV)
         return redirect(url_for("news", tab=tab))
 
     # ✉ 新規送信
@@ -170,16 +181,18 @@ def news():
         body = request.form.get("body", "").strip()
         now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+        # 添付
         file_path = ""
         file = request.files.get("attach")
         if file and file.filename:
-            filename = f"{datetime.now().timestamp()}_{file.filename}"  # ✅ 修正済み
+            filename = f"{datetime.now().timestamp()}_{file.filename}"  # ←修正済
             save_path = os.path.join(UPLOAD_DIR, filename)
             file.save(save_path)
             file_path = filename
 
+        # 宛先（@部署名 で一斉送信）
         recipients = []
-        if to.startswith("@"):  # 部署一斉送信
+        if to.startswith("@"):
             dept = to[1:]
             if os.path.exists(USERS_CSV):
                 with open(USERS_CSV, newline="", encoding="utf-8") as f:
@@ -188,6 +201,7 @@ def news():
         else:
             recipients = [to]
 
+        # 送信
         for r in recipients:
             new_msg = {
                 "ID": str(uuid.uuid4()),
@@ -207,6 +221,7 @@ def news():
 
         return redirect(url_for("news", tab="sent"))
 
+    # 未読件数
     unread_count = len([m for m in inbox if m["ステータス"] == "未読"])
 
     return render_template("pages/news.html",
@@ -233,6 +248,7 @@ def news_detail(msg_id):
     if not msg:
         return "メッセージが存在しません", 404
 
+    # 既読処理
     if msg["ステータス"] == "未読" and msg["宛先"] == session["user_id"]:
         msg["ステータス"] = "既読"
         with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
