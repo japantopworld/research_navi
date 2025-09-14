@@ -32,7 +32,7 @@ def ensure_users_csv():
             ])
 
 # -----------------------------
-# ホーム
+# トップページ
 # -----------------------------
 @app.route("/")
 def home():
@@ -43,60 +43,77 @@ def home():
 # -----------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    ensure_users_csv()
+    error = None
     if request.method == "POST":
-        user_id = request.form.get("user_id")
-        password = request.form.get("password")
+        user_id = request.form.get("user_id", "").strip()
+        password = request.form.get("password", "").strip()
 
-        with open(USERS_CSV, newline="", encoding="utf-8") as f:
-            users = list(csv.DictReader(f))
+        # 管理者ログイン
+        if user_id == "KING1219" and password == "11922960":
+            session["logged_in"] = True
+            session["user_id"] = user_id
+            session["is_admin"] = True
+            return redirect(url_for("home"))
 
-        for u in users:
-            if u["ID"] == user_id and u["PASS"] == password:
-                session["logged_in"] = True
-                session["user_id"] = user_id
-                return redirect(url_for("news"))
+        # 通常ユーザー
+        if os.path.exists(USERS_CSV):
+            with open(USERS_CSV, newline="", encoding="utf-8") as f:
+                for row in csv.DictReader(f):
+                    if row["ID"] == user_id and row["PASS"] == password:
+                        session["logged_in"] = True
+                        session["user_id"] = user_id
+                        session["is_admin"] = False
+                        return redirect(url_for("home"))
 
-        return render_template("auth/login.html", error="ログイン失敗")
+        error = "ID またはパスワードが正しくありません。"
 
-    return render_template("auth/login.html")
+    return render_template("pages/login.html", error=error)
 
 # -----------------------------
 # 新規登録
 # -----------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    errors, form = [], {}
     ensure_users_csv()
+
     if request.method == "POST":
         form = request.form.to_dict()
-        password = form.get("password")
-        password2 = form.get("password2")
-
-        errors = []
-        if password != password2:
-            errors.append("パスワードが一致しません")
-
-        # ユーザーIDを自動生成
-        birth = form.get("birth", "")
-        mmdd = birth[5:7] + birth[8:10] if birth else ""
+        name = form.get("name", "").strip()
+        kana = form.get("kana", "").strip()
+        birth = form.get("birth", "").strip()
         branch = form.get("branch", "A")
+        phone = form.get("phone", "")
+        mobile = form.get("mobile", "")
+        email = form.get("email", "")
+        dept = form.get("dept", "")
         ref_raw = form.get("ref_raw", "")
-        ref_no = ref_raw[1:] if ref_raw.startswith("K") else ref_raw
-        user_id = f"{ref_no}{mmdd}{branch}"
+        password = form.get("password", "")
+        password2 = form.get("password2", "")
 
+        # 入力チェック
+        if not name: errors.append("氏名は必須です。")
+        if not kana: errors.append("ふりがなは必須です。")
+        if not birth: errors.append("生年月日は必須です。")
+        if password != password2: errors.append("パスワードが一致しません。")
+
+        # 正規化処理
+        mmdd = datetime.strptime(birth, "%Y-%m-%d").strftime("%m%d") if birth else ""
+        ref_no = ref_raw.strip().upper()
+        if ref_no.startswith("K"): ref_no = ref_no[1:]
+        user_id = f"{ref_no}{mmdd}{branch}" if ref_no and mmdd else ""
+
+        # エラーなしなら保存
         if not errors:
             with open(USERS_CSV, "a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow([
-                    form.get("name"), form.get("kana"), form.get("birth"), "",
-                    form.get("phone"), form.get("mobile"), form.get("email"),
-                    form.get("dept"), ref_no, user_id, password
+                    name, kana, birth, "", phone, mobile,
+                    email, dept, ref_no, user_id, password
                 ])
             return redirect(url_for("login"))
 
-        return render_template("auth/register.html", errors=errors, form=form)
-
-    return render_template("auth/register.html", form={})
+    return render_template("pages/register.html", errors=errors, form=form)
 
 # -----------------------------
 # メールボックス
@@ -109,10 +126,10 @@ def news():
     user_id = session.get("user_id")
     tab = request.args.get("tab", "inbox")
     query = request.args.get("q", "").strip()
-
     reply_to = request.args.get("reply_to", "")
     reply_subject = request.args.get("subject", "")
 
+    # メッセージ一覧読み込み
     messages = []
     if os.path.exists(SUPPORT_CSV):
         with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
@@ -121,14 +138,14 @@ def news():
     inbox = [m for m in messages if m["宛先"] == user_id]
     sent = [m for m in messages if m["送信者"] == user_id]
 
-    # 🔍 検索フィルタ
+    # 検索
     if query:
         if tab == "inbox":
             inbox = [m for m in inbox if query in m["件名"] or query in m["本文"]]
         elif tab == "sent":
             sent = [m for m in sent if query in m["件名"] or query in m["本文"]]
 
-    # ✅ 一括既読処理
+    # 一括既読
     if request.method == "POST" and request.form.get("action") == "mark_read":
         ids = request.form.getlist("msg_ids")
         for m in messages:
@@ -140,7 +157,7 @@ def news():
             writer.writerows(messages)
         return redirect(url_for("news", tab="inbox"))
 
-    # 🗑️ 削除処理
+    # 削除
     if request.method == "POST" and request.form.get("action") == "delete":
         ids = request.form.getlist("msg_ids")
         messages = [m for m in messages if m["ID"] not in ids]
@@ -153,7 +170,7 @@ def news():
             os.remove(SUPPORT_CSV)
         return redirect(url_for("news", tab=tab))
 
-    # ✉ 新規送信
+    # 新規送信
     if request.method == "POST" and tab == "compose":
         to = request.form.get("to", "").strip()
         subject = request.form.get("subject", "").strip()
@@ -206,7 +223,7 @@ def news():
                            unread_count=unread_count)
 
 # -----------------------------
-# メッセージ詳細
+# メール詳細
 # -----------------------------
 @app.route("/news/<msg_id>")
 def news_detail(msg_id):
@@ -233,15 +250,14 @@ def news_detail(msg_id):
     return render_template("pages/news_detail.html", message=msg)
 
 # -----------------------------
-# 添付ファイル
+# アップロードファイル配信
 # -----------------------------
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_DIR, filename)
 
 # -----------------------------
-# /healthz (Render 用)
+# エントリーポイント
 # -----------------------------
-@app.route("/healthz")
-def healthz():
-    return "ok", 200
+if __name__ == "__main__":
+    app.run(debug=True)
