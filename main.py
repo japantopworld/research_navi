@@ -32,88 +32,11 @@ def ensure_users_csv():
             ])
 
 # -----------------------------
-# ルート: ホーム -> ログインへ
+# ホーム（トップページ）
 # -----------------------------
 @app.route("/")
 def home():
-    return redirect(url_for("login"))
-
-# -----------------------------
-# 新規登録
-# -----------------------------
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    ensure_users_csv()
-    errors = []
-    form = {}
-
-    if request.method == "POST":
-        form = request.form.to_dict()
-
-        name = form.get("name", "").strip()
-        kana = form.get("kana", "").strip()
-        birth = form.get("birth", "").strip()
-        branch = form.get("branch", "").strip()
-        phone = form.get("phone", "").strip()
-        mobile = form.get("mobile", "").strip()
-        email = form.get("email", "").strip()
-        dept = form.get("dept", "").strip()
-        ref_raw = form.get("ref_raw", "").strip()
-        ref_no = form.get("ref_no", "").strip()
-        user_id = form.get("user_id", "").strip()
-        password = form.get("password", "")
-        password2 = form.get("password2", "")
-
-        # 入力チェック
-        if not name: errors.append("氏名は必須です")
-        if not kana: errors.append("ふりがなは必須です")
-        if not birth: errors.append("生年月日は必須です")
-        if not ref_no: errors.append("紹介者NOの正規化ができません")
-        if not user_id: errors.append("ユーザーIDが生成されていません")
-        if not password: errors.append("パスワードは必須です")
-        if password != password2: errors.append("パスワードが一致しません")
-
-        # 既存IDチェック
-        if os.path.exists(USERS_CSV):
-            with open(USERS_CSV, newline="", encoding="utf-8") as f:
-                users = list(csv.DictReader(f))
-                if any(u["ID"] == user_id for u in users):
-                    errors.append("このユーザーIDはすでに登録されています")
-
-        if not errors:
-            # CSV保存
-            with open(USERS_CSV, "a", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow([
-                    name, kana, birth, "", phone, mobile,
-                    email, dept, ref_no, user_id, password
-                ])
-            return redirect(url_for("login"))
-
-    return render_template("auth/register.html", errors=errors, form=form)
-
-# -----------------------------
-# ログイン
-# -----------------------------
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    ensure_users_csv()
-    if request.method == "POST":
-        user_id = request.form.get("user_id")
-        password = request.form.get("password")
-
-        with open(USERS_CSV, newline="", encoding="utf-8") as f:
-            users = list(csv.DictReader(f))
-
-        for u in users:
-            if u["ID"] == user_id and u["PASS"] == password:
-                session["logged_in"] = True
-                session["user_id"] = user_id
-                return redirect(url_for("news"))
-
-        return "ログイン失敗"
-
-    return render_template("auth/login.html")
+    return render_template("pages/home.html")
 
 # -----------------------------
 # メールボックス
@@ -131,7 +54,7 @@ def news():
     reply_to = request.args.get("reply_to", "")
     reply_subject = request.args.get("subject", "")
 
-    # メッセージ一覧
+    # メッセージ一覧読み込み
     messages = []
     if os.path.exists(SUPPORT_CSV):
         with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
@@ -140,27 +63,26 @@ def news():
     inbox = [m for m in messages if m["宛先"] == user_id]
     sent = [m for m in messages if m["送信者"] == user_id]
 
-    # 🔍 検索
+    # 🔍 検索フィルタ
     if query:
         if tab == "inbox":
             inbox = [m for m in inbox if query in m["件名"] or query in m["本文"]]
         elif tab == "sent":
             sent = [m for m in sent if query in m["件名"] or query in m["本文"]]
 
-    # ✅ 一括既読
+    # ✅ 一括既読処理
     if request.method == "POST" and request.form.get("action") == "mark_read":
-        if messages:
-            ids = request.form.getlist("msg_ids")
-            for m in messages:
-                if m["ID"] in ids and m["宛先"] == user_id:
-                    m["ステータス"] = "既読"
-            with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=messages[0].keys())
-                writer.writeheader()
-                writer.writerows(messages)
+        ids = request.form.getlist("msg_ids")
+        for m in messages:
+            if m["ID"] in ids and m["宛先"] == user_id:
+                m["ステータス"] = "既読"
+        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=messages[0].keys())
+            writer.writeheader()
+            writer.writerows(messages)
         return redirect(url_for("news", tab="inbox"))
 
-    # 🗑️ 削除
+    # 🗑️ 削除処理
     if request.method == "POST" and request.form.get("action") == "delete":
         ids = request.form.getlist("msg_ids")
         messages = [m for m in messages if m["ID"] not in ids]
@@ -171,7 +93,7 @@ def news():
                 writer.writerows(messages)
         else:
             if os.path.exists(SUPPORT_CSV):
-                os.remove(SUPPORT_CSV)
+                os.remove(SUPPORT_CSV)  # 全削除されたらファイル削除
         return redirect(url_for("news", tab=tab))
 
     # ✉ 新規送信
@@ -185,12 +107,12 @@ def news():
         file_path = ""
         file = request.files.get("attach")
         if file and file.filename:
-            filename = f"{datetime.now().timestamp()}_{file.filename}"  # ←修正済
+            filename = f"{datetime.now().timestamp()}_{file.filename}"
             save_path = os.path.join(UPLOAD_DIR, filename)
             file.save(save_path)
             file_path = filename
 
-        # 宛先（@部署名 で一斉送信）
+        # 宛先が部署指定の場合 @部署名
         recipients = []
         if to.startswith("@"):
             dept = to[1:]
@@ -201,10 +123,10 @@ def news():
         else:
             recipients = [to]
 
-        # 送信
+        # 各宛先に送信
         for r in recipients:
             new_msg = {
-                "ID": str(uuid.uuid4()),
+                "ID": str(uuid.uuid4()),  # ユニークID
                 "送信者": user_id,
                 "宛先": r,
                 "件名": subject,
