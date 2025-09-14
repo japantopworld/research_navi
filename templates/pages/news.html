@@ -13,27 +13,44 @@
 
 <!-- ▼ 受信 / 送信 共通リスト -->
 {% if tab in ['inbox','sent'] %}
-  <table class="inbox">
-    <tr>
-      <th>送信者</th><th>宛先</th><th>件名</th><th>日時</th><th>状態</th>
-    </tr>
-    {% for m in messages %}
-      <tr class="{{ 'unread' if m['ステータス']=='未読' else 'read' }}">
-        <td>{{ m["送信者"] }}</td>
-        <td>{{ m["宛先"] }}</td>
-        <td>
-          <a href="{{ url_for('news_detail', msg_id=loop.index0) }}">
-            {{ m["件名"] }}
-          </a>
-        </td>
-        <td>{{ m["送信日時"] }}</td>
-        <td>{{ m["ステータス"] }}</td>
+  <form method="POST" action="{{ url_for('mark_read') }}">
+    <table class="inbox">
+      <tr>
+        {% if tab == 'inbox' %}
+          <th></th>
+        {% endif %}
+        <th>送信者</th><th>宛先</th><th>件名</th><th>日時</th><th>状態</th>
       </tr>
-    {% endfor %}
-    {% if messages|length == 0 %}
-      <tr><td colspan="5" style="text-align:center;">メッセージはありません</td></tr>
+      {% for m in messages %}
+        <tr class="{{ 'unread' if m['ステータス']=='未読' else 'read' }}">
+          {% if tab == 'inbox' %}
+            <td>
+              <input type="checkbox" name="msg_ids" value="{{ loop.index0 }}">
+            </td>
+          {% endif %}
+          <td>{{ m["送信者"] }}</td>
+          <td>{{ m["宛先"] }}</td>
+          <td>
+            <a href="{{ url_for('news_detail', msg_id=loop.index0) }}">
+              {{ m["件名"] }}
+            </a>
+          </td>
+          <td>{{ m["送信日時"] }}</td>
+          <td>{{ m["ステータス"] }}</td>
+        </tr>
+      {% endfor %}
+      {% if messages|length == 0 %}
+        <tr>
+          <td colspan="6" style="text-align:center;">メッセージはありません</td>
+        </tr>
+      {% endif %}
+    </table>
+    {% if tab == 'inbox' and messages|length > 0 %}
+      <div style="text-align:center; margin-top:1rem;">
+        <button type="submit" class="btn-mark">✅ 選択したメッセージを既読にする</button>
+      </div>
     {% endif %}
-  </table>
+  </form>
 {% endif %}
 
 <!-- ▼ 新規作成フォーム -->
@@ -86,7 +103,7 @@
     border-radius: .4rem;
     border:1px solid #ddd;
   }
-  .compose-form button {
+  .compose-form button, .btn-mark {
     padding: .6rem;
     border:none;
     border-radius:.6rem;
@@ -95,7 +112,8 @@
     font-weight:bold;
     cursor:pointer;
   }
-  .compose-form button:hover { opacity:.9; }
+  .compose-form button:hover,
+  .btn-mark:hover { opacity:.9; }
 </style>
 
 {% endblock %}
