@@ -1,26 +1,24 @@
-import os, csv
 from flask import Flask, render_template, session
-from routes.login import auth_bp   # ← login用Blueprintだけ残す
-# from routes.news import news_bp  # ← 今は未実装なので削除
+from routes.login import auth_bp   # ← login Blueprint を読み込み
 
 app = Flask(__name__)
-app.secret_key = "change-me"
+app.secret_key = "your_secret_key"
 
-# -----------------------------
 # Blueprint 登録
-# -----------------------------
 app.register_blueprint(auth_bp)
-# app.register_blueprint(news_bp)  # ← コメントアウト
 
 # -----------------------------
-# ルート
+# ホーム
 # -----------------------------
 @app.route("/")
 def home():
+    if not session.get("logged_in"):
+        return render_template("pages/login.html")  # 未ログインならログインページへ
     return render_template("pages/home.html")
 
+
 # -----------------------------
-# /healthz (Render用の死活監視)
+# 健康チェック（Render用）
 # -----------------------------
 @app.route("/healthz")
 def healthz():
@@ -28,5 +26,4 @@ def healthz():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
