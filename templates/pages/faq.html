@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+{% extends "base/layout.html" %}
 
 {% block title %}よくある質問 | リサーチナビ{% endblock %}
 
@@ -76,7 +76,7 @@
     </div>
 
     <div class="text-center mt-5">
-        <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">ホームに戻る</a>
+        <a href="{{ url_for('support') }}" class="btn btn-outline-secondary">サポートページに戻る</a>
     </div>
 </div>
 {% endblock %}
