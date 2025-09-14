@@ -16,7 +16,6 @@ USERS_CSV = os.path.join(DATA_DIR, "users.csv")
 SUPPORT_CSV = os.path.join(DATA_DIR, "support.csv")
 
 def ensure_users_csv():
-    """users.csv が存在しなければ作成"""
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(USERS_CSV):
         with open(USERS_CSV, "w", newline="", encoding="utf-8") as f:
@@ -51,7 +50,6 @@ def mmdd_from_birth(birth_ymd: str) -> str:
         return ""
 
 def normalize_ref(raw: str) -> str:
-    """紹介者NOの正規化: KA, KB1 → A, B1"""
     if not raw:
         return ""
     s = raw.strip().upper()
@@ -66,7 +64,6 @@ def normalize_ref(raw: str) -> str:
 # -----------------------------
 # ルート定義
 # -----------------------------
-
 @app.route("/")
 @app.route("/home")
 def home():
@@ -161,13 +158,7 @@ def mypage(user_id):
         user = next((row for row in reader if row["ID"] == user_id), None)
 
     if not user and user_id == "KING1219":
-        user = {
-            "ユーザー名": "小島崇彦",
-            "ID": "KING1219",
-            "メールアドレス": "",
-            "部署": "",
-            "紹介者NO": "",
-        }
+        user = {"ユーザー名": "小島崇彦", "ID": "KING1219", "メールアドレス": "", "部署": "", "紹介者NO": ""}
 
     if not user:
         return "ユーザーが見つかりません", 404
@@ -182,7 +173,7 @@ def logout():
     return redirect(url_for("home"))
 
 # -----------------------------
-# メールボックス（お知らせ一覧を拡張）
+# メールボックス
 # -----------------------------
 @app.route("/news", methods=["GET", "POST"])
 def news():
@@ -192,17 +183,15 @@ def news():
     user_id = session.get("user_id")
     tab = request.args.get("tab", "inbox")
 
-    messages = []
+    all_messages = []
     if os.path.exists(SUPPORT_CSV):
         with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            all_messages = list(reader)
+            all_messages = list(csv.DictReader(f))
 
-        if tab == "inbox":
-            messages = [m for m in all_messages if m["宛先"] == user_id]
-        elif tab == "sent":
-            messages = [m for m in all_messages if m["送信者"] == user_id]
+    inbox = [m for m in all_messages if m["宛先"] == user_id]
+    sent = [m for m in all_messages if m["送信者"] == user_id]
 
+    # 新規送信
     if request.method == "POST" and tab == "compose":
         to = request.form.get("to", "").strip()
         subject = request.form.get("subject", "").strip()
@@ -210,7 +199,7 @@ def news():
         now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
         new_msg = {
-            "ID": str(len(messages)),
+            "ID": str(len(all_messages)),
             "送信者": user_id,
             "宛先": to,
             "件名": subject,
@@ -229,8 +218,9 @@ def news():
 
         return redirect(url_for("news", tab="sent"))
 
-    return render_template("pages/news.html", tab=tab, messages=messages, user_id=user_id)
+    return render_template("pages/news.html", tab=tab, inbox=inbox, sent=sent, user_id=user_id)
 
+# メッセージ詳細（件名クリックで既読）
 @app.route("/news/<int:msg_id>")
 def news_detail(msg_id):
     if not session.get("logged_in"):
@@ -240,15 +230,13 @@ def news_detail(msg_id):
         return "メッセージが存在しません", 404
 
     with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        messages = list(reader)
+        messages = list(csv.DictReader(f))
 
     if msg_id < 0 or msg_id >= len(messages):
         return "メッセージが存在しません", 404
 
     message = messages[msg_id]
 
-    # 既読処理
     if message["ステータス"] == "未読" and message["宛先"] == session.get("user_id"):
         messages[msg_id]["ステータス"] = "既読"
         with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
@@ -258,8 +246,33 @@ def news_detail(msg_id):
 
     return render_template("pages/news_detail.html", message=message, msg_id=msg_id)
 
+# 一括既読
+@app.route("/news/mark_read", methods=["POST"])
+def mark_read():
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+
+    ids = request.form.getlist("msg_ids")
+    if not os.path.exists(SUPPORT_CSV):
+        return redirect(url_for("news", tab="inbox"))
+
+    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+        messages = list(csv.DictReader(f))
+
+    for idx in map(int, ids):
+        if 0 <= idx < len(messages):
+            messages[idx]["ステータス"] = "既読"
+
+    if messages:
+        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=messages[0].keys())
+            writer.writeheader()
+            writer.writerows(messages)
+
+    return redirect(url_for("news", tab="inbox"))
+
 # -----------------------------
-# その他ページ（従来どおり）
+# その他ページ
 # -----------------------------
 @app.route("/guide")
 def guide():
@@ -293,9 +306,6 @@ def settings():
 def healthz():
     return "OK", 200
 
-# -----------------------------
-# Render 環境対応
-# -----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port, debug=True)
