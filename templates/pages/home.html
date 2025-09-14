@@ -75,8 +75,9 @@
   <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ">
 
   <div class="hero-buttons">
-    <a href="{{ url_for('login') }}" class="login">ログイン</a>
-    <a href="{{ url_for('register') }}" class="register">新規登録</a>
+    <!-- ✅ Blueprint のエンドポイント名に修正 -->
+    <a href="{{ url_for('auth_bp.login') }}" class="login">ログイン</a>
+    <a href="{{ url_for('auth_bp.register') }}" class="register">新規登録</a>
   </div>
 
   <div class="footer-text">
