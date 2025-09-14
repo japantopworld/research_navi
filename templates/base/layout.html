@@ -1,127 +1,33 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}リサーチナビ{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
+<nav class="topnav">
+  <div class="nav-buttons">
+    <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
 
-  {# ▼ ログイン後のみナビバーを表示 #}
-  {% if session.get('logged_in') %}
-  <nav class="topnav">
-    <div class="nav-buttons">
-      <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
-
-      <!-- ▼ サポート ドロップダウン ▼ -->
-      <div class="dropdown">
-        <button class="btn dropdown-toggle">💬 サポート</button>
-        <div class="dropdown-menu">
-          <a href="{{ url_for('guide') }}">📘 使い方ガイド</a>
-          <a href="{{ url_for('terms') }}">📜 利用規約</a>
-          <a href="{{ url_for('privacy') }}">🔒 プライバシーポリシー</a>
-          <a href="{{ url_for('report') }}">⚠️ 違反通報フォーム</a>
-          <a href="{{ url_for('support') }}">💬 お問い合わせ</a>
-        </div>
+    <!-- ▼ サポート ドロップダウン ▼ -->
+    <div class="dropdown">
+      <button class="btn dropdown-toggle">💬 サポート</button>
+      <div class="dropdown-menu">
+        <a href="{{ url_for('static_pages.guide') }}">📘 使い方ガイド</a>
+        <a href="{{ url_for('static_pages.terms') }}">📜 利用規約</a>
+        <a href="{{ url_for('static_pages.privacy') }}">🔒 プライバシーポリシー</a>
+        <a href="{{ url_for('static_pages.faq') }}">❓ よくある質問（FAQ）</a>
+        <a href="{{ url_for('static_pages.contact') }}">📩 お問い合わせ</a>
+        <a href="{{ url_for('static_pages.support') }}">💬 サポートページ</a>
       </div>
-      <!-- ▲ サポート ドロップダウン ▲ -->
-
-      <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
-
-      <!-- 📰 お知らせ一覧（未読件数付き） -->
-      <a href="{{ url_for('news_bp.news') }}" class="btn">
-        📰 お知らせ一覧
-        {% if unread_count and unread_count > 0 %}
-          <span class="badge">{{ unread_count }}</span>
-        {% endif %}
-      </a>
-
-      <a href="{{ url_for('mypage', user_id=session.get('user_id','')) }}" class="btn">👤 マイページ</a>
-      <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
-      <a href="{{ url_for('auth_bp.logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
     </div>
-  </nav>
-  {% endif %}
-  {# ▲ ログイン後のみナビバーを表示 #}
+    <!-- ▲ サポート ドロップダウン ▲ -->
 
-  <!-- ページごとのコンテンツ -->
-  {% block content %}{% endblock %}
+    <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
 
-  <style>
-    .topnav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: #fff;
-      border-bottom: 1px solid rgba(0,0,0,.08);
-      padding: .8rem 1rem;
-    }
-    .nav-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: .8rem;
-    }
-    .btn {
-      display: inline-block;
-      padding: .6rem 1.1rem;
-      border-radius: .6rem;
-      text-decoration: none;
-      font-weight: 700;
-      background: #dc2626;
-      color: #ffeb3b;
-      transition: transform .08s ease, opacity .2s ease;
-    }
-    .btn:hover { transform: translateY(-2px); opacity: .9; }
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid #dc2626;
-      color: #dc2626;
-    }
-    .btn-ghost:hover {
-      background: #dc2626;
-      color: #ffeb3b;
-    }
-    .dropdown { position: relative; display: inline-block; }
-    .dropdown-toggle::after { content: " ▼"; font-size: 0.8rem; }
-    .dropdown-menu {
-      display: none;
-      position: absolute;
-      top: 110%;
-      left: 0;
-      min-width: 180px;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      z-index: 200;
-    }
-    .dropdown-menu a {
-      display: block;
-      padding: 0.6rem 1rem;
-      color: #333;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .dropdown-menu a:hover {
-      background: #fef2f2;
-      color: #dc2626;
-    }
-    .dropdown:hover .dropdown-menu { display: block; }
+    <!-- 📰 お知らせ一覧（未読件数付き） -->
+    <a href="{{ url_for('news_bp.news') }}" class="btn">
+      📰 お知らせ一覧
+      {% if unread_count and unread_count > 0 %}
+        <span class="badge">{{ unread_count }}</span>
+      {% endif %}
+    </a>
 
-    /* 未読バッジ */
-    .badge {
-      display: inline-block;
-      margin-left: 0.4rem;
-      padding: 0.2rem 0.5rem;
-      font-size: 0.8rem;
-      font-weight: bold;
-      border-radius: 0.8rem;
-      background: #fff;
-      color: #dc2626;
-      border: 1px solid #dc2626;
-    }
-  </style>
-</body>
-</html>
+    <a href="{{ url_for('mypage', user_id=session.get('user_id','')) }}" class="btn">👤 マイページ</a>
+    <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
+    <a href="{{ url_for('auth_bp.logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
+  </div>
+</nav>
