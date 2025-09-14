@@ -37,30 +37,56 @@ def ensure_users_csv():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     ensure_users_csv()
+    errors = []
+    form = {}
+
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        furigana = request.form.get("furigana", "").strip()
-        birth = request.form.get("birth", "").strip()
-        age = request.form.get("age", "").strip()
-        tel = request.form.get("tel", "").strip()
-        mobile = request.form.get("mobile", "").strip()
-        email = request.form.get("email", "").strip()
-        dept = request.form.get("dept", "").strip()
-        refno = request.form.get("refno", "").strip()
-        user_id = request.form.get("user_id", "").strip()
-        password = request.form.get("password", "").strip()
+        form = request.form.to_dict()
 
-        with open(USERS_CSV, "a", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow([name, furigana, birth, age, tel, mobile,
-                             email, dept, refno, user_id, password])
+        name = form.get("name", "").strip()
+        kana = form.get("kana", "").strip()
+        birth = form.get("birth", "").strip()
+        branch = form.get("branch", "").strip()
+        phone = form.get("phone", "").strip()
+        mobile = form.get("mobile", "").strip()
+        email = form.get("email", "").strip()
+        dept = form.get("dept", "").strip()
+        ref_raw = form.get("ref_raw", "").strip()
+        ref_no = form.get("ref_no", "").strip()
+        user_id = form.get("user_id", "").strip()
+        password = form.get("password", "")
+        password2 = form.get("password2", "")
 
-        return redirect(url_for("login"))
+        # 入力チェック
+        if not name: errors.append("氏名は必須です")
+        if not kana: errors.append("ふりがなは必須です")
+        if not birth: errors.append("生年月日は必須です")
+        if not ref_no: errors.append("紹介者NOの正規化ができません")
+        if not user_id: errors.append("ユーザーIDが生成されていません")
+        if not password: errors.append("パスワードは必須です")
+        if password != password2: errors.append("パスワードが一致しません")
 
-    return render_template("auth/register.html")
+        # 既存IDチェック
+        if os.path.exists(USERS_CSV):
+            with open(USERS_CSV, newline="", encoding="utf-8") as f:
+                users = list(csv.DictReader(f))
+                if any(u["ID"] == user_id for u in users):
+                    errors.append("このユーザーIDはすでに登録されています")
+
+        if not errors:
+            # CSV保存
+            with open(USERS_CSV, "a", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    name, kana, birth, "", phone, mobile,
+                    email, dept, ref_no, user_id, password
+                ])
+            return redirect(url_for("login"))
+
+    return render_template("auth/register.html", errors=errors, form=form)
 
 # -----------------------------
-# ログイン（仮置き）
+# ログイン
 # -----------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -83,7 +109,7 @@ def login():
     return render_template("auth/login.html")
 
 # -----------------------------
-# メールボックス（ここまでの最新版）
+# メールボックス
 # -----------------------------
 @app.route("/news", methods=["GET", "POST"])
 def news():
@@ -147,4 +173,78 @@ def news():
         file_path = ""
         file = request.files.get("attach")
         if file and file.filename:
-            filename = f"{datetime.now(
+            filename = f"{datetime.now().timestamp()}_{file.filename}"
+            save_path = os.path.join(UPLOAD_DIR, filename)
+            file.save(save_path)
+            file_path = filename
+
+        recipients = []
+        if to.startswith("@"):  # 部署一斉送信
+            dept = to[1:]
+            if os.path.exists(USERS_CSV):
+                with open(USERS_CSV, newline="", encoding="utf-8") as f:
+                    users = list(csv.DictReader(f))
+                    recipients = [u["ID"] for u in users if u["部署"] == dept]
+        else:
+            recipients = [to]
+
+        for r in recipients:
+            new_msg = {
+                "ID": str(uuid.uuid4()),
+                "送信者": user_id,
+                "宛先": r,
+                "件名": subject,
+                "本文": body,
+                "添付": file_path,
+                "ステータス": "未読",
+                "送信日時": now
+            }
+            with open(SUPPORT_CSV, "a", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=new_msg.keys())
+                if f.tell() == 0:
+                    writer.writeheader()
+                writer.writerow(new_msg)
+
+        return redirect(url_for("news", tab="sent"))
+
+    unread_count = len([m for m in inbox if m["ステータス"] == "未読"])
+
+    return render_template("pages/news.html",
+                           tab=tab, inbox=inbox, sent=sent,
+                           user_id=user_id, request=request,
+                           reply_to=reply_to, reply_subject=reply_subject,
+                           unread_count=unread_count)
+
+# -----------------------------
+# メッセージ詳細
+# -----------------------------
+@app.route("/news/<msg_id>")
+def news_detail(msg_id):
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+
+    if not os.path.exists(SUPPORT_CSV):
+        return "メッセージが存在しません", 404
+
+    with open(SUPPORT_CSV, newline="", encoding="utf-8") as f:
+        messages = list(csv.DictReader(f))
+
+    msg = next((m for m in messages if m["ID"] == msg_id), None)
+    if not msg:
+        return "メッセージが存在しません", 404
+
+    if msg["ステータス"] == "未読" and msg["宛先"] == session["user_id"]:
+        msg["ステータス"] = "既読"
+        with open(SUPPORT_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=messages[0].keys())
+            writer.writeheader()
+            writer.writerows(messages)
+
+    return render_template("pages/news_detail.html", message=msg)
+
+# -----------------------------
+# 添付ファイル配信
+# -----------------------------
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_DIR, filename)
