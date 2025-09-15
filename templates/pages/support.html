@@ -1,7 +1,5 @@
 {% extends "base/layout.html" %}
-
 {% block title %}サポート | リサーチナビ{% endblock %}
-
 {% block content %}
 <div class="container mt-5">
     <h2 class="mb-4">🛠 サポート</h2>
@@ -11,21 +9,11 @@
     </p>
 
     <div class="list-group mb-4">
-        <a href="{{ url_for('static_pages.guide') }}" class="list-group-item list-group-item-action">
-            📘 使い方ガイド
-        </a>
-        <a href="{{ url_for('static_pages.faq') }}" class="list-group-item list-group-item-action">
-            ❓ よくある質問（FAQ）
-        </a>
-        <a href="{{ url_for('static_pages.contact') }}" class="list-group-item list-group-item-action">
-            📩 お問い合わせフォーム
-        </a>
-        <a href="{{ url_for('static_pages.terms') }}" class="list-group-item list-group-item-action">
-            📄 利用規約
-        </a>
-        <a href="{{ url_for('static_pages.privacy') }}" class="list-group-item list-group-item-action">
-            🔐 プライバシーポリシー
-        </a>
+        <a href="{{ url_for('static_pages.guide') }}" class="list-group-item list-group-item-action">📘 使い方ガイド</a>
+        <a href="{{ url_for('static_pages.faq') }}" class="list-group-item list-group-item-action">❓ よくある質問（FAQ）</a>
+        <a href="{{ url_for('static_pages.contact') }}" class="list-group-item list-group-item-action">📩 お問い合わせフォーム</a>
+        <a href="{{ url_for('static_pages.terms') }}" class="list-group-item list-group-item-action">📄 利用規約</a>
+        <a href="{{ url_for('static_pages.privacy') }}" class="list-group-item list-group-item-action">🔐 プライバシーポリシー</a>
     </div>
 
     <div class="alert alert-info">
