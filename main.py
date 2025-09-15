@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, session
 from routes.login import auth_bp
 from routes.news import news_bp
 from routes.static_pages import static_pages_bp
@@ -18,12 +18,15 @@ app.register_blueprint(mypage_bp)
 # ホーム
 @app.route("/")
 def home():
+    # ✅ 初回アクセス時はログインしていない状態に強制
+    session["logged_in"] = False
     return render_template("pages/home.html")
 
 # 健康チェック
 @app.route("/healthz")
 def healthz():
     return "ok", 200
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
