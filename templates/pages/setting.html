@@ -5,7 +5,7 @@
 <h1>⚙️ 設定</h1>
 
 <div class="card">
-  <form method="post" action="{{ url_for('setting') }}">
+  <form method="post" action="{{ url_for('settings_bp.settings') }}">
     <div class="grid">
       <label>
         <span>メール通知を有効化</span>
@@ -47,12 +47,13 @@
 
     <div class="actions">
       <button type="submit">💾 保存する</button>
-      <form method="post" action="{{ url_for('setting_test_mail') }}" style="display:inline;">
-        <button type="submit" class="ghost">✉️ テスト送信</button>
-      </form>
-      <a href="{{ url_for('notifications') }}" class="btn">📣 通知一覧へ</a>
-    </div>
   </form>
+
+  <form method="post" action="{{ url_for('settings_bp.setting_test_mail') }}" style="display:inline;">
+    <button type="submit" class="ghost">✉️ テスト送信</button>
+  </form>
+
+  <a href="{{ url_for('settings_bp.notifications') }}" class="btn">📣 通知一覧へ</a>
 </div>
 
 <div class="card">
