@@ -17,28 +17,19 @@
       <div class="dropdown">
         <button class="btn dropdown-toggle">💬 サポート</button>
         <div class="dropdown-menu">
-          <a href="{{ url_for('static_pages.guide') }}">📘 使い方ガイド</a>
           <a href="{{ url_for('static_pages.terms') }}">📜 利用規約</a>
           <a href="{{ url_for('static_pages.privacy') }}">🔒 プライバシーポリシー</a>
-          <a href="{{ url_for('static_pages.report') }}">⚠️ 違反通報フォーム</a>
-          <a href="{{ url_for('static_pages.support') }}">💬 お問い合わせ</a>
+          <a href="{{ url_for('static_pages.faq') }}">❓ よくある質問</a>
+          <a href="{{ url_for('static_pages.contact') }}">📩 お問い合わせ</a>
+          <a href="{{ url_for('static_pages.support') }}">💬 サポートページ</a>
+          <a href="{{ url_for('static_pages.settings') }}">⚙️ 各種設定</a>
+          <a href="{{ url_for('news_bp.news') }}">📰 お知らせ一覧</a>
         </div>
       </div>
       <!-- ▲ サポート ドロップダウン ▲ -->
 
-      <a href="{{ url_for('services_bp.services') }}" class="btn">📋 サービス一覧</a>
-
-      <!-- 📰 お知らせ一覧（未読件数付き） -->
-      <a href="{{ url_for('news_bp.news') }}" class="btn">
-        📰 お知らせ一覧
-        {% if unread_count and unread_count > 0 %}
-          <span class="badge">{{ unread_count }}</span>
-        {% endif %}
-      </a>
-
-      <a href="{{ url_for('auth_bp.mypage', user_id=session.get('user_id','')) }}" class="btn">👤 マイページ</a>
-      <a href="{{ url_for('settings_bp.settings') }}" class="btn">⚙️ 各種設定</a>
-      <a href="{{ url_for('auth_bp.logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
+      <a href="{{ url_for('mypage', user_id=session.get('user_id','')) }}" class="btn">👤 マイページ</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
     </div>
   </nav>
   {% endif %}
@@ -89,7 +80,7 @@
       position: absolute;
       top: 110%;
       left: 0;
-      min-width: 180px;
+      min-width: 200px;
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 8px;
@@ -117,8 +108,8 @@
       font-size: 0.8rem;
       font-weight: bold;
       border-radius: 0.8rem;
-      background: #fff;   /* 白背景 */
-      color: #dc2626;     /* 赤文字 */
+      background: #fff;
+      color: #dc2626;
       border: 1px solid #dc2626;
     }
   </style>
