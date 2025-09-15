@@ -1,103 +1,93 @@
 {% extends "base/layout.html" %}
-{% block title %}リサーチナビ | ホーム{% endblock %}
+{% block title %}ホーム | リサーチナビ{% endblock %}
 {% block content %}
 
-<style>
-  .hero-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 5vh 2vw;
-    font-size: 1.3rem;
-  }
-  .hero-container h1 {
-    font-size: 2.2rem;
-    margin-bottom: 0.5rem;
-  }
-  .hero-container p {
-    font-size: 1.2rem;
-    color: #555;
-    margin-bottom: 1.5rem;
-  }
-  .hero-container img {
-    max-width: 300px;
-    width: 80%;
-    height: auto;
-    margin-bottom: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  .hero-buttons {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-  }
-  .hero-buttons a {
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    font-weight: bold;
-    background-color: #dc2626;
-    color: #ffeb3b;
-  }
-  .hero-buttons a:hover {
-    opacity: 0.9;
-  }
-  .links {
-    margin-top: 1rem;
-    font-size: 0.95rem;
-  }
-  .links a {
-    margin: 0 0.8rem;
-    text-decoration: none;
-  }
-  .links a:hover {
-    text-decoration: underline;
-  }
-  .footer-text {
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
-    color: #666;
-  }
-  @media screen and (max-width: 480px) {
-    .hero-container {
-      font-size: 1.1rem;
-    }
-    .hero-container h1 {
-      font-size: 1.7rem;
-    }
-    .hero-buttons a {
-      font-size: 1rem;
-      padding: 0.8rem 1.5rem;
-    }
-  }
-</style>
-
-<div class="hero-container">
-  <h1>🔍 <span style="color:#d92d20;">リサーチナビ</span></h1>
-  <p>最強のせどり支援ツールへようこそ！</p>
-
-  <!-- ✅ hero_main.jpg をマスコット画像に設定 -->
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ マスコット">
+<div class="hero">
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="Research Navi" class="hero-img">
+  <h1 class="hero-title">🚀 最強最高のリサーチナビ</h1>
+  <p class="hero-subtitle">仕入れ・転売・物販をトータルサポートするオールインワンプラットフォーム</p>
 
   <div class="hero-buttons">
-    <a href="{{ url_for('auth_bp.login') }}" class="login">ログイン</a>
-    <a href="{{ url_for('auth_bp.register') }}" class="register">新規登録</a>
-  </div>
-
-  <!-- ✅ 利用規約リンクはここだけ -->
-  <div class="links">
-    <a href="{{ url_for('static_pages.terms') }}">📜 利用規約</a>
-    <a href="{{ url_for('auth_bp.login') }}">❗ ログインできない場合はこちら</a>
-  </div>
-
-  <div class="footer-text">
-    制作者：鳳陽合同会社　小島崇彦<br>
-    © 2025 Research Navi. All rights reserved.
+    <a href="{{ url_for('login_bp.login') }}" class="login">ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="register">新規登録</a>
   </div>
 </div>
+
+<div class="features">
+  <h2>🔑 主な機能</h2>
+  <ul>
+    <li>🔍 商品検索（メルカリ・Amazon・楽天・Yahoo!ショッピング・1688 ほか）</li>
+    <li>💰 利益計算（手数料・送料・相場込み）</li>
+    <li>📊 履歴管理・ランキング（トレンド・回転率・ROI）</li>
+    <li>📩 通知・アラート機能（利益商品・在庫変動など）</li>
+    <li>👤 マイページによる個別管理</li>
+  </ul>
+</div>
+
+<div class="footer-credits">
+  <p>© 2025 鳳陽合同会社 小島崇彦</p>
+</div>
+
+<style>
+.hero {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+.hero-img {
+  max-width: 260px;
+  margin-bottom: 1.5rem;
+}
+.hero-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+.hero-buttons .login,
+.hero-buttons .register {
+  display: inline-block;
+  padding: 0.6rem 1.4rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: white;
+}
+.hero-buttons .login {
+  background: #dc2626;
+}
+.hero-buttons .register {
+  background: #2563eb;
+}
+.features {
+  margin: 3rem auto;
+  max-width: 600px;
+}
+.features h2 {
+  margin-bottom: 1rem;
+}
+.features ul {
+  list-style: none;
+  padding: 0;
+}
+.features li {
+  margin: 0.6rem 0;
+  font-size: 1.1rem;
+}
+.footer-credits {
+  text-align: center;
+  margin: 2rem 0;
+  color: #777;
+  font-size: 0.9rem;
+}
+</style>
 
 {% endblock %}
