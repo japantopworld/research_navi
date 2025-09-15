@@ -22,6 +22,20 @@
   .mypage-info strong {
     color: #333;
   }
+  table {
+    width: 100%;
+    margin-top: 1.5rem;
+    border-collapse: collapse;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  th {
+    background: #f9fafb;
+    color: #111;
+  }
 </style>
 
 <div class="mypage-container">
@@ -32,6 +46,25 @@
     <p><strong>部署:</strong> {{ user["部署"] or "未設定" }}</p>
     <p><strong>紹介者NO:</strong> {{ user["紹介者NO"] or "なし" }}</p>
   </div>
+
+  <hr>
+  <h3>📊 利益商品リスト</h3>
+  <table>
+    <thead>
+      <tr><th>商品名</th><th>利益率</th><th>利益額</th></tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.profit_rate }}%</td>
+        <td>{{ item.profit_amount }}円</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3">データがありません</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 {% endblock %}
