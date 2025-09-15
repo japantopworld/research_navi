@@ -1,6 +1,8 @@
+# routes/static_pages.py
+
 from flask import Blueprint, render_template
 
-# Blueprint の定義
+# ✅ Blueprint を定義
 static_pages_bp = Blueprint("static_pages", __name__)
 
 # 利用規約
@@ -18,12 +20,17 @@ def privacy():
 def guide():
     return render_template("pages/guide.html")
 
-# FAQ
+# よくある質問（FAQ）
 @static_pages_bp.route("/faq")
 def faq():
     return render_template("pages/faq.html")
 
-# お問い合わせ
-@static_pages_bp.route("/contact", methods=["GET", "POST"])
+# お問い合わせフォーム
+@static_pages_bp.route("/contact")
 def contact():
     return render_template("pages/contact.html")
+
+# サポートページ
+@static_pages_bp.route("/support")
+def support():
+    return render_template("pages/support.html")
