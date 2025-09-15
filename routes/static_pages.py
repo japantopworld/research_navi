@@ -1,5 +1,3 @@
-# routes/static_pages.py
-
 from flask import Blueprint, render_template
 
 # ✅ Blueprint を定義
@@ -34,3 +32,8 @@ def contact():
 @static_pages_bp.route("/support")
 def support():
     return render_template("pages/support.html")
+
+# ✅ 各種設定ページ ←これを追加
+@static_pages_bp.route("/settings")
+def settings():
+    return render_template("pages/settings.html")
