@@ -1,35 +1,35 @@
-{% extends "base/base.html" %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}リサーチナビ{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    {% if session.get('logged_in') %}
+    <nav class="navbar">
+      <a href="{{ url_for('search_bp.search') }}">検索</a>
+      <a href="{{ url_for('profit_bp.profit') }}">利益計算</a>
+      <a href="{{ url_for('history_bp.history') }}">履歴</a>
+      <a href="{{ url_for('alerts_bp.alerts') }}">通知</a>
+      <a href="{{ url_for('mypage_bp.mypage') }}">マイページ</a>
+      <a href="{{ url_for('auth_bp.logout') }}">ログアウト</a>
+    </nav>
+    {% endif %}
+  </header>
 
-{% block title %}リサーチナビ | レイアウト{% endblock %}
+  <main>
+    {% block content %}{% endblock %}
+  </main>
 
-{% block content %}
-<nav class="topnav">
-  <div class="nav-buttons">
-    <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
-
-    <!-- ▼ サポート ドロップダウン ▼ -->
-    <div class="dropdown">
-      <button class="btn dropdown-toggle">💬 サポート</button>
-      <div class="dropdown-menu">
-        <a href="{{ url_for('static_pages.guide') }}">📘 使い方ガイド</a>
-        <a href="{{ url_for('static_pages.faq') }}">❓ よくある質問</a>
-        <a href="{{ url_for('static_pages.contact') }}">📩 お問い合わせ</a>
-        <a href="{{ url_for('static_pages.terms') }}">📜 利用規約</a>
-        <a href="{{ url_for('static_pages.privacy') }}">🔒 プライバシーポリシー</a>
-        <a href="{{ url_for('static_pages.support') }}">🛠 サポートページ</a>
-      </div>
-    </div>
-    <!-- ▲ サポート ドロップダウン ▲ -->
-
-    <!-- 📰 お知らせ一覧 -->
-    <a href="{{ url_for('news_bp.news') }}" class="btn">
-      📰 お知らせ一覧
-      {% if unread_count and unread_count > 0 %}
-        <span class="badge">{{ unread_count }}</span>
-      {% endif %}
-    </a>
-
-    <a href="{{ url_for('auth_bp.login') }}" class="btn">👤 ログイン</a>
-  </div>
-</nav>
-{% endblock %}
+  <footer>
+    <p>
+      © 2025 リサーチナビ |
+      <a href="{{ url_for('static_pages.terms') }}">利用規約</a> |
+      <a href="{{ url_for('static_pages.privacy') }}">プライバシー</a> |
+      <a href="{{ url_for('static_pages.contact') }}">お問い合わせ</a>
+    </p>
+  </footer>
+</body>
+</html>
