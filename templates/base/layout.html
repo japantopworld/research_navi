@@ -1,3 +1,8 @@
+{% extends "base/base.html" %}
+
+{% block title %}リサーチナビ | レイアウト{% endblock %}
+
+{% block content %}
 <nav class="topnav">
   <div class="nav-buttons">
     <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
@@ -7,18 +12,16 @@
       <button class="btn dropdown-toggle">💬 サポート</button>
       <div class="dropdown-menu">
         <a href="{{ url_for('static_pages.guide') }}">📘 使い方ガイド</a>
+        <a href="{{ url_for('static_pages.faq') }}">❓ よくある質問</a>
+        <a href="{{ url_for('static_pages.contact') }}">📩 お問い合わせ</a>
         <a href="{{ url_for('static_pages.terms') }}">📜 利用規約</a>
         <a href="{{ url_for('static_pages.privacy') }}">🔒 プライバシーポリシー</a>
-        <a href="{{ url_for('static_pages.faq') }}">❓ よくある質問（FAQ）</a>
-        <a href="{{ url_for('static_pages.contact') }}">📩 お問い合わせ</a>
-        <a href="{{ url_for('static_pages.support') }}">💬 サポートページ</a>
+        <a href="{{ url_for('static_pages.support') }}">🛠 サポートページ</a>
       </div>
     </div>
     <!-- ▲ サポート ドロップダウン ▲ -->
 
-    <a href="{{ url_for('services') }}" class="btn">📋 サービス一覧</a>
-
-    <!-- 📰 お知らせ一覧（未読件数付き） -->
+    <!-- 📰 お知らせ一覧 -->
     <a href="{{ url_for('news_bp.news') }}" class="btn">
       📰 お知らせ一覧
       {% if unread_count and unread_count > 0 %}
@@ -26,8 +29,7 @@
       {% endif %}
     </a>
 
-    <a href="{{ url_for('mypage', user_id=session.get('user_id','')) }}" class="btn">👤 マイページ</a>
-    <a href="{{ url_for('settings') }}" class="btn">⚙️ 各種設定</a>
-    <a href="{{ url_for('auth_bp.logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
+    <a href="{{ url_for('auth_bp.login') }}" class="btn">👤 ログイン</a>
   </div>
 </nav>
+{% endblock %}
