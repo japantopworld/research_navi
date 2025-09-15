@@ -19,16 +19,20 @@
         <div class="dropdown-menu">
           <a href="{{ url_for('static_pages.terms') }}">📜 利用規約</a>
           <a href="{{ url_for('static_pages.privacy') }}">🔒 プライバシーポリシー</a>
-          <a href="{{ url_for('static_pages.faq') }}">❓ よくある質問</a>
-          <a href="{{ url_for('static_pages.contact') }}">📩 お問い合わせ</a>
-          <a href="{{ url_for('static_pages.support') }}">💬 サポートページ</a>
-          <a href="{{ url_for('static_pages.settings') }}">⚙️ 各種設定</a>
-          <a href="{{ url_for('news_bp.news') }}">📰 お知らせ一覧</a>
+          <a href="{{ url_for('static_pages.support') }}">💬 お問い合わせ</a>
         </div>
       </div>
       <!-- ▲ サポート ドロップダウン ▲ -->
 
-      <a href="{{ url_for('mypage', user_id=session.get('user_id','')) }}" class="btn">👤 マイページ</a>
+      <a href="{{ url_for('news_bp.news') }}" class="btn">
+        📰 お知らせ一覧
+        {% if unread_count and unread_count > 0 %}
+          <span class="badge">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+
+      <a href="{{ url_for('mypage_bp.mypage') }}" class="btn">👤 マイページ</a>
+      <a href="{{ url_for('settings_bp.settings') }}" class="btn">⚙️ 各種設定</a>
       <a href="{{ url_for('logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
     </div>
   </nav>
@@ -80,7 +84,7 @@
       position: absolute;
       top: 110%;
       left: 0;
-      min-width: 200px;
+      min-width: 180px;
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 8px;
@@ -100,7 +104,6 @@
     }
     .dropdown:hover .dropdown-menu { display: block; }
 
-    /* 未読バッジ */
     .badge {
       display: inline-block;
       margin-left: 0.4rem;
