@@ -2,34 +2,47 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}リサーチナビ{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
-  <header>
-    {% if session.get('logged_in') %}
-    <nav class="navbar">
-      <a href="{{ url_for('search_bp.search') }}">検索</a>
-      <a href="{{ url_for('profit_bp.profit') }}">利益計算</a>
-      <a href="{{ url_for('history_bp.history') }}">履歴</a>
-      <a href="{{ url_for('alerts_bp.alerts') }}">通知</a>
-      <a href="{{ url_for('mypage_bp.mypage') }}">マイページ</a>
-      <a href="{{ url_for('auth_bp.logout') }}">ログアウト</a>
-    </nav>
-    {% endif %}
-  </header>
 
-  <main>
-    {% block content %}{% endblock %}
-  </main>
+  {% if session.get('logged_in') %}
+  <nav class="topnav">
+    <div class="nav-buttons">
+      <a href="{{ url_for('home') }}" class="btn">🏠 ホーム</a>
 
-  <footer>
-    <p>
-      © 2025 リサーチナビ |
-      <a href="{{ url_for('static_pages.terms') }}">利用規約</a> |
-      <a href="{{ url_for('static_pages.privacy') }}">プライバシー</a> |
-      <a href="{{ url_for('static_pages.contact') }}">お問い合わせ</a>
-    </p>
-  </footer>
+      <div class="dropdown">
+        <button class="btn dropdown-toggle">💬 サポート</button>
+        <div class="dropdown-menu">
+          <a href="{{ url_for('static_pages.guide') }}">📘 使い方ガイド</a>
+          <a href="{{ url_for('static_pages.terms') }}">📜 利用規約</a>
+          <a href="{{ url_for('static_pages.privacy') }}">🔒 プライバシーポリシー</a>
+          <a href="{{ url_for('static_pages.report') }}">⚠️ 違反通報フォーム</a>
+          <a href="{{ url_for('static_pages.support') }}">💬 お問い合わせ</a>
+        </div>
+      </div>
+
+      <a href="{{ url_for('services_bp.index') }}" class="btn">📋 サービス一覧</a>
+
+      <a href="{{ url_for('news_bp.news') }}" class="btn">
+        📰 お知らせ一覧
+        {% if unread_count and unread_count > 0 %}
+          <span class="badge">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+
+      <a href="{{ url_for('auth_bp.mypage', user_id=session.get('user_id','')) }}" class="btn">👤 マイページ</a>
+      <a href="{{ url_for('settings_bp.index') }}" class="btn">⚙️ 各種設定</a>
+      <a href="{{ url_for('auth_bp.logout') }}" class="btn btn-ghost">↩︎ ログアウト</a>
+    </div>
+  </nav>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+
+  <style>
+    /* スタイルはそのまま */
+  </style>
 </body>
 </html>
