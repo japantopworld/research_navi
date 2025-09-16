@@ -1,18 +1,15 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-import csv
-import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+import csv, os, random, string
 
 login_bp = Blueprint("login_bp", __name__, url_prefix="/login")
 
-# ユーザーデータCSV
 USERS_CSV = os.path.join("research_navi", "data", "users.csv")
 
-# 管理者アカウント
+# 管理者固定アカウント
 ADMIN_ID = "KING1219"
 ADMIN_PASS = "11922960"
 
-
-# ログイン画面
+# ✅ ログイン処理
 @login_bp.route("/", methods=["GET", "POST"])
 def login():
     error = None
@@ -24,65 +21,61 @@ def login():
         if user_id == ADMIN_ID and password == ADMIN_PASS:
             session["logged_in"] = True
             session["user_id"] = ADMIN_ID
-            flash("管理者でログインしました ✅", "success")
+            session["is_admin"] = True
+            flash("管理者ログイン成功 ✅", "success")
             return redirect(url_for("mypage_bp.mypage"))
 
-        # CSVからユーザー確認
-        if os.path.exists(USERS_CSV):
-            with open(USERS_CSV, newline="", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    if row["ID"] == user_id and row["PASS"] == password:
-                        session["logged_in"] = True
-                        session["user_id"] = row["ID"]
-                        flash("ログイン成功 ✅", "success")
-                        return redirect(url_for("mypage_bp.mypage"))
-
-        error = "IDまたはパスワードが違います ❌"
-
-    return render_template("pages/login.html", error=error)
-
-
-# ログアウト
-@login_bp.route("/logout")
-def logout():
-    session.clear()
-    flash("ログアウトしました 👋", "info")
-    return redirect(url_for("login_bp.login"))
-
-
-# ID照会処理
-@login_bp.route("/forgot/id", methods=["POST"])
-def forgot_id():
-    email = request.form.get("email")
-    birthdate = request.form.get("birthdate")
-
-    if os.path.exists(USERS_CSV):
+        # 一般ユーザーCSVチェック
         with open(USERS_CSV, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                if row["メールアドレス"] == email and row["生年月日"] == birthdate:
-                    flash(f"✅ あなたの登録IDは 【{row['ID']}】 です。", "success")
-                    return redirect(url_for("login_bp.login"))
+                if row["ID"] == user_id and row["PASS"] == password:
+                    session["logged_in"] = True
+                    session["user_id"] = row["ID"]
+                    session["is_admin"] = False
+                    flash("ログイン成功 ✅", "success")
+                    return redirect(url_for("mypage_bp.mypage"))
 
-    flash("❌ 入力された情報ではIDを特定できませんでした。", "danger")
-    return redirect(url_for("login_bp.login"))
+        error = "⚠️ ID またはパスワードが間違っています"
+    return render_template("pages/login.html", error=error)
 
 
-# パスワード再発行処理（ダミー実装）
-@login_bp.route("/forgot/password", methods=["POST"])
-def forgot_password():
-    user_id = request.form.get("user_id")
-    email = request.form.get("email")
+# ✅ ID・パスワード再発行（一般ユーザーのみ）
+@login_bp.route("/forgot", methods=["GET", "POST"])
+def forgot():
+    new_pass = None
+    found_user = None
 
-    if os.path.exists(USERS_CSV):
+    if request.method == "POST":
+        user_id = request.form.get("user_id")
+        email = request.form.get("email")
+
+        # 管理者は対象外
+        if user_id == ADMIN_ID:
+            flash("⚠️ 管理者のパスワードは再発行できません。", "danger")
+            return render_template("pages/forgot.html")
+
+        users = []
+        found = False
+
         with open(USERS_CSV, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if row["ID"] == user_id and row["メールアドレス"] == email:
-                    # 本来はメール送信で再発行リンクを送る
-                    flash("✅ パスワード再発行リンクをメールに送信しました。", "success")
-                    return redirect(url_for("login_bp.login"))
+                    new_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+                    row["PASS"] = new_pass
+                    found = True
+                    found_user = row
+                users.append(row)
 
-    flash("❌ 入力された情報が一致しませんでした。", "danger")
-    return redirect(url_for("login_bp.login"))
+        if found:
+            with open(USERS_CSV, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=users[0].keys())
+                writer.writeheader()
+                writer.writerows(users)
+
+            flash("✅ 新しいパスワードを発行しました。", "success")
+        else:
+            flash("⚠️ 入力された情報が一致しません。", "danger")
+
+    return render_template("pages/forgot.html", new_pass=new_pass, user=found_user)
