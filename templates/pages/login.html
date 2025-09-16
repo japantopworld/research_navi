@@ -1,27 +1,99 @@
 {% extends "base/layout.html" %}
 {% block title %}ログイン | リサーチナビ{% endblock %}
 {% block content %}
-<div class="container mt-5" style="max-width:400px;">
-  <h2 class="mb-4">🔑 ログイン</h2>
+
+<style>
+  .login-container {
+    max-width: 480px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.8rem;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    font-size: 1.1rem;
+  }
+  .login-container h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #dc2626;
+  }
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+  .form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 0.4rem;
+  }
+  .btn-submit {
+    display: block;
+    width: 100%;
+    padding: 0.8rem;
+    background: #dc2626;
+    color: #ffeb3b;
+    font-weight: bold;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-submit:hover {
+    opacity: 0.9;
+  }
+  .error-message {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #b91c1c;
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  .info-text {
+    margin-top: 1rem;
+    text-align: center;
+  }
+  .info-text a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+  .info-text a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="login-container">
+  <h2>🔑 ログイン</h2>
 
   {% if error %}
-    <div style="color:red; margin-bottom:1rem;">{{ error }}</div>
+    <div class="error-message">{{ error }}</div>
   {% endif %}
 
-  <form method="post">
-    <div class="mb-3">
-      <label for="user_id" class="form-label">ユーザーID</label>
-      <input type="text" id="user_id" name="user_id" class="form-control" required>
+  <form method="POST">
+    <div class="form-group">
+      <label for="username">ID</label>
+      <input type="text" id="username" name="username" placeholder="IDを入力してください" required>
     </div>
-    <div class="mb-3">
-      <label for="password" class="form-label">パスワード</label>
-      <input type="password" id="password" name="password" class="form-control" required>
+
+    <div class="form-group">
+      <label for="password">パスワード</label>
+      <input type="password" id="password" name="password" placeholder="パスワードを入力してください" required>
     </div>
-    <button type="submit" class="btn btn-primary w-100">ログイン</button>
+
+    <button type="submit" class="btn-submit">ログイン</button>
   </form>
 
-  <p class="mt-3">
-    アカウントがない方は <a href="{{ url_for('auth_bp.register') }}">新規登録</a> へ
-  </p>
+  <div class="info-text">
+    <p>📌 管理者の方もこちらからログインできます。</p>
+    <p><a href="{{ url_for('register_bp.register') }}">📝 新規登録はこちら</a></p>
+    <p><a href="{{ url_for('login_bp.forgot') }}">❗ ID・パスワードを忘れた方はこちら</a></p>
+  </div>
 </div>
+
 {% endblock %}
