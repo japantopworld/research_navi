@@ -2,34 +2,41 @@
 {% block title %}リサーチナビ | ホーム{% endblock %}
 {% block content %}
 
-<div class="hero">
+<div class="hero-container">
   <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ" class="hero-img">
-  <h1>🚀 リサーチナビ</h1>
-  <p>せどり・物販を強力サポートする最強ツール</p>
+  <h1 class="hero-title">🚀 リサーチナビ</h1>
+  <p class="hero-subtitle">せどり・物販を最強サポート</p>
 
   <div class="hero-buttons">
-    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">🔑 ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success">🆕 新規登録</a>
-  </div>
-
-  <div class="mt-3">
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-danger">🔑 ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-outline-secondary">📝 新規登録</a>
     <a href="{{ url_for('login_bp.forgot') }}" class="btn btn-link text-danger">
-      ❗ ID・パスワードを忘れた方はこちら
+      ❓ ID・パスワードを忘れた方はこちら
     </a>
   </div>
 </div>
 
 <style>
-.hero {
+.hero-container {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem 1rem;
 }
 .hero-img {
-  max-width: 220px;
+  max-width: 300px;
   margin-bottom: 1rem;
 }
+.hero-title {
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #dc2626;
+}
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: #555;
+  margin-bottom: 2rem;
+}
 .hero-buttons .btn {
-  margin: 0.3rem;
+  margin: 0.4rem;
 }
 </style>
 
