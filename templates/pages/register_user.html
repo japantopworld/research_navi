@@ -44,10 +44,29 @@
   button:hover {
     opacity: 0.9;
   }
+  .generated-id {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #fef2f2;
+    border: 1px solid #dc2626;
+    border-radius: 0.5rem;
+    color: #b91c1c;
+    font-weight: bold;
+    text-align: center;
+  }
 </style>
 
 <div class="register-container">
   <h2>📝 新規登録</h2>
+
+  {# ✅ 自動生成されたIDを画面に表示 #}
+  {% if generated_id %}
+  <div class="generated-id">
+    🎉 あなたのユーザーIDは <strong>{{ generated_id }}</strong> です。<br>
+    ログインの際にご利用ください。
+  </div>
+  {% endif %}
+
   <form method="POST" action="{{ url_for('register_bp.register') }}">
     <div class="form-group">
       <label>ユーザー名</label>
