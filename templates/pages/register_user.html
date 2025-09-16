@@ -1,87 +1,117 @@
 {% extends "base/layout.html" %}
-{% block title %}ユーザー登録 | リサーチナビ{% endblock %}
+{% block title %}新規登録 | リサーチナビ{% endblock %}
 {% block content %}
 
 <style>
   .register-container {
-    max-width: 480px;
+    max-width: 700px;
     margin: 2rem auto;
     padding: 2rem;
     background: #fff;
     border-radius: 0.8rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    font-size: 1rem;
   }
   .register-container h2 {
     margin-bottom: 1rem;
-    text-align: center;
     color: #dc2626;
   }
-  .form-group {
+  form .form-group {
     margin-bottom: 1rem;
   }
-  .form-group label {
+  label {
     display: block;
-    margin-bottom: 0.3rem;
+    margin-bottom: .3rem;
     font-weight: bold;
     color: #333;
   }
-  .form-group input {
+  input, select {
     width: 100%;
-    padding: 0.6rem;
-    border-radius: 0.5rem;
+    padding: .6rem;
     border: 1px solid #ddd;
+    border-radius: .5rem;
   }
-  .actions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-  .actions button {
-    padding: 0.8rem 1.5rem;
+  button {
+    margin-top: 1rem;
+    padding: .8rem 1.5rem;
+    background: #dc2626;
+    color: #ffeb3b;
     border: none;
-    border-radius: 0.5rem;
+    border-radius: .5rem;
     font-size: 1rem;
     cursor: pointer;
-    background-color: #dc2626;
-    color: #ffeb3b;
-    font-weight: bold;
   }
-  .actions a {
-    padding: 0.8rem 1.5rem;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    font-size: 1rem;
-    background: #eee;
-    color: #333;
-  }
-  .actions a:hover {
-    background: #ddd;
+  button:hover {
+    opacity: 0.9;
   }
 </style>
 
 <div class="register-container">
-  <h2>📝 新規ユーザー登録</h2>
-  <form method="post" action="{{ url_for('register_bp.register') }}">
+  <h2>📝 新規登録</h2>
+  <form method="POST" action="{{ url_for('register_bp.register') }}">
     <div class="form-group">
-      <label for="username">ユーザー名</label>
-      <input type="text" id="username" name="username" placeholder="例: yamada_taro" required>
+      <label>ユーザー名</label>
+      <input type="text" name="username" required>
     </div>
 
     <div class="form-group">
-      <label for="password">パスワード</label>
-      <input type="password" id="password" name="password" placeholder="パスワードを入力" required>
+      <label>ふりがな</label>
+      <input type="text" name="furigana" required>
     </div>
 
     <div class="form-group">
-      <label for="email">メールアドレス</label>
-      <input type="email" id="email" name="email" placeholder="example@example.com" required>
+      <label>生年月日</label>
+      <input type="date" name="birthdate" required>
     </div>
 
-    <div class="actions">
-      <button type="submit">登録する</button>
-      <a href="{{ url_for('login_bp.login') }}">ログインはこちら</a>
+    <div class="form-group">
+      <label>年齢</label>
+      <input type="number" name="age" min="0" required>
     </div>
+
+    <div class="form-group">
+      <label>電話番号</label>
+      <input type="text" name="phone">
+    </div>
+
+    <div class="form-group">
+      <label>携帯番号</label>
+      <input type="text" name="mobile">
+    </div>
+
+    <div class="form-group">
+      <label>メールアドレス</label>
+      <input type="email" name="email" required>
+    </div>
+
+    <div class="form-group">
+      <label>部署</label>
+      <input type="text" name="department">
+    </div>
+
+    <div class="form-group">
+      <label>職種</label>
+      <select name="job_title" required>
+        <option value="営業">営業</option>
+        <option value="バイヤー">バイヤー</option>
+        <option value="販売">販売</option>
+        <option value="物流">物流</option>
+        <option value="総合">総合</option>
+        <option value="AI部">AI部</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>紹介者NO</label>
+      <input type="text" name="referrer_no" placeholder="例: KA, KB, KC">
+    </div>
+
+    <div class="form-group">
+      <label>パスワード</label>
+      <input type="password" name="password" required>
+    </div>
+
+    <button type="submit">✅ 登録する</button>
   </form>
 </div>
 
