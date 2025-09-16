@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from models.user import db, User
-import re
 
 register_bp = Blueprint("register_bp", __name__, url_prefix="/register")
 
@@ -14,7 +13,6 @@ def generate_user_id(job, birthday, introducer, branch_num=1):
 @register_bp.route("/", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        # 入力値取得
         username = request.form.get("username")
         furigana = request.form.get("furigana")
         birthday = request.form.get("birthday")
@@ -27,6 +25,11 @@ def register():
         introducer = request.form.get("introducer")
         password = request.form.get("password")
 
+        # 管理者は登録禁止
+        if username == "KING1219":
+            flash("⚠️ 管理者アカウントは新規登録できません。", "error")
+            return redirect(url_for("register_bp.register"))
+
         # 必須チェック
         if not all([username, furigana, birthday, age, tel, mobile, email, department, job, introducer, password]):
             flash("❌ 全ての項目を入力してください。", "error")
@@ -37,7 +40,7 @@ def register():
             flash("⚠️ 同じメールまたは電話番号のユーザーが存在します。", "error")
             return redirect(url_for("register_bp.register"))
 
-        # ID自動生成（枝番号の重複確認）
+        # ID自動生成
         branch_num = 1
         while True:
             new_id = generate_user_id(job, birthday, introducer, branch_num)
