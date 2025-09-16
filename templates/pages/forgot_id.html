@@ -1,26 +1,45 @@
 {% extends "base/layout.html" %}
-{% block title %}IDを忘れた方 | リサーチナビ{% endblock %}
+{% block title %}ID・パスワードを忘れた方 | リサーチナビ{% endblock %}
 {% block content %}
-<div class="container mt-5">
-  <h2>🔑 IDを忘れた方</h2>
-  <p>登録メールアドレスを入力すると、あなたのIDを確認できます。</p>
 
-  <form method="post">
-    <div class="mb-3">
-      <label for="email" class="form-label">登録メールアドレス</label>
-      <input type="email" id="email" name="email" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-primary">IDを確認する</button>
+<div class="container" style="max-width:800px;margin:2rem auto;padding:2rem;background:#fff;border-radius:0.8rem;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+  <h2>🔑 ID・パスワードを忘れた方</h2>
+  <p>登録時の情報をもとに、以下から再発行・照会を行ってください。</p>
+
+  <hr>
+
+  <h3>📌 IDを忘れた場合</h3>
+  <p>ご登録いただいた <strong>メールアドレス</strong> または <strong>電話番号</strong> を入力してください。管理者が照会を行います。</p>
+  <form method="post" action="{{ url_for('auth_bp.forgot_id') }}">
+    <label>メールアドレスまたは電話番号</label>
+    <input type="text" name="contact" required class="form-control" placeholder="例：taro@example.com">
+    <button type="submit" class="btn btn-primary mt-2">IDを照会する</button>
   </form>
 
-  {% if user_id %}
-    <div class="alert alert-success mt-3">
-      あなたのIDは <strong>{{ user_id }}</strong> です。
-    </div>
-  {% elif error %}
-    <div class="alert alert-danger mt-3">
-      {{ error }}
-    </div>
-  {% endif %}
+  <hr>
+
+  <h3>🔒 パスワードを忘れた場合</h3>
+  <p>ご登録いただいた <strong>ID</strong> と <strong>メールアドレス</strong> を入力してください。新しいパスワードを発行します。</p>
+  <form method="post" action="{{ url_for('auth_bp.forgot_password') }}">
+    <label>ID</label>
+    <input type="text" name="user_id" required class="form-control" placeholder="例：0101A">
+    <label>メールアドレス</label>
+    <input type="email" name="email" required class="form-control" placeholder="例：taro@example.com">
+    <button type="submit" class="btn btn-warning mt-2">パスワードをリセットする</button>
+  </form>
+
+  <div class="text-center mt-4">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">← ホームへ戻る</a>
+  </div>
 </div>
+
+<style>
+  h2,h3 { color:#dc2626; margin-bottom:1rem; }
+  label { display:block; margin-top:0.8rem; font-weight:bold; }
+  input { width:100%; padding:0.6rem; border:1px solid #ddd; border-radius:6px; }
+  button { padding:0.6rem 1.2rem; border:none; border-radius:6px; cursor:pointer; }
+  .btn-primary { background:#dc2626; color:#fff; }
+  .btn-warning { background:#ff9800; color:#fff; }
+</style>
+
 {% endblock %}
