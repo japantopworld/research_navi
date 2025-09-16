@@ -71,7 +71,7 @@
     <div class="error-message">{{ error }}</div>
   {% endif %}
 
-  <form method="POST">
+  <form method="POST" onsubmit="return validatePhone();">
     <div class="form-grid">
       <div class="form-group">
         <label for="username">ユーザー名 *</label>
@@ -92,12 +92,12 @@
       </div>
 
       <div class="form-group">
-        <label for="phone">電話番号</label>
+        <label for="phone">電話番号（どちらか必須）</label>
         <input type="tel" id="phone" name="phone" pattern="\\d{2,4}-\\d{2,4}-\\d{4}">
       </div>
       <div class="form-group">
-        <label for="mobile">携帯番号 *</label>
-        <input type="tel" id="mobile" name="mobile" pattern="\\d{3}-\\d{4}-\\d{4}" required>
+        <label for="mobile">携帯番号（どちらか必須）</label>
+        <input type="tel" id="mobile" name="mobile" pattern="\\d{3}-\\d{4}-\\d{4}">
       </div>
 
       <div class="form-group full-width">
@@ -120,7 +120,7 @@
       </div>
 
       <div class="form-group">
-        <label for="password">パスワード *</label>
+        <label for="password">パスワード（6文字以上） *</label>
         <input type="password" id="password" name="password" minlength="6" required>
       </div>
     </div>
@@ -129,5 +129,17 @@
     <button type="submit" class="btn-submit">登録する</button>
   </form>
 </div>
+
+<script>
+  function validatePhone() {
+    const phone = document.getElementById("phone").value.trim();
+    const mobile = document.getElementById("mobile").value.trim();
+    if (!phone && !mobile) {
+      alert("電話番号または携帯番号のどちらかは必須です。");
+      return false;
+    }
+    return true;
+  }
+</script>
 
 {% endblock %}
