@@ -2,72 +2,32 @@
 {% block title %}ログイン | リサーチナビ{% endblock %}
 {% block content %}
 
-<style>
-  .login-wrap {
-    max-width: 400px;
-    margin: 8vh auto;
-    padding: 2rem;
-    background: #fff;
-    border-radius: 1rem;
-    box-shadow: 0 6px 24px rgba(0,0,0,.08);
-    text-align: center;
-  }
-  .login-wrap h1 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-    color: #dc2626;
-  }
-  .login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .login-form label {
-    text-align: left;
-    font-size: 0.9rem;
-    color: #374151;
-  }
-  .login-form input {
-    padding: 0.8rem;
-    border-radius: 0.5rem;
-    border: 1px solid #d1d5db;
-    font-size: 1rem;
-  }
-  .btn-login {
-    margin-top: 1rem;
-    padding: 0.9rem;
-    border: none;
-    border-radius: 0.6rem;
-    font-weight: bold;
-    background: #dc2626;   /* 赤 */
-    color: #ffeb3b;        /* 黄 */
-    cursor: pointer;
-  }
-  .btn-login:hover {
-    opacity: 0.9;
-  }
-  .login-footer {
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    color: #6b7280;
-  }
-</style>
+<div class="container mt-5">
+  <h2 class="mb-4">🔑 ログイン</h2>
 
-<div class="login-wrap">
-  <h1>ログイン</h1>
-  <form method="post" class="login-form">
-    <div>
-      <label for="username">ユーザーID</label>
-      <input type="text" id="username" name="username" required>
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('login_bp.login') }}">
+    <div class="mb-3">
+      <label for="user_id" class="form-label">ユーザーID</label>
+      <input type="text" class="form-control" id="user_id" name="user_id" required>
     </div>
-    <div>
-      <label for="password">パスワード</label>
-      <input type="password" id="password" name="password" required>
+    <div class="mb-3">
+      <label for="password" class="form-label">パスワード</label>
+      <input type="password" class="form-control" id="password" name="password" required>
     </div>
-    <button type="submit" class="btn-login">ログイン</button>
+    <button type="submit" class="btn btn-danger w-100">ログイン</button>
   </form>
-  <div class="login-footer">
-    アカウントをお持ちでない方は <a href="{{ url_for('register') }}">新規登録</a>
+
+  <div class="mt-4 text-center">
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-outline-secondary w-100 mb-2">
+      📝 新規登録
+    </a>
+    <a href="{{ url_for('login_bp.forgot') }}" class="btn btn-link text-danger">
+      ❓ ID・パスワードを忘れた方はこちら
+    </a>
   </div>
 </div>
 
