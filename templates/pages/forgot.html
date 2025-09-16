@@ -2,87 +2,65 @@
 {% block title %}ID・パスワードを忘れた方{% endblock %}
 {% block content %}
 
-<h1>🔑 ID・パスワードを忘れた方</h1>
-
-<p>以下のフォームから <strong>ID照会</strong> または <strong>パスワード再発行</strong> を行えます。</p>
-
-<div class="card">
-  <form method="post" action="{{ url_for('forgot_bp.forgot') }}">
-    <label>
-      <span>メールアドレス</span>
-      <input type="email" name="email" required>
-    </label>
-    <label>
-      <span>生年月日（YYYYMMDD）</span>
-      <input type="text" name="birthday" placeholder="19900101" required>
-    </label>
-    <div class="actions">
-      <button type="submit" name="action" value="id">🆔 IDを照会する</button>
-      <button type="submit" name="action" value="pass">🔒 パスワードを再発行する</button>
-    </div>
-  </form>
-</div>
-
-<!-- ✅ 管理者対象外のメッセージ -->
-{% if error_admin %}
-<div class="popup-error">
-  🚨 管理者アカウントはパスワード再発行の対象外です。
-</div>
-{% endif %}
-
 <style>
-.card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #fff;
-  padding: 16px;
-  margin-top: 20px;
-}
-label {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 12px;
-}
-input {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-.actions {
-  display: flex;
-  gap: 10px;
-}
-button {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-button[value="id"] {
-  background: #2563eb;
-  color: #fff;
-}
-button[value="pass"] {
-  background: #dc2626;
-  color: #fff;
-}
-/* ✅ ポップアップ風エラーメッセージ */
-.popup-error {
-  margin-top: 20px;
-  padding: 12px;
-  border: 2px solid #dc2626;
-  background: #fee2e2;
-  color: #b91c1c;
-  font-weight: bold;
-  border-radius: 8px;
-  animation: popup 0.3s ease-out;
-}
-@keyframes popup {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
+  .forgot-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.8rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    font-size: 1.1rem;
+  }
+  h2 { color: #dc2626; margin-bottom: 1rem; }
+  .mode-section { margin-bottom: 2rem; }
+  .flash-message {
+    padding: 0.8rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+  }
+  .flash-message.error {
+    background: #fee2e2;
+    border: 1px solid #dc2626;
+    color: #b91c1c;
+  }
+  .flash-message.success {
+    background: #ecfdf5;
+    border: 1px solid #10b981;
+    color: #065f46;
+  }
 </style>
+
+<div class="forgot-container">
+  <h2>🔑 ID・パスワードを忘れた方</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash-message {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST">
+    <div class="mode-section">
+      <label><input type="radio" name="mode" value="id" required> IDを照会する</label><br>
+      <label><input type="radio" name="mode" value="password" required> パスワードを再発行する</label>
+    </div>
+
+    <div>
+      <label>📧 登録メールアドレス</label><br>
+      <input type="email" name="email" required style="width:100%; padding:0.5rem; margin-top:0.3rem;">
+    </div>
+
+    <button type="submit" style="margin-top:1rem; padding:0.6rem 1.2rem; background:#dc2626; color:#ffeb3b; border:none; border-radius:6px; font-weight:bold;">
+      実行する
+    </button>
+  </form>
+
+  <div style="margin-top:1.5rem;">
+    <a href="{{ url_for('login_bp.login') }}">← ログイン画面に戻る</a>
+  </div>
+</div>
 
 {% endblock %}
