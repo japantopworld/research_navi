@@ -1,0 +1,26 @@
+{% extends "base/layout.html" %}
+{% block title %}IDを忘れた方 | リサーチナビ{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h2>🔑 IDを忘れた方</h2>
+  <p>登録メールアドレスを入力すると、あなたのIDを確認できます。</p>
+
+  <form method="post">
+    <div class="mb-3">
+      <label for="email" class="form-label">登録メールアドレス</label>
+      <input type="email" id="email" name="email" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">IDを確認する</button>
+  </form>
+
+  {% if user_id %}
+    <div class="alert alert-success mt-3">
+      あなたのIDは <strong>{{ user_id }}</strong> です。
+    </div>
+  {% elif error %}
+    <div class="alert alert-danger mt-3">
+      {{ error }}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
