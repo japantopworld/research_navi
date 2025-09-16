@@ -2,102 +2,35 @@
 {% block title %}リサーチナビ | ホーム{% endblock %}
 {% block content %}
 
-<style>
-  .hero-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 5vh 2vw;
-    font-size: 1.3rem;
-  }
-  .hero-container h1 {
-    font-size: 2.2rem;
-    margin-bottom: 0.5rem;
-  }
-  .hero-container p {
-    font-size: 1.2rem;
-    color: #555;
-    margin-bottom: 1.5rem;
-  }
-  .hero-container img {
-    max-width: 300px;
-    width: 80%;
-    height: auto;
-    margin-bottom: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  .hero-buttons {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-  }
-  .hero-buttons a {
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    font-weight: bold;
-    background-color: #dc2626;
-    color: #ffeb3b;
-  }
-  .hero-buttons a:hover {
-    opacity: 0.9;
-  }
-  .links {
-    margin-top: 1rem;
-    font-size: 0.95rem;
-  }
-  .links a {
-    margin: 0 0.8rem;
-    text-decoration: none;
-  }
-  .links a:hover {
-    text-decoration: underline;
-  }
-  .footer-text {
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
-    color: #666;
-  }
-  @media screen and (max-width: 480px) {
-    .hero-container {
-      font-size: 1.1rem;
-    }
-    .hero-container h1 {
-      font-size: 1.7rem;
-    }
-    .hero-buttons a {
-      font-size: 1rem;
-      padding: 0.8rem 1.5rem;
-    }
-  }
-</style>
-
-<div class="hero-container">
-  <h1>🔍 <span style="color:#d92d20;">リサーチナビ</span></h1>
-  <p>最強のせどり支援ツールへようこそ！</p>
-
-  <!-- ✅ マスコット中央表示 -->
-  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ マスコット">
+<div class="hero">
+  <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ" class="hero-img">
+  <h1>🚀 リサーチナビ</h1>
+  <p>せどり・物販を強力サポートする最強ツール</p>
 
   <div class="hero-buttons">
-    <a href="{{ url_for('login_bp.login') }}" class="login">ログイン</a>
-    <a href="{{ url_for('register_bp.register') }}" class="register">新規登録</a>
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">🔑 ログイン</a>
+    <a href="{{ url_for('register_bp.register') }}" class="btn btn-success">🆕 新規登録</a>
   </div>
 
-  <!-- ✅ 利用規約リンク & ID/パスワード忘れ -->
-  <div class="links">
-    <a href="{{ url_for('static_pages.terms') }}">📜 利用規約</a>
-    <a href="{{ url_for('forgot_bp.forgot_id') }}">❗ ID・パスワードを忘れた方</a>
-  </div>
-
-  <div class="footer-text">
-    制作者：鳳陽合同会社　小島崇彦<br>
-    © 2025 Research Navi. All rights reserved.
+  <div class="mt-3">
+    <a href="{{ url_for('login_bp.forgot') }}" class="btn btn-link text-danger">
+      ❗ ID・パスワードを忘れた方はこちら
+    </a>
   </div>
 </div>
+
+<style>
+.hero {
+  text-align: center;
+  padding: 2rem;
+}
+.hero-img {
+  max-width: 220px;
+  margin-bottom: 1rem;
+}
+.hero-buttons .btn {
+  margin: 0.3rem;
+}
+</style>
 
 {% endblock %}
