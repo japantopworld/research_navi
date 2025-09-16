@@ -3,63 +3,75 @@ import csv, os
 
 register_bp = Blueprint("register_bp", __name__, url_prefix="/register")
 
-# CSVファイルのパス
-CSV_FILE = os.path.join("data", "users.csv")
+DATA_FILE = "data/users.csv"
 
 @register_bp.route("/", methods=["GET", "POST"])
 def register():
-    error = None
-
     if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        furigana = request.form.get("furigana", "").strip()
-        birthdate = request.form.get("birthdate", "").strip()
-        age = request.form.get("age", "").strip()
-        phone = request.form.get("phone", "").strip()
-        mobile = request.form.get("mobile", "").strip()
-        email = request.form.get("email", "").strip()
-        department = request.form.get("department", "").strip()
-        role = request.form.get("role", "").strip()
-        ref_code = request.form.get("ref_code", "").strip()
-        password = request.form.get("password", "").strip()
+        username = request.form.get("username")
+        furigana = request.form.get("furigana")
+        birth = request.form.get("birth")  # YYYY-MM-DD
+        age = request.form.get("age")
+        tel = request.form.get("tel")
+        mobile = request.form.get("mobile")
+        email = request.form.get("email")
+        dept = request.form.get("dept")
+        job = request.form.get("job")
+        ref_code = request.form.get("ref_code")  # KA～KE
+        password = request.form.get("password")
 
-        # ✅ サーバー側バリデーション
-        if not birthdate:
-            error = "生年月日は必須です。"
-        elif not username or not furigana or not age or not email or not department or not role:
-            error = "必須項目が未入力です。"
-        elif not phone and not mobile:
-            error = "電話番号または携帯番号のどちらかは必須です。"
-        elif len(password) < 6:
-            error = "パスワードは6文字以上で入力してください。"
+        # 必須チェック
+        if not all([username, furigana, birth, age, email, dept, job, ref_code, password]):
+            flash("必須項目が未入力です ❌", "danger")
+            return redirect(url_for("register_bp.register"))
+        if not tel and not mobile:
+            flash("電話番号または携帯番号のいずれかは必須です ❌", "danger")
+            return redirect(url_for("register_bp.register"))
+        if len(password) < 6:
+            flash("パスワードは6文字以上で入力してください ❌", "danger")
+            return redirect(url_for("register_bp.register"))
 
-        if error:
-            return render_template("pages/register_user.html", error=error)
+        # 誕生日のMMDDを抽出
+        birth_mmdd = birth.replace("-", "")[4:8]  # YYYYMMDD → MMDD
 
-        # ✅ ID自動生成ロジック
-        # 職種の頭文字2つ + 誕生日(MMDD) + 紹介者コード
-        birth_mmdd = birthdate.replace("-", "")[4:8]  # YYYY-MM-DD → MMDD
-        role_prefix = role[:2].upper()
-        ref = ref_code[1:] if ref_code.startswith("K") else ref_code
-        user_id = f"{role_prefix}{birth_mmdd}{ref}"
+        # 紹介者コード（Kを外す）
+        if ref_code.startswith("K"):
+            ref_code_clean = ref_code[1:]
+        else:
+            ref_code_clean = ref_code
 
-        # ✅ CSVに保存
-        new_user = [
-            username, furigana, birthdate, age,
-            phone, mobile, email, department, role,
-            ref_code, user_id, password
-        ]
+        # ID生成: 職種頭2 + 誕生日MMDD + 紹介者コード
+        user_id = job[:2].upper() + birth_mmdd + ref_code_clean
+
+        # CSVに保存
         os.makedirs("data", exist_ok=True)
-        write_header = not os.path.exists(CSV_FILE)
-        with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            if write_header:
-                writer.writerow(["ユーザー名","ふりがな","生年月日","年齢",
-                                 "電話番号","携帯番号","メールアドレス",
-                                 "部署","職種","紹介者NO","ID","PASS"])
-            writer.writerow(new_user)
+        file_exists = os.path.isfile(DATA_FILE)
+        with open(DATA_FILE, "a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=["ユーザー名", "ふりがな", "生年月日", "年齢", "電話番号", "携帯番号",
+                            "メールアドレス", "部署", "職種", "紹介者NO", "ID", "PASS"]
+            )
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow({
+                "ユーザー名": username,
+                "ふりがな": furigana,
+                "生年月日": birth,
+                "年齢": age,
+                "電話番号": tel,
+                "携帯番号": mobile,
+                "メールアドレス": email,
+                "部署": dept,
+                "職種": job,
+                "紹介者NO": ref_code,
+                "ID": user_id,
+                "PASS": password
+            })
 
-        flash(f"登録完了！ID: {user_id} を発行しました。", "success")
-        return redirect(url_for("login_bp.login"))
+        # 完了画面へ
+        return render_template("pages/register_success.html",
+                               user_id=user_id,
+                               username=username)
 
-    return render_template("pages/register_user.html", error=error)
+    return render_template("pages/register_user.html")
