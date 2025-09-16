@@ -1,145 +1,145 @@
 {% extends "base/layout.html" %}
-{% block title %}新規登録 | リサーチナビ{% endblock %}
+{% block title %}新規ユーザー登録 | リサーチナビ{% endblock %}
 {% block content %}
 
-<style>
-  .register-container {
-    max-width: 650px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: #fff;
-    border-radius: 0.8rem;
-    box-shadow: 0 0 12px rgba(0,0,0,0.1);
-    font-size: 1rem;
-  }
-  .register-container h2 {
-    margin-bottom: 1.5rem;
-    text-align: center;
-    color: #dc2626;
-  }
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem 2rem;
-  }
-  .form-group {
-    display: flex;
-    flex-direction: column;
-  }
-  .form-group label {
-    font-weight: bold;
-    margin-bottom: 0.3rem;
-  }
-  .form-group input, .form-group select {
-    padding: 0.6rem;
-    border: 1px solid #ccc;
-    border-radius: 0.4rem;
-  }
-  .full-width {
-    grid-column: span 2;
-  }
-  .btn-submit {
-    margin-top: 1.5rem;
-    width: 100%;
-    padding: 0.8rem;
-    background: #dc2626;
-    color: #ffeb3b;
-    font-weight: bold;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  .btn-submit:hover {
-    opacity: 0.9;
-  }
-  .error-message {
-    background: #fee2e2;
-    color: #b91c1c;
-    border: 1px solid #b91c1c;
-    padding: 0.8rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    text-align: center;
-  }
-</style>
-
 <div class="register-container">
-  <h2>📝 新規ユーザー登録</h2>
+  <h1>📝 新規ユーザー登録</h1>
+  <form method="post" action="{{ url_for('register_bp.register') }}">
+    <div class="grid">
 
-  {% if error %}
-    <div class="error-message">{{ error }}</div>
-  {% endif %}
+      <label>
+        <span>ユーザー名（必須）</span>
+        <input type="text" name="username" required>
+      </label>
 
-  <form method="POST" onsubmit="return validatePhone();">
-    <div class="form-grid">
-      <div class="form-group">
-        <label for="username">ユーザー名 *</label>
-        <input type="text" id="username" name="username" required>
-      </div>
-      <div class="form-group">
-        <label for="furigana">ふりがな *</label>
-        <input type="text" id="furigana" name="furigana" required>
-      </div>
+      <label>
+        <span>ふりがな（必須）</span>
+        <input type="text" name="furigana" required>
+      </label>
 
-      <div class="form-group">
-        <label for="birthdate">生年月日 *</label>
-        <input type="date" id="birthdate" name="birthdate" required>
-      </div>
-      <div class="form-group">
-        <label for="age">年齢 *</label>
-        <input type="number" id="age" name="age" min="18" max="100" required>
-      </div>
+      <label>
+        <span>生年月日（必須）</span>
+        <input type="date" name="birth" required>
+      </label>
 
-      <div class="form-group">
-        <label for="phone">電話番号（どちらか必須）</label>
-        <input type="tel" id="phone" name="phone" pattern="\\d{2,4}-\\d{2,4}-\\d{4}">
-      </div>
-      <div class="form-group">
-        <label for="mobile">携帯番号（どちらか必須）</label>
-        <input type="tel" id="mobile" name="mobile" pattern="\\d{3}-\\d{4}-\\d{4}">
-      </div>
+      <label>
+        <span>年齢（必須）</span>
+        <input type="number" name="age" min="0" required>
+      </label>
 
-      <div class="form-group full-width">
-        <label for="email">メールアドレス *</label>
-        <input type="email" id="email" name="email" required>
-      </div>
+      <label>
+        <span>電話番号（必須※携帯とどちらか）</span>
+        <input type="tel" name="tel" placeholder="000-0000-0000">
+      </label>
 
-      <div class="form-group">
-        <label for="department">部署 *</label>
-        <input type="text" id="department" name="department" required>
-      </div>
-      <div class="form-group">
-        <label for="role">職種 *</label>
-        <input type="text" id="role" name="role" placeholder="例：営業" required>
-      </div>
+      <label>
+        <span>携帯番号（必須※電話とどちらか）</span>
+        <input type="tel" name="mobile" placeholder="090-0000-0000">
+      </label>
 
-      <div class="form-group">
-        <label for="ref_code">紹介者NO</label>
-        <input type="text" id="ref_code" name="ref_code" placeholder="例：KA, KB…">
-      </div>
+      <label class="grow">
+        <span>メールアドレス（必須）</span>
+        <input type="email" name="email" required>
+      </label>
 
-      <div class="form-group">
-        <label for="password">パスワード（6文字以上） *</label>
-        <input type="password" id="password" name="password" minlength="6" required>
-      </div>
+      <label>
+        <span>部署（必須）</span>
+        <input type="text" name="dept" required>
+      </label>
+
+      <label>
+        <span>職種（必須）</span>
+        <input type="text" name="job" required>
+      </label>
+
+      <label>
+        <span>紹介者NO（必須 / 例: KA〜KE）</span>
+        <input type="text" name="ref_code" required>
+      </label>
+
+      <label>
+        <span>パスワード（必須 / 6文字以上）</span>
+        <input type="password" name="password" minlength="6" required>
+      </label>
     </div>
 
-    <!-- IDはサーバ側で自動生成 -->
-    <button type="submit" class="btn-submit">登録する</button>
+    <div class="actions">
+      <button type="submit">✅ 登録する</button>
+      <a href="{{ url_for('login_bp.login') }}" class="btn">↩︎ ログインへ戻る</a>
+    </div>
   </form>
 </div>
 
-<script>
-  function validatePhone() {
-    const phone = document.getElementById("phone").value.trim();
-    const mobile = document.getElementById("mobile").value.trim();
-    if (!phone && !mobile) {
-      alert("電話番号または携帯番号のどちらかは必須です。");
-      return false;
-    }
-    return true;
+<style>
+.register-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+h1 {
+  margin-bottom: 1.5rem;
+  color: #dc2626;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.95rem;
+  color: #333;
+}
+label span {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+}
+input {
+  padding: 0.6rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+.grow {
+  grid-column: span 2;
+}
+.actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+.actions button, .actions .btn {
+  padding: 0.8rem 1.2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  text-align: center;
+}
+.actions button {
+  background: #dc2626;
+  color: #ffeb3b;
+  border: none;
+  cursor: pointer;
+}
+.actions button:hover {
+  opacity: 0.9;
+}
+.actions .btn {
+  background: #f3f4f6;
+  color: #111;
+  border: 1px solid #ddd;
+}
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
   }
-</script>
+  .grow {
+    grid-column: span 1;
+  }
+}
+</style>
 
 {% endblock %}
