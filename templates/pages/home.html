@@ -80,7 +80,7 @@
   <h1>🔍 <span style="color:#d92d20;">リサーチナビ</span></h1>
   <p>最強のせどり支援ツールへようこそ！</p>
 
-  <!-- ✅ マスコット画像 hero_main.jpg を表示 -->
+  <!-- ✅ マスコット中央表示 -->
   <img src="{{ url_for('static', filename='img/hero_main.jpg') }}" alt="リサーチナビ マスコット">
 
   <div class="hero-buttons">
@@ -88,10 +88,10 @@
     <a href="{{ url_for('register_bp.register') }}" class="register">新規登録</a>
   </div>
 
-  <!-- ✅ ログインできない方へのリンクを追加 -->
+  <!-- ✅ 利用規約リンク & ID/パスワード忘れ -->
   <div class="links">
     <a href="{{ url_for('static_pages.terms') }}">📜 利用規約</a>
-    <a href="{{ url_for('static_pages.support') }}">❗ ログインできない方はこちら</a>
+    <a href="{{ url_for('forgot_bp.forgot_id') }}">❗ ID・パスワードを忘れた方</a>
   </div>
 
   <div class="footer-text">
