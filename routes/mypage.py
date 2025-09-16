@@ -1,29 +1,16 @@
-from flask import Blueprint, render_template, request, session
-from utils.profit_finder import get_profit_items
+from flask import Blueprint, render_template, session, redirect, url_for
 
-mypage_bp = Blueprint("mypage_bp", __name__)
+mypage_bp = Blueprint("mypage_bp", __name__, url_prefix="/mypage")
 
-@mypage_bp.route("/mypage", methods=["GET", "POST"])
+@mypage_bp.route("/", methods=["GET"])
 def mypage():
-    # 仮のログインユーザー情報（本番はDBやsessionから取得予定）
-    user = {
-        "ID": session.get("user_id", "guest123"),
-        "メールアドレス": session.get("email", None),
-        "部署": session.get("department", None),
-        "紹介者NO": session.get("ref_code", None)
-    }
-    display_name = session.get("display_name", "ゲスト")
+    if not session.get("logged_in"):
+        return redirect(url_for("login_bp.login"))
 
-    # 利益フィルタ
-    min_profit_rate = float(request.form.get("min_profit_rate", 10))
-    max_profit_rate = float(request.form.get("max_profit_rate", 20))
-    items = get_profit_items(min_profit_rate, max_profit_rate)
+    # 管理者 or 一般ユーザーを区別
+    if session.get("user_id") == "KING1219":
+        display_name = "管理者"
+    else:
+        display_name = session.get("username", session.get("user_id"))
 
-    return render_template(
-        "pages/mypage.html",
-        user=user,
-        display_name=display_name,
-        items=items,
-        min_rate=min_profit_rate,
-        max_rate=max_profit_rate
-    )
+    return render_template("pages/mypage.html", display_name=display_name)
