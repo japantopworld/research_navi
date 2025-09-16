@@ -1,70 +1,51 @@
 {% extends "base/layout.html" %}
-{% block title %}リサーチナビ | マイページ{% endblock %}
+{% block title %}マイページ | リサーチナビ{% endblock %}
 {% block content %}
 
-<style>
-  .mypage-container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: #fff;
-    border-radius: 0.8rem;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    font-size: 1.1rem;
-  }
-  .mypage-container h2 {
-    margin-bottom: 1rem;
-    color: #dc2626;
-  }
-  .mypage-info {
-    line-height: 1.8;
-  }
-  .mypage-info strong {
-    color: #333;
-  }
-  table {
-    width: 100%;
-    margin-top: 1.5rem;
-    border-collapse: collapse;
-  }
-  th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-  }
-  th {
-    background: #f9fafb;
-    color: #111;
-  }
-</style>
-
 <div class="mypage-container">
-  <h2>👤 {{ display_name }} さんのマイページ</h2>
-  <div class="mypage-info">
-    <p><strong>ID:</strong> {{ user["ID"] }}</p>
-    <p><strong>メールアドレス:</strong> {{ user["メールアドレス"] or "未登録" }}</p>
-    <p><strong>部署:</strong> {{ user["部署"] or "未設定" }}</p>
-    <p><strong>紹介者NO:</strong> {{ user["紹介者NO"] or "なし" }}</p>
-  </div>
+  <h2>👋 ようこそ、{{ display_name }} さん！</h2>
+  <p>ここから各機能へアクセスできます。</p>
 
-  <hr>
-  <h3>📊 利益商品リスト</h3>
-  <table>
-    <thead>
-      <tr><th>商品名</th><th>利益率</th><th>利益額</th></tr>
-    </thead>
-    <tbody>
-      {% for item in items %}
-      <tr>
-        <td>{{ item.name }}</td>
-        <td>{{ item.profit_rate }}%</td>
-        <td>{{ item.profit_amount }}円</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="3">データがありません</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="mypage-links">
+    <a href="{{ url_for('news_bp.news') }}">📰 お知らせ一覧</a>
+    <a href="{{ url_for('settings_bp.settings') }}">⚙️ 各種設定</a>
+    <a href="{{ url_for('static_pages.support') }}">💬 サポート</a>
+  </div>
 </div>
+
+<style>
+.mypage-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+.mypage-container h2 {
+  color: #dc2626;
+  margin-bottom: 1rem;
+}
+.mypage-links {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.mypage-links a {
+  display: block;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #333;
+}
+.mypage-links a:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+</style>
 
 {% endblock %}
