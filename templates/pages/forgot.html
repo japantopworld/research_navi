@@ -1,0 +1,89 @@
+{% extends "base/layout.html" %}
+{% block title %}ID・パスワードを忘れた方 | リサーチナビ{% endblock %}
+{% block content %}
+
+<style>
+  .forgot-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.8rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    font-size: 1rem;
+  }
+  .forgot-container h2 {
+    margin-bottom: 1rem;
+    color: #dc2626;
+  }
+  form {
+    margin-bottom: 2rem;
+  }
+  label {
+    font-weight: bold;
+    margin-top: 0.8rem;
+    display: block;
+  }
+  input, select {
+    width: 100%;
+    padding: 0.6rem;
+    margin-top: 0.3rem;
+    border: 1px solid #ccc;
+    border-radius: 0.4rem;
+  }
+  button {
+    margin-top: 1rem;
+    padding: 0.7rem 1.2rem;
+    background: #dc2626;
+    color: #ffeb3b;
+    font-weight: bold;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+  }
+  button:hover {
+    opacity: 0.9;
+  }
+  .section-divider {
+    border-top: 1px solid #ddd;
+    margin: 2rem 0;
+  }
+</style>
+
+<div class="forgot-container">
+  <h2>🔑 ID・パスワードを忘れた方</h2>
+  <p>以下のフォームから、IDの照会 または パスワードの再発行を行えます。</p>
+
+  <!-- ✅ ID照会フォーム -->
+  <form method="POST" action="{{ url_for('login_bp.forgot_id') }}">
+    <h3>🆔 IDを忘れた場合</h3>
+    <label>登録メールアドレス</label>
+    <input type="email" name="email" required>
+
+    <label>生年月日（例: 1990-01-01）</label>
+    <input type="date" name="birthdate" required>
+
+    <button type="submit">IDを照会する</button>
+  </form>
+
+  <div class="section-divider"></div>
+
+  <!-- ✅ パスワード再発行フォーム -->
+  <form method="POST" action="{{ url_for('login_bp.forgot_password') }}">
+    <h3>🔒 パスワードを忘れた場合</h3>
+    <label>登録ID</label>
+    <input type="text" name="user_id" required>
+
+    <label>登録メールアドレス</label>
+    <input type="email" name="email" required>
+
+    <button type="submit">パスワード再発行リンクを送信</button>
+  </form>
+
+  <p style="margin-top:1rem;">
+    ※ 入力内容が一致した場合、登録メールアドレスに通知が届きます。<br>
+    ※ 本人確認が取れない場合は <a href="{{ url_for('static_pages.support') }}">サポート</a> までご連絡ください。
+  </p>
+</div>
+
+{% endblock %}
