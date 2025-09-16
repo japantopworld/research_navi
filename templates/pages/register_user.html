@@ -1,48 +1,133 @@
 {% extends "base/layout.html" %}
-{% block title %}新規ユーザー登録{% endblock %}
+{% block title %}新規登録 | リサーチナビ{% endblock %}
 {% block content %}
 
-<div class="container mt-5">
+<style>
+  .register-container {
+    max-width: 650px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.8rem;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    font-size: 1rem;
+  }
+  .register-container h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #dc2626;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 2rem;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .form-group label {
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+  }
+  .form-group input, .form-group select {
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 0.4rem;
+  }
+  .full-width {
+    grid-column: span 2;
+  }
+  .btn-submit {
+    margin-top: 1.5rem;
+    width: 100%;
+    padding: 0.8rem;
+    background: #dc2626;
+    color: #ffeb3b;
+    font-weight: bold;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-submit:hover {
+    opacity: 0.9;
+  }
+  .error-message {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #b91c1c;
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+</style>
+
+<div class="register-container">
   <h2>📝 新規ユーザー登録</h2>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
+  {% if error %}
+    <div class="error-message">{{ error }}</div>
+  {% endif %}
 
   <form method="POST">
-    <div class="row mb-3">
-      <div class="col"><label>ユーザー名</label><input type="text" name="username" class="form-control" required></div>
-      <div class="col"><label>ふりがな</label><input type="text" name="furigana" class="form-control" required></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="username">ユーザー名 *</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+      <div class="form-group">
+        <label for="furigana">ふりがな *</label>
+        <input type="text" id="furigana" name="furigana" required>
+      </div>
+
+      <div class="form-group">
+        <label for="birthdate">生年月日 *</label>
+        <input type="date" id="birthdate" name="birthdate" required>
+      </div>
+      <div class="form-group">
+        <label for="age">年齢 *</label>
+        <input type="number" id="age" name="age" min="18" max="100" required>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">電話番号</label>
+        <input type="tel" id="phone" name="phone" pattern="\\d{2,4}-\\d{2,4}-\\d{4}">
+      </div>
+      <div class="form-group">
+        <label for="mobile">携帯番号 *</label>
+        <input type="tel" id="mobile" name="mobile" pattern="\\d{3}-\\d{4}-\\d{4}" required>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="email">メールアドレス *</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="department">部署 *</label>
+        <input type="text" id="department" name="department" required>
+      </div>
+      <div class="form-group">
+        <label for="role">職種 *</label>
+        <input type="text" id="role" name="role" placeholder="例：営業" required>
+      </div>
+
+      <div class="form-group">
+        <label for="ref_code">紹介者NO</label>
+        <input type="text" id="ref_code" name="ref_code" placeholder="例：KA, KB…">
+      </div>
+
+      <div class="form-group">
+        <label for="password">パスワード *</label>
+        <input type="password" id="password" name="password" minlength="6" required>
+      </div>
     </div>
 
-    <div class="row mb-3">
-      <div class="col"><label>生年月日</label><input type="date" name="birthday" class="form-control" required></div>
-      <div class="col"><label>年齢</label><input type="number" name="age" class="form-control" required></div>
-    </div>
-
-    <div class="row mb-3">
-      <div class="col"><label>電話番号</label><input type="text" name="tel" class="form-control" required></div>
-      <div class="col"><label>携帯番号</label><input type="text" name="mobile" class="form-control" required></div>
-    </div>
-
-    <div class="mb-3"><label>メールアドレス</label><input type="email" name="email" class="form-control" required></div>
-    <div class="mb-3"><label>部署</label><input type="text" name="department" class="form-control" required></div>
-    <div class="mb-3"><label>職種</label><input type="text" name="job" class="form-control" required></div>
-    <div class="mb-3"><label>紹介者NO</label><input type="text" name="introducer" class="form-control" required></div>
-    <div class="mb-3"><label>パスワード</label><input type="password" name="password" class="form-control" required></div>
-
-    <button type="submit" class="btn btn-danger w-100">登録する</button>
+    <!-- IDはサーバ側で自動生成 -->
+    <button type="submit" class="btn-submit">登録する</button>
   </form>
-
-  <div class="mt-3">
-    <a href="{{ url_for('login_bp.login') }}">← ログイン画面に戻る</a>
-  </div>
 </div>
 
 {% endblock %}
