@@ -6,6 +6,7 @@ from routes.mypage import mypage_bp
 from routes.static_pages import static_pages_bp
 from routes.settings import settings_bp
 from routes.news import news_bp
+from routes.forgot import forgot_bp   # ← 追加
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -22,6 +23,7 @@ app.register_blueprint(mypage_bp)
 app.register_blueprint(static_pages_bp)
 app.register_blueprint(settings_bp)
 app.register_blueprint(news_bp)
+app.register_blueprint(forgot_bp)     # ← 追加
 
 # ホーム
 @app.route("/")
