@@ -2,98 +2,77 @@
 {% block title %}ログイン | リサーチナビ{% endblock %}
 {% block content %}
 
-<style>
-  .login-container {
-    max-width: 480px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: #fff;
-    border-radius: 0.8rem;
-    box-shadow: 0 0 12px rgba(0,0,0,0.1);
-    font-size: 1.1rem;
-  }
-  .login-container h2 {
-    margin-bottom: 1.5rem;
-    text-align: center;
-    color: #dc2626;
-  }
-  .form-group {
-    margin-bottom: 1.2rem;
-  }
-  .form-group label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 0.3rem;
-  }
-  .form-group input {
-    width: 100%;
-    padding: 0.6rem;
-    border: 1px solid #ccc;
-    border-radius: 0.4rem;
-  }
-  .btn-submit {
-    display: block;
-    width: 100%;
-    padding: 0.8rem;
-    background: #dc2626;
-    color: #ffeb3b;
-    font-weight: bold;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  .btn-submit:hover {
-    opacity: 0.9;
-  }
-  .error-message {
-    background: #fee2e2;
-    color: #b91c1c;
-    border: 1px solid #b91c1c;
-    padding: 0.8rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    text-align: center;
-  }
-  .info-text {
-    margin-top: 1rem;
-    text-align: center;
-  }
-  .info-text a {
-    color: #2563eb;
-    text-decoration: none;
-  }
-  .info-text a:hover {
-    text-decoration: underline;
-  }
-</style>
-
 <div class="login-container">
-  <h2>🔑 ログイン</h2>
+  <h1>👤 ログイン</h1>
 
   {% if error %}
-    <div class="error-message">{{ error }}</div>
+    <div class="error">{{ error }}</div>
   {% endif %}
 
-  <form method="POST">
-    <div class="form-group">
-      <label for="username">ID</label>
-      <input type="text" id="username" name="username" placeholder="IDを入力してください" required>
-    </div>
+  <form method="post">
+    <label>ID</label>
+    <input type="text" name="user_id" placeholder="発行されたIDを入力" required>
 
-    <div class="form-group">
-      <label for="password">パスワード</label>
-      <input type="password" id="password" name="password" placeholder="パスワードを入力してください" required>
-    </div>
+    <label>パスワード</label>
+    <input type="password" name="password" placeholder="6文字以上" required>
 
-    <button type="submit" class="btn-submit">ログイン</button>
+    <button type="submit">ログイン</button>
   </form>
 
-  <div class="info-text">
-    <p>📌 管理者の方もこちらからログインできます。</p>
-    <p><a href="{{ url_for('register_bp.register') }}">📝 新規登録はこちら</a></p>
-    <p><a href="{{ url_for('login_bp.forgot') }}">❗ ID・パスワードを忘れた方はこちら</a></p>
+  <div class="links">
+    <a href="{{ url_for('register_bp.register') }}">📝 新規登録はこちら</a><br>
+    <a href="{{ url_for('login_bp.forgot') }}">❗ ID・パスワードを忘れた方</a>
   </div>
 </div>
+
+<style>
+.login-container {
+  max-width: 400px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: bold;
+  text-align: left;
+}
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: .3rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+button {
+  margin-top: 1.5rem;
+  padding: 10px 20px;
+  background: #dc2626;
+  color: #ffeb3b;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:hover { opacity: 0.9; }
+.error {
+  margin-bottom: 1rem;
+  padding: 0.6rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+}
+.links {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+}
+.links a { text-decoration: none; color: #2563eb; }
+.links a:hover { text-decoration: underline; }
+</style>
 
 {% endblock %}
