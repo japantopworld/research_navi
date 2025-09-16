@@ -2,64 +2,38 @@
 {% block title %}ID・パスワードを忘れた方{% endblock %}
 {% block content %}
 
-<style>
-  .forgot-container {
-    max-width: 600px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: #fff;
-    border-radius: 0.8rem;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    font-size: 1.1rem;
-  }
-  h2 { color: #dc2626; margin-bottom: 1rem; }
-  .mode-section { margin-bottom: 2rem; }
-  .flash-message {
-    padding: 0.8rem 1rem;
-    border-radius: 6px;
-    margin-bottom: 1rem;
-  }
-  .flash-message.error {
-    background: #fee2e2;
-    border: 1px solid #dc2626;
-    color: #b91c1c;
-  }
-  .flash-message.success {
-    background: #ecfdf5;
-    border: 1px solid #10b981;
-    color: #065f46;
-  }
-</style>
-
-<div class="forgot-container">
-  <h2>🔑 ID・パスワードを忘れた方</h2>
-
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="flash-message {{ category }}">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
+<div style="max-width: 600px; margin: 2rem auto; padding: 2rem; background: #fff; border-radius: 0.8rem; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+  <h2>❗ ID・パスワードを忘れた方</h2>
+  <p>登録時のIDを入力して、照会または再発行を選択してください。</p>
 
   <form method="POST">
-    <div class="mode-section">
-      <label><input type="radio" name="mode" value="id" required> IDを照会する</label><br>
-      <label><input type="radio" name="mode" value="password" required> パスワードを再発行する</label>
+    <div style="margin-bottom: 1rem;">
+      <label>ID入力（必須）</label><br>
+      <input type="text" name="user_id" required style="width:100%; padding:0.6rem;">
     </div>
 
-    <div>
-      <label>📧 登録メールアドレス</label><br>
-      <input type="email" name="email" required style="width:100%; padding:0.5rem; margin-top:0.3rem;">
+    <div style="margin-bottom: 1rem;">
+      <label>操作を選択</label><br>
+      <select name="mode" required style="width:100%; padding:0.6rem;">
+        <option value="id">ID照会</option>
+        <option value="password">パスワード再発行</option>
+      </select>
     </div>
 
-    <button type="submit" style="margin-top:1rem; padding:0.6rem 1.2rem; background:#dc2626; color:#ffeb3b; border:none; border-radius:6px; font-weight:bold;">
-      実行する
-    </button>
+    <button type="submit" class="btn btn-danger">送信</button>
   </form>
 
-  <div style="margin-top:1.5rem;">
-    <a href="{{ url_for('login_bp.login') }}">← ログイン画面に戻る</a>
+  {% if message %}
+    <div style="margin-top:1.5rem; padding:1rem; border:2px solid {% if '❌' in message or '⚠' in message %}#dc2626{% else %}#16a34a{% endif %}; border-radius:0.5rem; background:#fffbea;">
+      <p style="margin:0; font-weight:bold;">{{ message }}</p>
+      {% if new_password %}
+        <p style="margin-top:0.5rem; font-size:1.2rem; color:#dc2626;">🔑 新しいパスワード: <strong>{{ new_password }}</strong></p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div style="margin-top:2rem; text-align:center;">
+    <a href="{{ url_for('login_bp.login') }}" class="btn btn-outline-secondary">ログインに戻る</a>
   </div>
 </div>
 
