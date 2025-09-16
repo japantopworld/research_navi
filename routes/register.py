@@ -1,75 +1,68 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-import datetime
+from models.user import db, User
+import re
 
 register_bp = Blueprint("register_bp", __name__, url_prefix="/register")
 
-# 仮のユーザーデータ保存リスト（本番はDB利用を想定）
-users = []
-
-def generate_user_id(job_title, birthdate, referrer_no):
-    """
-    職種2文字 + 誕生日MMDD + 紹介者コード(先頭Kを除外) + 枝番号
-    """
-    # 職種 → 先頭2文字
-    job_code = job_title[:2].upper()
-
-    # 誕生日 → MMDD
-    try:
-        date_obj = datetime.datetime.strptime(birthdate, "%Y-%m-%d")
-        birth_code = date_obj.strftime("%m%d")
-    except Exception:
-        birth_code = "0000"
-
-    # 紹介者コード処理（KA, KB → A, B）
-    ref_code = ""
-    branch_num = ""
-    if referrer_no:
-        if referrer_no.startswith("K") and len(referrer_no) >= 2:
-            ref_code = referrer_no[1]  # 先頭のKを除去して1文字取得
-            branch_num = referrer_no[2:] if len(referrer_no) > 2 else ""
-        else:
-            ref_code = referrer_no  # Kがない場合そのまま
-
-    return f"{job_code}{birth_code}{ref_code}{branch_num}"
+def generate_user_id(job, birthday, introducer, branch_num=1):
+    """職種2文字 + 誕生日MMDD + 紹介者コード + 枝番号 でID作成"""
+    job_code = job[:2].upper()
+    birthday_code = birthday.replace("-", "")[4:8]  # YYYY-MM-DD → MMDD
+    intro_code = introducer[1:] if introducer.startswith("K") else introducer
+    return f"{job_code}{birthday_code}{intro_code}{branch_num}"
 
 @register_bp.route("/", methods=["GET", "POST"])
 def register():
-    generated_id = None
     if request.method == "POST":
+        # 入力値取得
         username = request.form.get("username")
         furigana = request.form.get("furigana")
-        birthdate = request.form.get("birthdate")
+        birthday = request.form.get("birthday")
         age = request.form.get("age")
-        phone = request.form.get("phone")
+        tel = request.form.get("tel")
         mobile = request.form.get("mobile")
         email = request.form.get("email")
         department = request.form.get("department")
-        job_title = request.form.get("job_title")
-        referrer_no = request.form.get("referrer_no")
+        job = request.form.get("job")
+        introducer = request.form.get("introducer")
         password = request.form.get("password")
 
-        # ID自動生成
-        generated_id = generate_user_id(job_title, birthdate, referrer_no)
+        # 必須チェック
+        if not all([username, furigana, birthday, age, tel, mobile, email, department, job, introducer, password]):
+            flash("❌ 全ての項目を入力してください。", "error")
+            return redirect(url_for("register_bp.register"))
 
-        # 仮保存（本番はDBに保存）
-        users.append({
-            "ID": generated_id,
-            "ユーザー名": username,
-            "ふりがな": furigana,
-            "生年月日": birthdate,
-            "年齢": age,
-            "電話番号": phone,
-            "携帯番号": mobile,
-            "メールアドレス": email,
-            "部署": department,
-            "職種": job_title,
-            "紹介者NO": referrer_no,
-            "PASS": password
-        })
+        # 重複チェック
+        if User.query.filter((User.email == email) | (User.tel == tel) | (User.mobile == mobile)).first():
+            flash("⚠️ 同じメールまたは電話番号のユーザーが存在します。", "error")
+            return redirect(url_for("register_bp.register"))
 
-        flash(f"登録完了 🎉 あなたのIDは {generated_id} です。", "success")
+        # ID自動生成（枝番号の重複確認）
+        branch_num = 1
+        while True:
+            new_id = generate_user_id(job, birthday, introducer, branch_num)
+            if not User.query.filter_by(username=new_id).first():
+                break
+            branch_num += 1
 
-        # IDを登録画面に渡して表示
-        return render_template("pages/register_user.html", generated_id=generated_id)
+        # ユーザー保存
+        new_user = User(
+            username=new_id,
+            furigana=furigana,
+            birthday=birthday,
+            age=age,
+            tel=tel,
+            mobile=mobile,
+            email=email,
+            department=department,
+            job=job,
+            introducer=introducer,
+            password=password
+        )
+        db.session.add(new_user)
+        db.session.commit()
 
-    return render_template("pages/register_user.html", generated_id=generated_id)
+        flash(f"✅ 登録が完了しました。あなたのIDは {new_id} です。", "success")
+        return redirect(url_for("login_bp.login"))
+
+    return render_template("pages/register_user.html")
