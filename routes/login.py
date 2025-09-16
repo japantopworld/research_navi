@@ -1,42 +1,45 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from models.user import User
+import csv
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 
 login_bp = Blueprint("login_bp", __name__, url_prefix="/login")
 
-# 管理者アカウント（固定）
-ADMIN_ID = "KING1219"
-ADMIN_PASS = "11922960"
+CSV_FILE = "data/users.csv"
 
 @login_bp.route("/", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":
-        input_id = request.form.get("username")
-        input_pass = request.form.get("password")
+        user_id = request.form.get("user_id")
+        password = request.form.get("password")
 
-        # ✅ 管理者チェック
-        if input_id == ADMIN_ID and input_pass == ADMIN_PASS:
+        # ✅ 管理者ログイン
+        if user_id == "KING1219" and password == "11922960":
             session["logged_in"] = True
-            session["user_id"] = ADMIN_ID
-            session["is_admin"] = True
-            flash("👑 管理者ログイン成功！", "success")
+            session["user_id"] = "KING1219"
+            flash("管理者としてログインしました ✅", "success")
             return redirect(url_for("mypage_bp.mypage"))
 
-        # ✅ 一般ユーザー（DB検索）
-        user = User.query.filter_by(username=input_id, password=input_pass).first()
-        if user:
-            session["logged_in"] = True
-            session["user_id"] = user.username
-            session["is_admin"] = False
-            flash("✅ ログイン成功！", "success")
-            return redirect(url_for("mypage_bp.mypage"))
-        else:
-            error = "❌ ID またはパスワードが違います。"
+        # ✅ CSVから一般ユーザーを探す（IDベース）
+        if os.path.exists(CSV_FILE):
+            with open(CSV_FILE, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row["ID"] == user_id and row["PASS"] == password:
+                        session["logged_in"] = True
+                        session["user_id"] = row["ID"]
+                        session["username"] = row["ユーザー名"]
+                        flash("ログイン成功 ✅", "success")
+                        return redirect(url_for("mypage_bp.mypage"))
+
+        # 失敗時
+        error = "⚠️ ID またはパスワードが間違っています。"
 
     return render_template("pages/login.html", error=error)
+
 
 @login_bp.route("/logout")
 def logout():
     session.clear()
-    flash("↩ ログアウトしました。", "info")
-    return redirect(url_for("login_bp.login"))
+    flash("ログアウトしました 👋", "info")
+    return redirect(url_for("home"))
