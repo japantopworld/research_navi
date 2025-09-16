@@ -1,57 +1,80 @@
 {% extends "base/layout.html" %}
-{% block title %}ID・パスワードを忘れた方{% endblock %}
+{% block title %}ID・パスワード再発行{% endblock %}
 {% block content %}
 
 <h1>🔑 ID・パスワードを忘れた方</h1>
 
-<form method="post">
-  <label>メールアドレスまたはID</label>
-  <input type="text" name="identifier" required>
-
-  <button type="submit">送信</button>
+<form method="post" class="forgot-form">
+  <label>IDを入力してください</label>
+  <input type="text" name="user_id" required>
+  <button type="submit">再発行する</button>
 </form>
 
-{% if error %}
-<div class="popup-error">
-  {{ error }}
+<!-- ポップアップ風メッセージ -->
+{% if popup_message %}
+<div class="popup-error">{{ popup_message }}</div>
+{% endif %}
+
+<!-- 新パスワード表示 -->
+{% if new_pass %}
+<div class="popup-success">
+  ✅ 新しいパスワードが発行されました<br>
+  <strong>{{ new_pass }}</strong>
 </div>
 {% endif %}
 
 <style>
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 400px;
-    margin: 20px auto;
-  }
-  input, button {
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-  }
-  button {
-    background: #dc2626;
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  .popup-error {
-    margin: 20px auto;
-    max-width: 400px;
-    padding: 15px;
-    border-radius: 8px;
-    background: #fee2e2;
-    color: #b91c1c;
-    font-weight: bold;
-    text-align: center;
-    animation: popupFade 0.5s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  }
-  @keyframes popupFade {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
-  }
+.forgot-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 400px;
+  margin: 1.5rem auto;
+}
+.forgot-form input {
+  padding: .6rem;
+  border: 1px solid #ddd;
+  border-radius: .5rem;
+}
+.forgot-form button {
+  padding: .6rem;
+  background: #dc2626;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: .5rem;
+  cursor: pointer;
+}
+.forgot-form button:hover { opacity: 0.9; }
+
+.popup-error {
+  margin: 1rem auto;
+  max-width: 400px;
+  background: #fee2e2;
+  border: 2px solid #dc2626;
+  color: #dc2626;
+  font-weight: bold;
+  padding: 1rem;
+  border-radius: .5rem;
+  text-align: center;
+  animation: fadein .3s;
+}
+.popup-success {
+  margin: 1rem auto;
+  max-width: 400px;
+  background: #ecfdf5;
+  border: 2px solid #10b981;
+  color: #065f46;
+  font-weight: bold;
+  padding: 1rem;
+  border-radius: .5rem;
+  text-align: center;
+  animation: fadein .3s;
+}
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 </style>
 
 {% endblock %}
