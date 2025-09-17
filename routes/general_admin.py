@@ -8,3 +8,4 @@ def general_admin():
     if "user_id" not in session:
         return redirect(url_for("login_bp.login"))
     return render_template("pages/general_admin.html")
+
