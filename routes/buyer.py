@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-# 相対インポート → 絶対インポートに修正
 from services.price_math import calc_profit
 from services.data_io import read_csv, write_csv, append_order, set_order_status, seed_if_empty
 import random, datetime as dt
 
-buyer_bp = Blueprint("buyer_bp", __name__, template_folder="../templates", static_folder="../static")
+# url_prefix を追加 → バイヤー部は /buyer/ 配下で動くようにする
+buyer_bp = Blueprint(
+    "buyer_bp",
+    __name__,
+    url_prefix="/buyer",
+    template_folder="../templates",
+    static_folder="../static"
+)
 
 @buyer_bp.before_app_request
 def ensure_seed():
