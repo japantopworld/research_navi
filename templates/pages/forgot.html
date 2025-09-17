@@ -5,84 +5,93 @@
 <style>
   .forgot-container {
     max-width: 500px;
-    margin: 3rem auto;
+    margin: 2rem auto;
     padding: 2rem;
     background: #fff;
     border-radius: 0.8rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    text-align: center;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
   }
   .forgot-container h2 {
-    margin-bottom: 1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
     color: #dc2626;
   }
-  .forgot-container form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  .form-group {
+    margin-bottom: 1rem;
   }
-  .forgot-container input {
-    padding: 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-  }
-  .forgot-container button {
-    padding: 0.8rem;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1.1rem;
+  label {
+    display: block;
+    margin-bottom: .5rem;
     font-weight: bold;
+  }
+  input {
+    width: 100%;
+    padding: .6rem;
+    border: 1px solid #ddd;
+    border-radius: .4rem;
+  }
+  button {
+    width: 100%;
+    padding: .8rem;
     background: #dc2626;
-    color: #ffeb3b;
+    color: #fff;
+    border: none;
+    border-radius: .5rem;
+    font-size: 1rem;
     cursor: pointer;
   }
-  .forgot-container button:hover {
+  button:hover {
     opacity: 0.9;
   }
-  /* ✅ ポップアップ風メッセージ */
+
+  /* ポップアップ */
+  .popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
   .popup {
+    background: #fff;
+    padding: 2rem;
+    border-radius: .8rem;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.3);
+  }
+  .popup.success { border: 2px solid #16a34a; }
+  .popup.error { border: 2px solid #dc2626; }
+  .popup button {
     margin-top: 1rem;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    font-weight: bold;
-    animation: fadeIn 0.5s ease-in-out;
-  }
-  .popup.success {
-    background: #d1fae5;
-    border: 1px solid #10b981;
-    color: #065f46;
-  }
-  .popup.error {
-    background: #fee2e2;
-    border: 1px solid #dc2626;
-    color: #991b1b;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
+    background: #111;
   }
 </style>
 
 <div class="forgot-container">
   <h2>🔑 ID・パスワード再発行</h2>
-  <p>登録時のIDを入力し、新しいパスワードを設定してください。</p>
-
-  <form method="POST">
-    <input type="text" name="user_id" placeholder="ユーザーID" required>
-    <input type="password" name="new_pass" placeholder="新しいパスワード（6文字以上）" minlength="6" required>
+  <form method="post">
+    <div class="form-group">
+      <label for="user_id">ユーザーID</label>
+      <input type="text" id="user_id" name="user_id" required>
+    </div>
+    <div class="form-group">
+      <label for="new_pass">新しいパスワード</label>
+      <input type="password" id="new_pass" name="new_pass" minlength="6" required>
+    </div>
     <button type="submit">再発行する</button>
   </form>
+</div>
 
-  {% if message %}
-    <div class="popup {{ message.type }}">
-      {{ message.text }}
-    </div>
-  {% endif %}
-
-  <div style="margin-top:1.5rem;">
-    <a href="{{ url_for('login_bp.login') }}">← ログイン画面に戻る</a>
+{% if message %}
+<div class="popup-overlay" id="popup" style="display:flex;">
+  <div class="popup {{ message.type }}">
+    <p>{{ message.text }}</p>
+    <button onclick="document.getElementById('popup').style.display='none'">閉じる</button>
   </div>
 </div>
+{% endif %}
 
 {% endblock %}
