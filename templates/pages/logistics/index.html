@@ -1,1 +1,20 @@
+{% extends "base/layout.html" %}
+{% block title %}物流部トップ | リサーチナビ{% endblock %}
+{% block content %}
 
+<h1>📦 物流部（在庫・発送・梱包）</h1>
+<p>商品の受け入れ・在庫・発送・梱包・倉庫管理に関する全機能</p>
+
+<div class="dept-card-grid">
+  <a href="{{ url_for('logistics_bp.inventory') }}" class="dept-card border-success">
+    🧮 在庫管理・棚卸
+  </a>
+  <a href="{{ url_for('logistics_bp.shipping') }}" class="dept-card border-primary">
+    📦 出荷・梱包支援
+  </a>
+  <a href="{{ url_for('logistics_bp.layout') }}" class="dept-card border-warning">
+    🗺️ 仮想倉庫レイアウト
+  </a>
+</div>
+
+{% endblock %}
