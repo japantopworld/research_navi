@@ -1,0 +1,21 @@
+{% extends "base/layout.html" %}
+{% block title %}システム設定 | リサーチナビ{% endblock %}
+{% block content %}
+<h1>🌐 システム全体管理</h1>
+<form method="post" class="card">
+  <h3>モジュールON/OFF</h3>
+  <div class="checkboxes">
+    {% set ALL = ['SEARCH','PROFIT','HISTORY','RANKING','ALERTS','ACCOUNTING','LOGISTICS'] %}
+    {% for k in ALL %}
+      {% set key = 'module_' + k.lower() %}
+      <label><input type="checkbox" name="modules" value="{{ k }}" {% if module_toggles.get(key,true) %}checked{% endif %}> {{ k }}</label>
+    {% endfor %}
+  </div>
+  <h3>通知切替</h3>
+  <label><input type="checkbox" name="notify_email" {% if notify_email %}checked{% endif %}> メール通知</label>
+  <label><input type="checkbox" name="notify_webpush" {% if notify_webpush %}checked{% endif %}> Webプッシュ</label>
+  <div class="actions">
+    <button class="btn">保存</button>
+  </div>
+</form>
+{% endblock %}
