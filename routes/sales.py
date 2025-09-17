@@ -1,11 +1,16 @@
-
+# routes/sales.py
+# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template
-sales_bp = Blueprint('sales_bp', __name__)
 
-@sales_bp.route('/sales/history')
-def sales_history():
-    return render_template('pages/sales/sales_history.html')
+sales_bp = Blueprint(
+    "sales_bp",
+    __name__,
+    url_prefix="/sales",   # 部署ごとにプレフィックスを付与
+    template_folder="../templates",
+    static_folder="../static"
+)
 
-@sales_bp.route('/sales/graph')
-def sales_graph():
-    return render_template('pages/sales/sales_graph.html')
+@sales_bp.route("/")
+def sales_home():
+    """販売部のホーム画面"""
+    return render_template("pages/sales/home.html")
