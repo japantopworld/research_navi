@@ -1,0 +1,1 @@
+{% extends 'base/layout.html' %}{% block content %}<h1>📦発注</h1><form method=post><input name=name><input name=vendor><input name=owner><button>追加</button></form><ul>{% for o in orders %}<li>{{o.id}} {{o.name}} {{o.status}}</li>{% endfor %}</ul>{% endblock %}
