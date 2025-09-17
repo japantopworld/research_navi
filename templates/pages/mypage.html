@@ -2,70 +2,128 @@
 {% block title %}マイページ | リサーチナビ{% endblock %}
 {% block content %}
 
-<div class="mypage-container">
-  <h2>👋 ようこそ、{{ display_name }} さん！</h2>
-  <p>ここから各部署へアクセスできます。</p>
+<div class="mypage-wrap">
+  <header class="hero">
+    <h1>👋 ようこそ、{{ display_name }} さん</h1>
+    <p class="sub">ここから各部署やポートフォリオへアクセスできます。</p>
+  </header>
 
-  <div class="mypage-links">
-    <a href="{{ url_for('general_admin_bp.general_admin_home') }}" class="dept-card border-primary">
-      🟦 総合部<br><small>全体管理・人事・サポート</small>
-    </a>
-    <a href="{{ url_for('buyer_bp.buyer_home') }}" class="dept-card border-warning">
-      🟨 バイヤー部<br><small>仕入・価格調査・発注</small>
-    </a>
-    <a href="{{ url_for('sales_bp.sales_home') }}" class="dept-card border-danger">
-      🟥 販売部<br><small>出品支援・価格戦略・販売分析</small>
-    </a>
-    <a href="{{ url_for('logistics_bp.logistics_home') }}" class="dept-card border-success">
-      🟩 物流部<br><small>在庫・梱包・発送管理</small>
-    </a>
-    <a href="{{ url_for('ai_finance_bp.ai_finance_home') }}" class="dept-card border-purple">
-      🟪 AI経理部<br><small>損益・帳簿・AI予測</small>
-    </a>
-  </div>
+  <!-- 部署ショートカット -->
+  <section class="section">
+    <h2 class="sec-title">部署ショートカット</h2>
+    <div class="grid">
+      <a class="btn-tile border-warning" href="{{ url_for('buyer_bp.buyer_home') }}">
+        <span class="emoji">🛒</span>
+        <span class="label">バイヤー部</span>
+        <small class="desc">仕入れ・価格調査</small>
+      </a>
+
+      <a class="btn-tile border-info" href="{{ url_for('sales_bp.sales_home') }}">
+        <span class="emoji">🧾</span>
+        <span class="label">販売部</span>
+        <small class="desc">出品・販売管理</small>
+      </a>
+
+      <a class="btn-tile border-success" href="{{ url_for('logistics_bp.logistics_home') }}">
+        <span class="emoji">📦</span>
+        <span class="label">物流部</span>
+        <small class="desc">在庫・発送・梱包</small>
+      </a>
+
+      <a class="btn-tile border-primary" href="{{ url_for('accounting_bp.accounting_home') }}">
+        <span class="emoji">🧮</span>
+        <span class="label">AI・経理部</span>
+        <small class="desc">損益・帳簿・税務</small>
+      </a>
+
+      <a class="btn-tile border-danger" href="{{ url_for('general_bp.general_home') }}">
+        <span class="emoji">🟦</span>
+        <span class="label">総合（統括）</span>
+        <small class="desc">全体管理・設定</small>
+      </a>
+    </div>
+  </section>
+
+  <!-- ポートフォリオ -->
+  <section class="section">
+    <h2 class="sec-title">ポートフォリオ</h2>
+    <div class="grid">
+      <a class="btn-tile border-portfolio" href="https://github.com/" target="_blank" rel="noopener">
+        <span class="emoji">🔗</span>
+        <span class="label">GitHub</span>
+        <small class="desc">外部リンク</small>
+      </a>
+
+      <a class="btn-tile border-portfolio" href="https://example.com" target="_blank" rel="noopener">
+        <span class="emoji">🛰️</span>
+        <span class="label">本番サイト</span>
+        <small class="desc">外部リンク</small>
+      </a>
+
+      <a class="btn-tile border-portfolio" href="https://drive.google.com/" target="_blank" rel="noopener">
+        <span class="emoji">📁</span>
+        <span class="label">Googleドライブ</span>
+        <small class="desc">外部リンク</small>
+      </a>
+
+      <a class="btn-tile border-portfolio" href="{{ url_for('news_bp.news') }}">
+        <span class="emoji">📰</span>
+        <span class="label">ニュースページ</span>
+        <small class="desc">内部リンク</small>
+      </a>
+    </div>
+  </section>
 </div>
 
 <style>
-.mypage-container {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  text-align: center;
+.mypage-wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+.hero h1 { font-size: 1.6rem; margin: 0 0 4px; }
+.hero .sub { color: #6b7280; margin: 0 0 20px; }
+
+.section { margin: 28px 0; }
+.sec-title { font-size: 1.2rem; margin: 0 0 12px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0,1fr));
+  gap: 12px;
 }
-.mypage-links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 2rem;
-  gap: 1rem;
+@media (min-width: 560px) {
+  .grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
-.dept-card {
-  display: inline-block;
-  width: 200px;
-  padding: 1rem;
-  border: 2px solid #ccc;
-  border-radius: 8px;
+@media (min-width: 900px) {
+  .grid { grid-template-columns: repeat(4, minmax(0,1fr)); }
+}
+
+.btn-tile {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  align-content: center;
+  gap: 4px;
+  padding: 16px 14px;
+  border-radius: 14px;
   text-decoration: none;
-  font-weight: bold;
-  background: #fafafa;
-  transition: all 0.2s ease-in-out;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+  min-height: 92px;
 }
-.dept-card small {
-  font-weight: normal;
-  color: #555;
+.btn-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  border-color: #c7cad1;
 }
-.dept-card:hover {
-  background: #f0f0f0;
-  transform: translateY(-3px);
-}
-.border-primary { border-color: #2563eb; }
-.border-warning { border-color: #facc15; }
-.border-danger { border-color: #dc2626; }
-.border-success { border-color: #16a34a; }
-.border-purple { border-color: #9333ea; }
+.btn-tile .emoji { font-size: 1.4rem; line-height: 1; }
+.btn-tile .label { font-weight: 700; color: #111827; }
+.btn-tile .desc { color: #6b7280; }
+
+.border-warning { border-color: #f59e0b; }
+.border-info    { border-color: #0ea5e9; }
+.border-success { border-color: #10b981; }
+.border-primary { border-color: #6366f1; }
+.border-danger  { border-color: #ef4444; }
+.border-portfolio { border-color: #374151; }
 </style>
 
 {% endblock %}
