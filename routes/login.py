@@ -14,8 +14,8 @@ ADMIN_PASS = "11922960"
 @login_bp.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        user_id = request.form.get("user_id")
-        password = request.form.get("password")
+        user_id = request.form.get("user_id", "").strip()
+        password = request.form.get("password", "").strip()
 
         # 管理者ログイン
         if user_id == ADMIN_ID and password == ADMIN_PASS:
@@ -53,8 +53,8 @@ def logout():
 def forgot():
     message = None
     if request.method == "POST":
-        user_id = request.form.get("user_id")
-        new_pass = request.form.get("new_pass")
+        user_id = request.form.get("user_id", "").strip()
+        new_pass = request.form.get("new_pass", "").strip()
 
         # 管理者は対象外
         if user_id == ADMIN_ID:
@@ -75,7 +75,7 @@ def forgot():
                     writer = csv.DictWriter(f, fieldnames=rows[0].keys())
                     writer.writeheader()
                     writer.writerows(rows)
-                message = {"type": "success", "text": f"パスワードを再発行しました。新しいパスワード: {new_pass}"}
+                message = {"type": "success", "text": f"✅ パスワードを再発行しました。新しいパスワード: {new_pass}"}
             else:
                 message = {"type": "error", "text": "該当するユーザーが見つかりません"}
 
