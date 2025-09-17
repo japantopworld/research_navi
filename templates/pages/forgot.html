@@ -1,39 +1,87 @@
 {% extends "base/layout.html" %}
-{% block title %}ID・パスワードを忘れた方{% endblock %}
+{% block title %}ID・パスワードを忘れた方 | リサーチナビ{% endblock %}
 {% block content %}
 
-<div style="max-width: 600px; margin: 2rem auto; padding: 2rem; background: #fff; border-radius: 0.8rem; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-  <h2>❗ ID・パスワードを忘れた方</h2>
-  <p>登録時のIDを入力して、照会または再発行を選択してください。</p>
+<style>
+  .forgot-container {
+    max-width: 500px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.8rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  .forgot-container h2 {
+    margin-bottom: 1rem;
+    color: #dc2626;
+  }
+  .forgot-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .forgot-container input {
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+  }
+  .forgot-container button {
+    padding: 0.8rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: #dc2626;
+    color: #ffeb3b;
+    cursor: pointer;
+  }
+  .forgot-container button:hover {
+    opacity: 0.9;
+  }
+  /* ✅ ポップアップ風メッセージ */
+  .popup {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-weight: bold;
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  .popup.success {
+    background: #d1fae5;
+    border: 1px solid #10b981;
+    color: #065f46;
+  }
+  .popup.error {
+    background: #fee2e2;
+    border: 1px solid #dc2626;
+    color: #991b1b;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="forgot-container">
+  <h2>🔑 ID・パスワード再発行</h2>
+  <p>登録時のIDを入力し、新しいパスワードを設定してください。</p>
 
   <form method="POST">
-    <div style="margin-bottom: 1rem;">
-      <label>ID入力（必須）</label><br>
-      <input type="text" name="user_id" required style="width:100%; padding:0.6rem;">
-    </div>
-
-    <div style="margin-bottom: 1rem;">
-      <label>操作を選択</label><br>
-      <select name="mode" required style="width:100%; padding:0.6rem;">
-        <option value="id">ID照会</option>
-        <option value="password">パスワード再発行</option>
-      </select>
-    </div>
-
-    <button type="submit" class="btn btn-danger">送信</button>
+    <input type="text" name="user_id" placeholder="ユーザーID" required>
+    <input type="password" name="new_pass" placeholder="新しいパスワード（6文字以上）" minlength="6" required>
+    <button type="submit">再発行する</button>
   </form>
 
   {% if message %}
-    <div style="margin-top:1.5rem; padding:1rem; border:2px solid {% if '❌' in message or '⚠' in message %}#dc2626{% else %}#16a34a{% endif %}; border-radius:0.5rem; background:#fffbea;">
-      <p style="margin:0; font-weight:bold;">{{ message }}</p>
-      {% if new_password %}
-        <p style="margin-top:0.5rem; font-size:1.2rem; color:#dc2626;">🔑 新しいパスワード: <strong>{{ new_password }}</strong></p>
-      {% endif %}
+    <div class="popup {{ message.type }}">
+      {{ message.text }}
     </div>
   {% endif %}
 
-  <div style="margin-top:2rem; text-align:center;">
-    <a href="{{ url_for('login_bp.login') }}" class="btn btn-outline-secondary">ログインに戻る</a>
+  <div style="margin-top:1.5rem;">
+    <a href="{{ url_for('login_bp.login') }}">← ログイン画面に戻る</a>
   </div>
 </div>
 
