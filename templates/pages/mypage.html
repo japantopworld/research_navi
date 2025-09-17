@@ -4,18 +4,10 @@
 
 <div class="mypage-container">
   <h2>👋 ようこそ、{{ display_name }} さん！</h2>
-  <p>ここから各機能へアクセスできます。</p>
+  <p>ここから各部署へアクセスできます。</p>
 
-  <!-- 基本リンク -->
-  <div class="mypage-links mb-4">
-    <a href="{{ url_for('news_bp.news') }}">📰 お知らせ一覧</a>
-    <a href="{{ url_for('settings_bp.settings') }}">⚙️ 各種設定</a>
-    <a href="{{ url_for('static_pages.support') }}">💬 サポート</a>
-  </div>
-
-  <!-- 部署リンク -->
-  <div class="dept-grid">
-    <a href="{{ url_for('general_admin_bp.general_admin') }}" class="dept-card border-primary">
+  <div class="mypage-links">
+    <a href="{{ url_for('general_admin_bp.general_admin_home') }}" class="dept-card border-primary">
       🟦 総合部<br><small>全体管理・人事・サポート</small>
     </a>
     <a href="{{ url_for('buyer_bp.buyer_home') }}" class="dept-card border-warning">
@@ -27,13 +19,12 @@
     <a href="{{ url_for('logistics_bp.logistics_home') }}" class="dept-card border-success">
       🟩 物流部<br><small>在庫・梱包・発送管理</small>
     </a>
-    <a href="{{ url_for('ai_finance_bp.ai_finance_home') }}" class="dept-card border-secondary">
+    <a href="{{ url_for('ai_finance_bp.ai_finance_home') }}" class="dept-card border-purple">
       🟪 AI経理部<br><small>損益・帳簿・AI予測</small>
     </a>
   </div>
 </div>
 
-<!-- スタイル -->
 <style>
 .mypage-container {
   max-width: 900px;
@@ -44,57 +35,37 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   text-align: center;
 }
-.mypage-container h2 {
-  color: #dc2626;
-  margin-bottom: 1rem;
-}
 .mypage-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-.mypage-links a {
-  display: block;
-  padding: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: bold;
-  color: #333;
-}
-.mypage-links a:hover {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.dept-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 1rem;
   margin-top: 2rem;
+  gap: 1rem;
 }
 .dept-card {
+  display: inline-block;
   width: 200px;
   padding: 1rem;
-  border-radius: 10px;
-  text-align: center;
-  font-weight: bold;
-  background-color: #f9fafb;
-  border: 2px solid #ddd;
+  border: 2px solid #ccc;
+  border-radius: 8px;
   text-decoration: none;
-  color: #333;
-  transition: 0.2s ease-in-out;
+  font-weight: bold;
+  background: #fafafa;
+  transition: all 0.2s ease-in-out;
+}
+.dept-card small {
+  font-weight: normal;
+  color: #555;
 }
 .dept-card:hover {
-  transform: scale(1.05);
-  background: #fefce8;
+  background: #f0f0f0;
+  transform: translateY(-3px);
 }
-.border-primary { border-color: #3b82f6; }
+.border-primary { border-color: #2563eb; }
 .border-warning { border-color: #facc15; }
-.border-danger { border-color: #ef4444; }
-.border-success { border-color: #10b981; }
-.border-secondary { border-color: #6b7280; }
+.border-danger { border-color: #dc2626; }
+.border-success { border-color: #16a34a; }
+.border-purple { border-color: #9333ea; }
 </style>
 
 {% endblock %}
