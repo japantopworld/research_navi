@@ -2,7 +2,7 @@
 from flask import Flask, render_template
 from models.user import db
 
-# 認証・共通系
+# 認証・共通系 Blueprints
 from routes.login import login_bp
 from routes.register import register_bp
 from routes.mypage import mypage_bp
@@ -25,7 +25,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data/users.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
-# Blueprint 登録
+# 認証・共通系 Blueprint 登録
 app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(mypage_bp)
@@ -40,12 +40,13 @@ app.register_blueprint(sales_bp)
 app.register_blueprint(logistics_bp)
 app.register_blueprint(ai_finance_bp)
 
-# ホーム
+# ホーム（トップページ）
 @app.route("/")
-def home():
+def index():
+    # templates/pages/home.html を表示
     return render_template("pages/home.html")
 
-# 健康チェック
+# 健康チェック（Renderのヘルスチェック用）
 @app.route("/healthz")
 def healthz():
     return "ok", 200
