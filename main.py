@@ -1,3 +1,4 @@
+# research_navi/main.py
 from flask import Flask, render_template
 from models.user import db
 from routes.login import login_bp
@@ -6,7 +7,7 @@ from routes.mypage import mypage_bp
 from routes.static_pages import static_pages_bp
 from routes.settings import settings_bp
 from routes.news import news_bp
-from routes.forgot import forgot_bp   # ← 追加
+from routes.general_admin import general_admin_bp  # ← 追加！
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -23,7 +24,7 @@ app.register_blueprint(mypage_bp)
 app.register_blueprint(static_pages_bp)
 app.register_blueprint(settings_bp)
 app.register_blueprint(news_bp)
-app.register_blueprint(forgot_bp)     # ← 追加
+app.register_blueprint(general_admin_bp)  # ← 追加！
 
 # ホーム
 @app.route("/")
