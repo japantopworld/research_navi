@@ -1,0 +1,35 @@
+{% extends "base/layout.html" %}
+{% block title %}販売部 | リサーチナビ{% endblock %}
+{% block content %}
+
+<div class="dept-container">
+  <h1>🧾 販売部</h1>
+  <p>商品の販売活動・出品管理をサポートします。</p>
+
+  <div class="dept-links">
+    <a href="{{ url_for('sales_bp.sales_home') }}" class="btn btn-outline-danger">🏠 ホーム</a>
+    <a href="#" class="btn btn-outline-secondary">📊 販売分析</a>
+    <a href="#" class="btn btn-outline-secondary">📝 出品補助</a>
+    <a href="#" class="btn btn-outline-secondary">📦 在庫連動</a>
+  </div>
+</div>
+
+<style>
+.dept-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+.dept-links {
+  margin-top: 2rem;
+}
+.dept-links .btn {
+  margin: 0.4rem;
+}
+</style>
+
+{% endblock %}
