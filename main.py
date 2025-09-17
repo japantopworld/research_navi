@@ -1,8 +1,8 @@
 # research_navi/main.py
-from flask import Flask, render_template
+from flask import Flask, render_template, session, redirect, url_for
 from models.user import db
 
-# 認証・共通系 Blueprints
+# 認証・共通系
 from routes.login import login_bp
 from routes.register import register_bp
 from routes.mypage import mypage_bp
@@ -25,7 +25,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data/users.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
-# 認証・共通系 Blueprint 登録
+# Blueprint 登録
 app.register_blueprint(login_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(mypage_bp)
@@ -40,13 +40,19 @@ app.register_blueprint(sales_bp)
 app.register_blueprint(logistics_bp)
 app.register_blueprint(ai_finance_bp)
 
-# ホーム（トップページ）
+# ホーム
 @app.route("/")
-def index():
-    # templates/pages/home.html を表示
+def home():
     return render_template("pages/home.html")
 
-# 健康チェック（Renderのヘルスチェック用）
+# マイページ（ログイン必須）
+@app.route("/mypage_redirect")
+def mypage_redirect():
+    if "user_id" not in session:
+        return redirect(url_for("login_bp.login"))
+    return redirect(url_for("mypage_bp.mypage"))
+
+# 健康チェック
 @app.route("/healthz")
 def healthz():
     return "ok", 200
