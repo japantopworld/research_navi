@@ -1,0 +1,26 @@
+{% extends "base/layout.html" %}
+{% block title %}更新履歴管理 | リサーチナビ{% endblock %}
+{% block content %}
+<h1>🛠 更新履歴・アップデート通知</h1>
+<form method="post" class="card">
+  <input type="text" name="version" placeholder="v1.2.3" required>
+  <input type="text" name="title" placeholder="タイトル" required>
+  <textarea name="details" rows="4" placeholder="詳細"></textarea>
+  <button class="btn">登録</button>
+</form>
+
+<table class="table">
+  <thead><tr><th>公開日</th><th>バージョン</th><th>タイトル</th></tr></thead>
+  <tbody>
+    {% for u in items %}
+    <tr>
+      <td>{{ u.published_at.strftime("%Y-%m-%d") }}</td>
+      <td>{{ u.version }}</td>
+      <td>{{ u.title }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="muted">まだありません</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
