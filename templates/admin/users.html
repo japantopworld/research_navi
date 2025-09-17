@@ -1,0 +1,91 @@
+{% extends "base/layout.html" %}
+{% block title %}ユーザー・部署管理 | リサーチナビ{% endblock %}
+{% block content %}
+<h1>👥 ユーザー・部署管理</h1>
+<form method="get" class="row gap">
+  <input type="text" name="q" value="{{ q }}" placeholder="ID/氏名/メール検索">
+  <button class="btn">検索</button>
+</form>
+
+<div class="grid-2">
+  <div class="card">
+    <h3>ユーザー一覧（最新200件）</h3>
+    <table class="table">
+      <thead><tr><th>ID</th><th>氏名</th><th>部署</th><th>ロール</th><th>連絡先</th><th>状態</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for u in items %}
+        <tr>
+          <td>{{ u.user_id }}</td>
+          <td>{{ u.display_name }}</td>
+          <td>{{ u.department_code or '-' }}</td>
+          <td>{{ u.role_id or '-' }}</td>
+          <td>{{ u.email or '' }}<br>{{ u.phone or '' }}</td>
+          <td>{{ '有効' if u.is_active else '停止' }}</td>
+          <td>
+            <details>
+              <summary>編集</summary>
+              <form method="post" action="{{ url_for('general_bp.users_update', user_pk=u.id) }}" class="mini-form">
+                <input type="text" name="display_name" value="{{ u.display_name }}">
+                <input type="text" name="department_code" value="{{ u.department_code or '' }}" placeholder="部署コード">
+                <input type="email" name="email" value="{{ u.email or '' }}" placeholder="email">
+                <input type="text" name="phone" value="{{ u.phone or '' }}" placeholder="phone">
+                <select name="role_id">
+                  <option value="">(変更なし)</option>
+                  {% for r in roles %}
+                  <option value="{{ r.id }}" {% if u.role_id==r.id %}selected{% endif %}>{{ r.name }}</option>
+                  {% endfor %}
+                </select>
+                <label><input type="checkbox" name="is_active" {% if u.is_active %}checked{% endif %}> 有効</label>
+                <button class="btn">保存</button>
+              </form>
+            </details>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="muted">ユーザーがいません。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>新規ユーザー</h3>
+    <form method="post" action="{{ url_for('general_bp.users_create') }}">
+      <input type="text" name="user_id" placeholder="ID (必須)" required>
+      <input type="text" name="display_name" placeholder="氏名 (必須)" required>
+      <input type="text" name="department_code" placeholder="部署コード (例: GEN)">
+      <input type="email" name="email" placeholder="メール">
+      <input type="text" name="phone" placeholder="電話番号">
+      <select name="role_id">
+        <option value="">ロール未設定</option>
+        {% for r in roles %}
+        <option value="{{ r.id }}">{{ r.name }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn">作成</button>
+    </form>
+
+    <hr>
+    <h3>部署一覧</h3>
+    <table class="table">
+      <thead><tr><th>コード</th><th>名称</th></tr></thead>
+      <tbody>
+        {% for d in depts %}
+        <tr><td>{{ d.code }}</td><td>{{ d.name }}</td></tr>
+        {% else %}
+        <tr><td colspan="2" class="muted">部署なし</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <details>
+      <summary>部署の追加</summary>
+      <form method="post" action="{{ url_for('general_bp.departments_create') }}">
+        <input type="text" name="code" placeholder="GEN / BUY / SAL / LOG など" required>
+        <input type="text" name="name" placeholder="部署名" required>
+        <button class="btn">追加</button>
+      </form>
+    </details>
+  </div>
+</div>
+{% endblock %}
