@@ -1,0 +1,27 @@
+{% extends "base/layout.html" %}
+{% block title %}AI・経理部 | リサーチナビ{% endblock %}
+{% block content %}
+<div class="dept-container">
+  <h1>🧮 AI・経理部</h1>
+  <p>ここで損益・帳簿・税務を管理します。</p>
+
+  <div class="dept-links">
+    <a href="{{ url_for('accounting_bp.accounting_home') }}" class="btn-tile border-primary">
+      📊 損益一覧
+    </a>
+    <a href="#" class="btn-tile border-primary">
+      📝 経費入力
+    </a>
+    <a href="#" class="btn-tile border-primary">
+      📑 帳簿レポート
+    </a>
+  </div>
+</div>
+
+<style>
+.dept-container { max-width: 800px; margin: 2rem auto; }
+.dept-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 20px; }
+.btn-tile { padding: 16px; border: 2px solid #6366f1; border-radius: 12px; text-align: center; text-decoration: none; background: #fff; }
+.btn-tile:hover { background: #f9fafb; }
+</style>
+{% endblock %}
