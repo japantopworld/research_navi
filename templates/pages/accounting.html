@@ -1,0 +1,68 @@
+{% extends "base/layout.html" %}
+{% block title %}AI・経理部 | リサーチナビ{% endblock %}
+{% block content %}
+
+<h1>🧠 AI・経理部（帳簿・税務・AI判断）</h1>
+
+<form method="POST">
+  <label>日付</label><input type="date" name="date" required>
+  <label>商品名</label><input type="text" name="item" required>
+  <label>カテゴリ</label><input type="text" name="category">
+  <label>プラットフォーム</label>
+  <select name="platform">
+    <option value="メルカリ">メルカリ</option>
+    <option value="Amazon">Amazon</option>
+    <option value="楽天">楽天</option>
+    <option value="Yahoo">Yahoo</option>
+  </select>
+  <label>売価</label><input type="number" step="0.01" name="revenue">
+  <label>仕入</label><input type="number" step="0.01" name="cost">
+  <label>手数料</label><input type="number" step="0.01" name="fee">
+  <label>送料</label><input type="number" step="0.01" name="shipping">
+  <label>経費</label><input type="number" step="0.01" name="expense">
+  <label>タグ</label><input type="text" name="tags">
+  <button type="submit">保存</button>
+</form>
+
+<hr>
+
+<h2>📊 月次サマリー</h2>
+{% if summary.empty %}
+<p>まだデータがありません。</p>
+{% else %}
+<table border="1">
+  <tr>
+    <th>月</th><th>売上</th><th>仕入</th><th>手数料</th><th>送料</th><th>経費</th><th>利益</th>
+  </tr>
+  {% for row in summary.itertuples() %}
+  <tr>
+    <td>{{ row.month }}</td>
+    <td>{{ "{:,.0f}".format(row.revenue) }}</td>
+    <td>{{ "{:,.0f}".format(row.cost) }}</td>
+    <td>{{ "{:,.0f}".format(row.fee) }}</td>
+    <td>{{ "{:,.0f}".format(row.shipping) }}</td>
+    <td>{{ "{:,.0f}".format(row.expense) }}</td>
+    <td>{{ "{:,.0f}".format(row.profit) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2>🏅 ROIトップ10</h2>
+{% if top_roi.empty %}
+<p>まだ記録がありません。</p>
+{% else %}
+<table border="1">
+  <tr><th>日付</th><th>商品名</th><th>ROI%</th><th>利益</th></tr>
+  {% for row in top_roi.itertuples() %}
+  <tr>
+    <td>{{ row.date.date() }}</td>
+    <td>{{ row.item }}</td>
+    <td>{{ "{:.1f}".format(row.roi) }}%</td>
+    <td>{{ "{:,.0f}".format(row.profit) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}
