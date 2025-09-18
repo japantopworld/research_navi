@@ -1,1 +1,8 @@
-date,item,category,platform,revenue,cost,fee,shipping,expense,profit,roi,tags
+date,platform,revenue,cost,profit
+2025-09-12,Amazon,12000,8000,4000
+2025-09-13,楽天,18000,12000,6000
+2025-09-14,Amazon,9000,7000,2000
+2025-09-15,メルカリ,15000,9000,6000
+2025-09-16,楽天,8000,5000,3000
+2025-09-17,Amazon,22000,14000,8000
+2025-09-18,メルカリ,10000,6000,4000
