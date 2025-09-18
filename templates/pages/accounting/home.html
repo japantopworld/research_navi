@@ -4,20 +4,32 @@
 
 <h1>会計部</h1>
 
-<!-- 新規登録 -->
+<!-- 新規登録フォーム -->
 <form method="post" action="{{ url_for('accounting_add') }}" class="card p-3 mb-4">
   <h3>新規支払い登録</h3>
-  <input type="date" name="date" required>
-  <input type="text" name="pay_to" placeholder="支払先" required>
-  <input type="number" name="amount" placeholder="金額" required>
-  <select name="category">
-    <option value="人件費">人件費</option>
-    <option value="経費">経費</option>
-    <option value="仕入">仕入</option>
-    <option value="外注費">外注費</option>
-    <option value="役員報酬">役員報酬</option>
-    <option value="インセンティブ">インセンティブ</option>
-  </select>
+  <div>
+    <label>日付</label>
+    <input type="date" name="date" required>
+  </div>
+  <div>
+    <label>支払先</label>
+    <input type="text" name="pay_to" required>
+  </div>
+  <div>
+    <label>金額</label>
+    <input type="number" name="amount" required>
+  </div>
+  <div>
+    <label>カテゴリ</label>
+    <select name="category">
+      <option value="人件費">人件費</option>
+      <option value="経費">経費</option>
+      <option value="仕入">仕入</option>
+      <option value="外注費">外注費</option>
+      <option value="役員報酬">役員報酬</option>
+      <option value="インセンティブ">インセンティブ</option>
+    </select>
+  </div>
   <button type="submit" class="btn btn-success mt-2">登録する</button>
 </form>
 
@@ -25,7 +37,9 @@
 <h3>支払い一覧</h3>
 <table class="table">
   <thead>
-    <tr><th>ID</th><th>日付</th><th>支払先</th><th>金額</th><th>カテゴリ</th><th>操作</th></tr>
+    <tr>
+      <th>ID</th><th>日付</th><th>支払先</th><th>金額</th><th>カテゴリ</th><th>操作</th>
+    </tr>
   </thead>
   <tbody>
     {% for row in payments.itertuples() %}
@@ -51,7 +65,9 @@
 <h3 class="mt-4">削除リクエスト</h3>
 <table class="table">
   <thead>
-    <tr><th>ID</th><th>対象支払いID</th><th>申請者</th><th>承認数</th><th>状態</th><th>操作</th></tr>
+    <tr>
+      <th>ID</th><th>対象支払いID</th><th>申請者</th><th>承認数</th><th>状態</th><th>操作</th>
+    </tr>
   </thead>
   <tbody>
     {% for row in requests.itertuples() %}
