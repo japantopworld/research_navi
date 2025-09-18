@@ -1,0 +1,109 @@
+{% extends "base/layout.html" %}
+{% block title %}ダッシュボード | リサーチナビ{% endblock %}
+{% block content %}
+
+<h1>📊 ダッシュボード</h1>
+<p class="muted">売上・利益・在庫・通知を一目で確認できます（日本時間ベース）。</p>
+
+<div class="grid-2">
+  <section class="card">
+    <h3>本日売上・利益</h3>
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">本日売上</div>
+        <div class="kpi-value">¥{{ "{:,.0f}".format(today_sales) }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">本日利益</div>
+        <div class="kpi-value">¥{{ "{:,.0f}".format(today_profit) }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>今月売上・利益</h3>
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">今月売上</div>
+        <div class="kpi-value">¥{{ "{:,.0f}".format(monthly_sales) }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">今月利益</div>
+        <div class="kpi-value">¥{{ "{:,.0f}".format(monthly_profit) }}</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="card">
+  <h3>直近7日の売上推移</h3>
+  <canvas id="salesChart" height="120"></canvas>
+</section>
+
+<div class="grid-2 mt-16">
+  <section class="card">
+    <h3>在庫トップ5</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>商品名</th>
+          <th>在庫数</th>
+          <th>カテゴリ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in stock_df.itertuples() %}
+        <tr>
+          <td>{{ row.item }}</td>
+          <td>{{ row.stock }}</td>
+          <td>{{ row.category }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h3>最新アラート</h3>
+    <ul class="alerts">
+      {% for a in alert_df.itertuples() %}
+      <li>
+        <span class="badge">{{ a.level }}</span>
+        {{ a.message }}
+        <small class="muted">({{ a.date }})</small>
+      </li>
+      {% else %}
+      <li class="muted">アラートはありません。</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+<script>
+// Chart.js simple line chart
+const ctx = document.getElementById('salesChart').getContext('2d');
+const salesChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: {{ chart_labels|tojson }},
+    datasets: [{
+      label: '売上 (円)',
+      data: {{ chart_values|tojson }},
+      tension: 0.3,
+      fill: false
+    }]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: true }
+    },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+</script>
+
+{% endblock %}
