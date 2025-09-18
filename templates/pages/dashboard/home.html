@@ -1,1 +1,6 @@
-
+{% extends "base/layout.html" %}
+{% block title %}ホーム | リサーチナビ{% endblock %}
+{% block content %}
+  <h1>ホーム</h1>
+  <p>ダッシュボードへは上部ナビバー、または <a href="{{ url_for('dashboard') }}">こちら</a> から。</p>
+{% endblock %}
