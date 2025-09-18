@@ -5,7 +5,7 @@
 <div class="mypage-wrap">
   <header class="hero">
     <h1>👋 ようこそ、{{ display_name }} さん</h1>
-    <p class="sub">ここから各部署やポートフォリオへアクセスできます。</p>
+    <p class="sub">ここから部署やダッシュボードへアクセスできます。</p>
   </header>
 
   <!-- 部署ショートカット -->
@@ -30,7 +30,7 @@
         <small class="desc">在庫・発送・梱包</small>
       </a>
 
-      <a class="btn-tile border-primary" href="{{ url_for('accounting_bp.accounting_home') }}">
+      <a class="btn-tile border-primary" href="{{ url_for('accounting_bp.accounting') }}">
         <span class="emoji">🧮</span>
         <span class="label">AI・経理部</span>
         <small class="desc">損益・帳簿・税務</small>
@@ -44,12 +44,12 @@
     </div>
   </section>
 
-  <!-- ポートフォリオ -->
+  <!-- ダッシュボード -->
   <section class="section">
-    <h2 class="sec-title">ポートフォリオ</h2>
+    <h2 class="sec-title">ダッシュボード</h2>
     <div class="grid">
       <a class="btn-tile border-portfolio" href="https://github.com/" target="_blank" rel="noopener">
-        <span class="emoji">🔗</span>
+        <span class="emoji">📊</span>
         <span class="label">GitHub</span>
         <small class="desc">外部リンク</small>
       </a>
