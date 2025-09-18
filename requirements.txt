@@ -1,7 +1,13 @@
-Flask>=3.0,<4
-Flask-SQLAlchemy>=3.1,<4
-SQLAlchemy>=2.0,<3
-psycopg[binary]>=3.1
-waitress>=3.0
-reportlab>=4.0
-Pillow>=10.0
+Flask==3.0.3
+waitress==3.0.0
+pandas==2.2.2
+numpy==2.0.2
+
+# データベースや拡張用（必要に応じて）
+SQLAlchemy==2.0.32
+
+# CSVやエクスポート関連で便利
+openpyxl==3.1.5
+
+# メール通知を将来的に使う場合
+jinja2==3.1.4
