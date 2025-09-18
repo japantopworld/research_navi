@@ -2,6 +2,6 @@ services:
   - type: web
     name: research-navi
     env: python
-    runtime: python-3.12.5   # 👈 Python バージョンを固定
+    runtime: python-3.12.5   # ← Python バージョンを強制指定！
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
