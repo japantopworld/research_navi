@@ -1,27 +1,82 @@
 {% extends "base/layout.html" %}
-{% block title %}AI・経理部 | リサーチナビ{% endblock %}
+{% block title %}会計部 | リサーチナビ{% endblock %}
 {% block content %}
-<div class="dept-container">
-  <h1>🧮 AI・経理部</h1>
-  <p>ここで損益・帳簿・税務を管理します。</p>
 
-  <div class="dept-links">
-    <a href="{{ url_for('accounting_bp.accounting_home') }}" class="btn-tile border-primary">
-      📊 損益一覧
-    </a>
-    <a href="#" class="btn-tile border-primary">
-      📝 経費入力
-    </a>
-    <a href="#" class="btn-tile border-primary">
-      📑 帳簿レポート
-    </a>
-  </div>
-</div>
+<h1>会計部</h1>
 
-<style>
-.dept-container { max-width: 800px; margin: 2rem auto; }
-.dept-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 20px; }
-.btn-tile { padding: 16px; border: 2px solid #6366f1; border-radius: 12px; text-align: center; text-decoration: none; background: #fff; }
-.btn-tile:hover { background: #f9fafb; }
-</style>
+<!-- 新規登録 -->
+<form method="post" action="{{ url_for('accounting_add') }}" class="card p-3 mb-4">
+  <h3>新規支払い登録</h3>
+  <input type="date" name="date" required>
+  <input type="text" name="pay_to" placeholder="支払先" required>
+  <input type="number" name="amount" placeholder="金額" required>
+  <select name="category">
+    <option value="人件費">人件費</option>
+    <option value="経費">経費</option>
+    <option value="仕入">仕入</option>
+    <option value="外注費">外注費</option>
+    <option value="役員報酬">役員報酬</option>
+    <option value="インセンティブ">インセンティブ</option>
+  </select>
+  <button type="submit" class="btn btn-success mt-2">登録する</button>
+</form>
+
+<!-- 支払い一覧 -->
+<h3>支払い一覧</h3>
+<table class="table">
+  <thead>
+    <tr><th>ID</th><th>日付</th><th>支払先</th><th>金額</th><th>カテゴリ</th><th>操作</th></tr>
+  </thead>
+  <tbody>
+    {% for row in payments.itertuples() %}
+    <tr>
+      <td>{{ row.id }}</td>
+      <td>{{ row.date }}</td>
+      <td>{{ row.pay_to }}</td>
+      <td>¥{{ "{:,.0f}".format(row.amount|int) }}</td>
+      <td>{{ row.category }}</td>
+      <td>
+        <form method="post" action="{{ url_for('request_delete', payment_id=row.id) }}">
+          <button type="submit" class="btn btn-warning btn-sm">削除リクエスト</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="text-muted">記録がありません</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- 削除リクエスト一覧 -->
+<h3 class="mt-4">削除リクエスト</h3>
+<table class="table">
+  <thead>
+    <tr><th>ID</th><th>対象支払いID</th><th>申請者</th><th>承認数</th><th>状態</th><th>操作</th></tr>
+  </thead>
+  <tbody>
+    {% for row in requests.itertuples() %}
+    <tr>
+      <td>{{ row.request_id }}</td>
+      <td>{{ row.payment_id }}</td>
+      <td>{{ row.requested_by }}</td>
+      <td>{{ row.approvals }}</td>
+      <td>{{ row.final_status }}</td>
+      <td>
+        {% if role == "accounting" %}
+          <form method="post" action="{{ url_for('approve_delete', request_id=row.request_id) }}">
+            <button type="submit" class="btn btn-info btn-sm">承認</button>
+          </form>
+        {% elif role == "accounting_leader" %}
+          <form method="post" action="{{ url_for('final_delete', request_id=row.request_id) }}">
+            <button type="submit" class="btn btn-danger btn-sm">最終削除</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="text-muted">リクエストはありません</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 {% endblock %}
