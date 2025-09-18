@@ -1,13 +1,23 @@
+# Webフレームワーク
 Flask==3.0.3
 waitress==3.0.0
+
+# データ処理・集計
 pandas==2.2.2
 numpy==2.0.2
 
-# データベースや拡張用（必要に応じて）
+# データベース操作
 SQLAlchemy==2.0.32
 
-# CSVやエクスポート関連で便利
+# ファイル入出力（Excel/CSV）
 openpyxl==3.1.5
 
-# メール通知を将来的に使う場合
+# Flaskテンプレート拡張
 jinja2==3.1.4
+
+# メール送信など拡張を考える場合
+itsdangerous==2.2.0
+Werkzeug==3.0.4
+
+# 日付・時刻処理の強化（必要に応じて）
+python-dateutil==2.9.0.post0
