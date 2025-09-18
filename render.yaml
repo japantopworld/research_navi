@@ -1,9 +1,7 @@
 services:
   - type: web
-    name: research-navi-dashboard
+    name: research-navi
     env: python
-    plan: free
+    runtime: python-3.12.5   # 👈 ここでPythonを指定
     buildCommand: pip install -r requirements.txt
-    startCommand: python -m waitress --listen=0.0.0.0:$PORT main:app
-    healthCheckPath: /healthz
-    autoDeploy: true
+    startCommand: python main.py
