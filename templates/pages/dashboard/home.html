@@ -1,7 +1,14 @@
 {% extends "base/layout.html" %}
 {% block title %}ホーム | リサーチナビ{% endblock %}
 {% block content %}
-  <h1>ホーム</h1>
-  <p>ここからダッシュボードへ移動できます。</p>
-  <a href="{{ url_for('dashboard') }}" class="btn">📊 ダッシュボードへ</a>
+
+<div class="container py-5 text-center">
+  <h1>📊 リサーチナビ ダッシュボード</h1>
+  <p class="lead">売上・利益・在庫・通知をまとめて確認できます。</p>
+
+  <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg mt-4">
+    ダッシュボードへ進む
+  </a>
+</div>
+
 {% endblock %}
