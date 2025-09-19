@@ -2,108 +2,126 @@
 {% block title %}ダッシュボード | リサーチナビ{% endblock %}
 {% block content %}
 
-<h1>📊 ダッシュボード</h1>
-<p class="muted">売上・利益・在庫・通知を一目で確認できます（日本時間ベース）。</p>
+<div class="container py-4">
+  <h2 class="mb-4">📈 ダッシュボード</h2>
 
-<div class="grid-2">
-  <section class="card">
-    <h3>本日売上・利益</h3>
-    <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-label">本日売上</div>
-        <div class="kpi-value">¥{{ "{:,.0f}".format(today_sales) }}</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">本日利益</div>
-        <div class="kpi-value">¥{{ "{:,.0f}".format(today_profit) }}</div>
+  <!-- 今日と今月の売上・利益 -->
+  <div class="row text-center mb-4">
+    <div class="col-md-3 col-6 mb-3">
+      <div class="card border-success shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">今日の売上</h5>
+          <p class="display-6 text-success">{{ today_sales | int }} 円</p>
+        </div>
       </div>
     </div>
-  </section>
-
-  <section class="card">
-    <h3>今月売上・利益</h3>
-    <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-label">今月売上</div>
-        <div class="kpi-value">¥{{ "{:,.0f}".format(monthly_sales) }}</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">今月利益</div>
-        <div class="kpi-value">¥{{ "{:,.0f}".format(monthly_profit) }}</div>
+    <div class="col-md-3 col-6 mb-3">
+      <div class="card border-info shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">今日の利益</h5>
+          <p class="display-6 text-info">{{ today_profit | int }} 円</p>
+        </div>
       </div>
     </div>
-  </section>
+    <div class="col-md-3 col-6 mb-3">
+      <div class="card border-primary shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">今月の売上</h5>
+          <p class="display-6 text-primary">{{ monthly_sales | int }} 円</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+      <div class="card border-warning shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">今月の利益</h5>
+          <p class="display-6 text-warning">{{ monthly_profit | int }} 円</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 売上チャート -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title">直近7日間の売上</h5>
+      <canvas id="salesChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 在庫トップ5 -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">在庫トップ5</h5>
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>商品</th>
+                <th>在庫数</th>
+                <th>カテゴリ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in stock_df.itertuples() %}
+              <tr>
+                <td>{{ row.item }}</td>
+                <td>{{ row.stock }}</td>
+                <td>{{ row.category }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- アラートトップ5 -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">最新アラート</h5>
+          <ul class="list-group">
+            {% for row in alert_df.itertuples() %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ row.date }} - {{ row.message }}</span>
+              <span class="badge bg-danger">{{ row.level }}</span>
+            </li>
+            {% endfor %}
+            {% if alert_df.empty %}
+            <li class="list-group-item text-muted">アラートはありません</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<section class="card">
-  <h3>直近7日の売上推移</h3>
-  <canvas id="salesChart" height="120"></canvas>
-</section>
-
-<div class="grid-2 mt-16">
-  <section class="card">
-    <h3>在庫トップ5</h3>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>商品名</th>
-          <th>在庫数</th>
-          <th>カテゴリ</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in stock_df.itertuples() %}
-        <tr>
-          <td>{{ row.item }}</td>
-          <td>{{ row.stock }}</td>
-          <td>{{ row.category }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-
-  <section class="card">
-    <h3>最新アラート</h3>
-    <ul class="alerts">
-      {% for a in alert_df.itertuples() %}
-      <li>
-        <span class="badge">{{ a.level }}</span>
-        {{ a.message }}
-        <small class="muted">({{ a.date }})</small>
-      </li>
-      {% else %}
-      <li class="muted">アラートはありません。</li>
-      {% endfor %}
-    </ul>
-  </section>
-</div>
-
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Chart.js simple line chart
-const ctx = document.getElementById('salesChart').getContext('2d');
-const salesChart = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: {{ chart_labels|tojson }},
-    datasets: [{
-      label: '売上 (円)',
-      data: {{ chart_values|tojson }},
-      tension: 0.3,
-      fill: false
-    }]
-  },
-  options: {
-    responsive: true,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { display: true }
+  const ctx = document.getElementById("salesChart");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: {{ chart_labels|tojson }},
+      datasets: [{
+        label: "売上 (円)",
+        data: {{ chart_values|tojson }},
+        borderColor: "rgba(75, 192, 192, 1)",
+        fill: false,
+        tension: 0.2
+      }]
     },
-    scales: {
-      y: { beginAtZero: true }
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      }
     }
-  }
-});
+  });
 </script>
 
 {% endblock %}
