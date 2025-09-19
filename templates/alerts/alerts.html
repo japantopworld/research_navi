@@ -1,0 +1,24 @@
+{% extends "base/layout.html" %}
+{% block title %}アラート一覧 | リサーチナビ{% endblock %}
+{% block content %}
+
+<div class="container py-4">
+  <h2>⚠ アラート一覧</h2>
+  <p class="text-muted">最新の通知や警告を確認できます。</p>
+
+  <ul class="list-group">
+    {% for row in alert_df.itertuples() %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span>{{ row.date }} - {{ row.message }}</span>
+      <span class="badge {% if row.level == 'high' %}bg-danger{% elif row.level == 'medium' %}bg-warning{% else %}bg-secondary{% endif %}">
+        {{ row.level }}
+      </span>
+    </li>
+    {% endfor %}
+    {% if alert_df.empty %}
+    <li class="list-group-item text-muted">アラートはありません</li>
+    {% endif %}
+  </ul>
+</div>
+
+{% endblock %}
