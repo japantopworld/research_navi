@@ -3,12 +3,23 @@
 {% block content %}
 
 <div class="container py-5 text-center">
-  <h1>📊 リサーチナビ ダッシュボード</h1>
-  <p class="lead">売上・利益・在庫・通知をまとめて確認できます。</p>
+  <!-- ロゴやタイトル -->
+  <h1 class="mb-4 fw-bold">📊 リサーチナビ</h1>
+  <p class="lead text-muted">物販・せどりのための最強管理ツール</p>
+  <p class="mb-4">鳳陽合同会社　小島崇彦</p>
 
-  <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg mt-4">
+  <!-- ダッシュボードへ -->
+  <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg shadow-sm px-4">
     ダッシュボードへ進む
   </a>
+
+  <!-- 補助リンク（オプション） -->
+  <div class="mt-5">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary m-2">📈 ダッシュボード</a>
+    <a href="{{ url_for('home') }}#stock" class="btn btn-outline-secondary m-2">📦 在庫管理</a>
+    <a href="{{ url_for('home') }}#alerts" class="btn btn-outline-secondary m-2">⚠ アラート</a>
+    <a href="/settings" class="btn btn-outline-secondary m-2">⚙ 設定</a>
+  </div>
 </div>
 
 {% endblock %}
