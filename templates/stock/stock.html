@@ -1,0 +1,31 @@
+{% extends "base/layout.html" %}
+{% block title %}在庫管理 | リサーチナビ{% endblock %}
+{% block content %}
+
+<div class="container py-4">
+  <h2>📦 在庫管理</h2>
+  <p class="text-muted">商品ごとの在庫状況を確認できます。</p>
+
+  <table class="table table-hover table-striped">
+    <thead>
+      <tr>
+        <th>商品名</th>
+        <th>在庫数</th>
+        <th>カテゴリ</th>
+        <th>最終更新</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in stock_df.itertuples() %}
+      <tr class="{% if row.stock < 5 %}table-danger{% elif row.stock < 20 %}table-warning{% else %}table-success{% endif %}">
+        <td>{{ row.item }}</td>
+        <td>{{ row.stock }}</td>
+        <td>{{ row.category }}</td>
+        <td>{{ row.updated_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
