@@ -6,13 +6,15 @@ from flask import Flask, render_template
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
-# CSVパス
+# CSVファイルのパス
 DATA_PATH = os.path.join("data", "transactions.csv")
 STOCK_PATH = os.path.join("data", "stock.csv")
 ALERT_PATH = os.path.join("data", "alerts.csv")
+
+# 日本時間
 JST = timezone(timedelta(hours=9))
 
-# CSV読み込み（安全版）
+# CSV読み込みの安全ラッパー
 def safe_read_csv(path, columns):
     if os.path.exists(path):
         try:
@@ -26,12 +28,12 @@ def safe_read_csv(path, columns):
     else:
         return pd.DataFrame(columns=columns)
 
-# ヘルスチェック
+# ヘルスチェック用（Render/Herokuの監視用）
 @app.route("/healthz")
 def healthz():
     return "ok", 200
 
-# ホーム
+# ホーム画面
 @app.route("/")
 def home():
     return render_template("pages/dashboard/home.html")
@@ -39,11 +41,17 @@ def home():
 # ダッシュボード
 @app.route("/dashboard")
 def dashboard():
+    # 取引データ
     tx_cols = ["date", "platform", "revenue", "cost", "profit"]
     df = safe_read_csv(DATA_PATH, tx_cols)
+
+    # 在庫データ
     stock_df = safe_read_csv(STOCK_PATH, ["item", "stock", "category", "updated_at"])
+
+    # アラートデータ
     alert_df = safe_read_csv(ALERT_PATH, ["date", "message", "level"])
 
+    # 今日・今月の売上・利益
     today = datetime.now(JST).date()
     today_str = today.strftime("%Y-%m-%d")
     year_month = today.strftime("%Y-%m")
@@ -57,6 +65,7 @@ def dashboard():
     monthly_sales = df.loc[df["date"].str.startswith(year_month, na=False), "revenue"].sum()
     monthly_profit = df.loc[df["date"].str.startswith(year_month, na=False), "profit"].sum()
 
+    # 直近7日間の売上推移
     df_dates = df.copy()
     if not df_dates.empty:
         df_dates["date"] = pd.to_datetime(df_dates["date"], errors="coerce").dt.date
@@ -71,12 +80,14 @@ def dashboard():
     chart_labels = [d.strftime("%m/%d") for d in chart_df["date"]]
     chart_values = chart_df["revenue"].tolist()
 
+    # 在庫トップ5
     try:
         stock_df["stock"] = pd.to_numeric(stock_df["stock"], errors="coerce").fillna(0).astype(int)
         stock_top5 = stock_df.sort_values("stock", ascending=False).head(5)
     except Exception:
         stock_top5 = stock_df.head(5)
 
+    # アラートトップ5
     if not alert_df.empty:
         try:
             alert_df["date_dt"] = pd.to_datetime(alert_df["date"], errors="coerce")
@@ -85,6 +96,7 @@ def dashboard():
             pass
     alert_top5 = alert_df.head(5)
 
+    # ダッシュボード画面へ渡す
     return render_template(
         "pages/dashboard/dashboard.html",
         today_sales=round(float(today_sales), 0),
@@ -97,5 +109,6 @@ def dashboard():
         chart_values=chart_values
     )
 
+# ローカル開発用
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
