@@ -28,4 +28,25 @@ def setting_test_mail():
 # 通知一覧
 @settings_bp.route("/notifications")
 def notifications():
-    return render_template("pages/notifications.html")
+    # 仮の通知データ（本番はDBやCSVから読み込む）
+    rows = [
+        {
+            "id": 1,
+            "title": "利益通知",
+            "body": "1万円以上の利益が発生しました",
+            "kind": "profit",
+            "created_at": "2025-09-22 09:30",
+            "unread": True,
+            "meta": {"商品": "iPhone 14", "利益": "12,000円"}
+        },
+        {
+            "id": 2,
+            "title": "在庫アラート",
+            "body": "在庫が少なくなっています",
+            "kind": "warn",
+            "created_at": "2025-09-21 15:10",
+            "unread": False,
+            "meta": {"商品": "AirPods Pro", "残り": "2個"}
+        }
+    ]
+    return render_template("pages/notifications.html", rows=rows)
